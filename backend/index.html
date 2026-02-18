@@ -1,0 +1,1636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Horizon Bank - Modern Banking</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  
+  <style>
+    :root {
+      --primary: #0A0E27;
+      --secondary: #1A1F3A;
+      --accent: #00D9FF;
+      --accent-warm: #FF6B9D;
+      --success: #00E676;
+      --warning: #FFB800;
+      --error: #FF5252;
+      --text: #E8EAED;
+      --text-dim: #9CA3AF;
+      --border: rgba(255, 255, 255, 0.1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Epilogue', sans-serif;
+      background: var(--primary);
+      color: var(--text);
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: 
+        radial-gradient(circle at 20% 50%, rgba(0, 217, 255, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255, 107, 157, 0.15) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, rgba(0, 230, 118, 0.1) 0%, transparent 50%);
+      animation: gradient-shift 20s ease infinite;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    @keyframes gradient-shift {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      33% { transform: translate(5%, -5%) rotate(120deg); }
+      66% { transform: translate(-5%, 5%) rotate(240deg); }
+    }
+
+    body::after {
+      content: '';
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    #root {
+      position: relative;
+      z-index: 2;
+    }
+
+    .glass-card {
+      background: rgba(26, 31, 58, 0.6);
+      backdrop-filter: blur(20px);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 
+        0 8px 32px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    }
+
+    .glass-card-light {
+      background: rgba(26, 31, 58, 0.4);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent) 0%, #0099CC 100%);
+      color: var(--primary);
+      font-weight: 600;
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+      overflow: hidden;
+      font-family: 'Epilogue', sans-serif;
+    }
+
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn-primary:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(0, 217, 255, 0.4);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-secondary {
+      background: transparent;
+      color: var(--accent);
+      font-weight: 600;
+      padding: 14px 32px;
+      border-radius: 12px;
+      border: 2px solid var(--accent);
+      cursor: pointer;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      font-family: 'Epilogue', sans-serif;
+    }
+
+    .btn-secondary:hover {
+      background: rgba(0, 217, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .input-field {
+      width: 100%;
+      padding: 16px 20px;
+      background: rgba(10, 14, 39, 0.6);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      color: var(--text);
+      font-size: 15px;
+      transition: all 0.3s ease;
+      font-family: 'Epilogue', sans-serif;
+      outline: none;
+    }
+
+    .input-field:focus {
+      border-color: var(--accent);
+      background: rgba(10, 14, 39, 0.8);
+      box-shadow: 0 0 0 3px rgba(0, 217, 255, 0.1);
+    }
+
+    .input-field::placeholder {
+      color: var(--text-dim);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    @keyframes scaleIn {
+      from {
+        opacity: 0;
+        transform: scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    .animate-slide-up {
+      animation: slideUp 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .animate-fade-in {
+      animation: fadeIn 0.5s ease forwards;
+    }
+
+    .animate-scale-in {
+      animation: scaleIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+    }
+
+    .account-card {
+      background: linear-gradient(135deg, rgba(0, 217, 255, 0.15) 0%, rgba(0, 153, 204, 0.05) 100%);
+      border: 1px solid rgba(0, 217, 255, 0.2);
+      padding: 24px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .account-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 150px;
+      height: 150px;
+      background: radial-gradient(circle, rgba(0, 217, 255, 0.2) 0%, transparent 70%);
+      border-radius: 50%;
+      transform: translate(50%, -50%);
+    }
+
+    .account-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 12px 32px rgba(0, 217, 255, 0.2);
+      border-color: var(--accent);
+    }
+
+    .transaction-item {
+      padding: 16px;
+      border-bottom: 1px solid var(--border);
+      transition: background 0.2s ease;
+    }
+
+    .transaction-item:hover {
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .transaction-item:last-child {
+      border-bottom: none;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .loading-spinner {
+      border: 3px solid rgba(0, 217, 255, 0.2);
+      border-top: 3px solid var(--accent);
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .notification {
+      position: fixed;
+      top: 24px;
+      right: 24px;
+      padding: 16px 24px;
+      border-radius: 12px;
+      font-weight: 500;
+      z-index: 1000;
+      animation: slideInRight 0.3s ease;
+      max-width: 400px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    }
+
+    @keyframes slideInRight {
+      from {
+        transform: translateX(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateX(0);
+        opacity: 1;
+      }
+    }
+
+    .notification.success {
+      background: rgba(0, 230, 118, 0.15);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+
+    .notification.error {
+      background: rgba(255, 82, 82, 0.15);
+      border: 1px solid var(--error);
+      color: var(--error);
+    }
+
+    .notification.warning {
+      background: rgba(255, 184, 0, 0.15);
+      border: 1px solid var(--warning);
+      color: var(--warning);
+    }
+
+    .stat-card {
+      background: rgba(26, 31, 58, 0.4);
+      border: 1px solid var(--border);
+      padding: 20px;
+      border-radius: 16px;
+      transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+      border-color: var(--accent);
+      background: rgba(26, 31, 58, 0.6);
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--secondary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: rgba(0, 217, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: rgba(0, 217, 255, 0.5);
+    }
+
+    .tab-button {
+      padding: 12px 24px;
+      background: transparent;
+      border: none;
+      color: var(--text-dim);
+      font-weight: 600;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.3s ease;
+      font-family: 'Epilogue', sans-serif;
+    }
+
+    .tab-button.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+
+    .tab-button:hover {
+      color: var(--text);
+    }
+
+    select.input-field {
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2300D9FF' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 16px center;
+      padding-right: 40px;
+      cursor: pointer;
+    }
+
+    /* Live Chat Styles */
+.chat-widget {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 999;
+}
+
+.chat-button {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent) 0%, #0099CC 100%);
+  border: none;
+  cursor: pointer;
+  box-shadow: 0 4px 20px rgba(0, 217, 255, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.3s ease;
+}
+
+.chat-button:hover {
+  transform: scale(1.1);
+}
+
+.chat-window {
+  position: fixed;
+  bottom: 100px;
+  right: 24px;
+  width: 380px;
+  height: 500px;
+  background: rgba(26, 31, 58, 0.95);
+  backdrop-filter: blur(20px);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-header {
+  padding: 16px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chat-message {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  word-wrap: break-word;
+  font-size: 14px;
+}
+
+.chat-message.user {
+  align-self: flex-end;
+  background: linear-gradient(135deg, var(--accent) 0%, #0099CC 100%);
+  color: var(--primary);
+}
+
+.chat-message.admin {
+  align-self: flex-start;
+  background: rgba(255, 107, 157, 0.2);
+  border: 1px solid rgba(255, 107, 157, 0.3);
+}
+
+.chat-input-container {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 8px;
+}
+
+.chat-input {
+  flex: 1;
+  padding: 10px 14px;
+  background: rgba(10, 14, 39, 0.6);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  color: var(--text);
+  outline: none;
+}
+
+.send-button {
+  padding: 10px 20px;
+  background: linear-gradient(135deg, var(--accent) 0%, #0099CC 100%);
+  border: none;
+  border-radius: 8px;
+  color: var(--primary);
+  font-weight: 600;
+  cursor: pointer;
+}
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const API_URL = 'http://localhost:5000/api';
+    // ==================== UTILITY FUNCTIONS ====================
+
+    const formatCurrency = (amount) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2
+      }).format(amount);
+    };
+
+    const formatDate = (dateString) => {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    };
+
+    // ==================== NOTIFICATION COMPONENT ====================
+
+    const Notification = ({ message, type, onClose }) => {
+      useEffect(() => {
+        const timer = setTimeout(onClose, 4000);
+        return () => clearTimeout(timer);
+      }, [onClose]);
+
+      return (
+        <div className={`notification ${type}`}>
+          {message}
+        </div>
+      );
+    };
+
+    // ==================== LOGIN PAGE ====================
+
+    const LoginPage = ({ onLogin, onSwitchToRegister }) => {
+      const [email, setEmail] = useState('');
+      const [password, setPassword] = useState('');
+      const [loading, setLoading] = useState(false);
+      const [notification, setNotification] = useState(null);
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        setLoading(true);
+
+        try {
+          const response = await fetch(`${API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email, password })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            setNotification({ message: 'Login successful!', type: 'success' });
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setTimeout(() => onLogin(data.user, data.token), 500);
+          } else {
+            setNotification({ message: data.message || 'Login failed', type: 'error' });
+          }
+        } catch (error) {
+          setNotification({ message: 'Connection error. Please try again.', type: 'error' });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          {notification && (
+            <Notification
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          )}
+
+          <div className="glass-card p-8 w-full max-w-md animate-scale-in">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-[#00D9FF] to-[#FF6B9D] bg-clip-text text-transparent">
+                Horizon Bank
+              </h1>
+              <p className="text-gray-400">Welcome back to modern banking</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Email</label>
+                <input
+                  type="email"
+                  className="input-field"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Password</label>
+                <input
+                  type="password"
+                  className="input-field"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn-primary w-full"
+                disabled={loading}
+              >
+                {loading ? 'Logging in...' : 'Login'}
+              </button>
+
+              <div className="text-center pt-4">
+                <span className="text-gray-400">Don't have an account? </span>
+                <button
+                  type="button"
+                  onClick={onSwitchToRegister}
+                  className="text-[#00D9FF] font-semibold hover:underline"
+                >
+                  Sign up
+                </button>
+              </div>
+            </form>
+          </div>
+          {user.role !== 'admin' && <LiveChat user={user} token={token} />}
+        </div>
+      );
+    };
+
+    // ==================== REGISTER PAGE ====================
+
+    const RegisterPage = ({ onRegister, onSwitchToLogin }) => {
+      const [formData, setFormData] = useState({
+        first_name: '',
+        last_name: '',
+        email: '',
+        password: '',
+        confirmPassword: ''
+      });
+      const [loading, setLoading] = useState(false);
+      const [notification, setNotification] = useState(null);
+
+      const handleChange = (e) => {
+        setFormData({ ...formData, [e.target.name]: e.target.value });
+      };
+
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        if (formData.password !== formData.confirmPassword) {
+          setNotification({ message: 'Passwords do not match', type: 'error' });
+          return;
+        }
+
+        setLoading(true);
+
+        try {
+          const response = await fetch(`${API_URL}/auth/register`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              first_name: formData.first_name,
+              last_name: formData.last_name,
+              email: formData.email,
+              password: formData.password
+            })
+          });
+
+          const data = await response.json();
+
+          if (data.success) {
+            setNotification({ message: 'Registration successful!', type: 'success' });
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            setTimeout(() => onRegister(data.user, data.token), 500);
+          } else {
+            setNotification({ message: data.message || 'Registration failed', type: 'error' });
+          }
+        } catch (error) {
+          setNotification({ message: 'Connection error. Please try again.', type: 'error' });
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      return (
+        <div className="min-h-screen flex items-center justify-center p-4">
+          {notification && (
+            <Notification
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          )}
+
+          <div className="glass-card p-8 w-full max-w-md animate-scale-in">
+            <div className="text-center mb-8">
+              <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-[#00D9FF] to-[#FF6B9D] bg-clip-text text-transparent">
+                Horizon Bank
+              </h1>
+              <p className="text-gray-400">Create your account</p>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">First Name</label>
+                  <input
+                    type="text"
+                    name="first_name"
+                    className="input-field"
+                    placeholder="John"
+                    value={formData.first_name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Last Name</label>
+                  <input
+                    type="text"
+                    name="last_name"
+                    className="input-field"
+                    placeholder="Doe"
+                    value={formData.last_name}
+                    onChange={handleChange}
+                    required
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Email</label>
+                <input
+                  type="email"
+                  name="email"
+                  className="input-field"
+                  placeholder="your@email.com"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Password</label>
+                <input
+                  type="password"
+                  name="password"
+                  className="input-field"
+                  placeholder="••••••••"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-gray-300">Confirm Password</label>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  className="input-field"
+                  placeholder="••••••••"
+                  value={formData.confirmPassword}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <button
+                type="submit"
+                className="btn-primary w-full"
+                disabled={loading}
+              >
+                {loading ? 'Creating account...' : 'Create Account'}
+              </button>
+
+              <div className="text-center pt-4">
+                <span className="text-gray-400">Already have an account? </span>
+                <button
+                  type="button"
+                  onClick={onSwitchToLogin}
+                  className="text-[#00D9FF] font-semibold hover:underline"
+                >
+                  Login
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      );
+    };
+
+    // ==================== LIVE CHAT COMPONENT ====================
+const LiveChat = ({ user, token }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [socket, setSocket] = useState(null);
+  const messagesEndRef = React.useRef(null);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    newSocket.emit('join-chat', { userId: user.id, userRole: user.role });
+
+    newSocket.on('chat-history', (history) => {
+      setMessages(history);
+    });
+
+    newSocket.on('new-message', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    return () => newSocket.disconnect();
+  }, [user.id, user.role]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim() || !socket) return;
+
+    socket.emit('send-message', {
+      userId: user.id,
+      message: inputMessage,
+      senderType: user.role === 'admin' ? 'admin' : 'user'
+    });
+
+    setInputMessage('');
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <>
+      <div className="chat-widget">
+        <button className="chat-button" onClick={() => setIsOpen(!isOpen)}>
+          💬
+        </button>
+      </div>
+
+      {isOpen && (
+        <div className="chat-window">
+          <div className="chat-header">
+            <div>
+              <h3 className="font-bold text-lg">Live Support</h3>
+              <p className="text-xs text-gray-400">Chat with admin</p>
+            </div>
+            <button onClick={() => setIsOpen(false)} className="text-gray-400 hover:text-white text-xl">
+              ✕
+            </button>
+          </div>
+
+          <div className="chat-messages">
+            {messages.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                <p>👋 Welcome to Support!</p>
+                <p className="text-sm mt-2">How can we help?</p>
+              </div>
+            ) : (
+              messages.map((msg, index) => (
+                <div key={index}>
+                  <div className={`chat-message ${msg.sender_type}`}>
+                    <p>{msg.message}</p>
+                    <p className="text-xs opacity-70 mt-1">{formatTime(msg.created_at)}</p>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          <form onSubmit={sendMessage} className="chat-input-container">
+            <input
+              type="text"
+              className="chat-input"
+              placeholder="Type your message..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+            />
+            <button type="submit" className="send-button">Send</button>
+          </form>
+        </div>
+      )}
+    </>
+  );
+};
+
+// ==================== ADMIN CHAT PANEL ====================
+const AdminChatPanel = ({ token }) => {
+  const [activeChats, setActiveChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [socket, setSocket] = useState(null);
+  const messagesEndRef = React.useRef(null);
+  const selectedChatRef = React.useRef(null);
+  const [isAdminConnected, setIsAdminConnected] = useState(false);
+
+  const user = JSON.parse(localStorage.getItem('user'));
+
+  React.useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
+
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    newSocket.on('connect', () => {
+      console.log('🔌 Admin socket connected:', newSocket.id);
+      setIsAdminConnected(true);
+
+      newSocket.emit('join-chat', {
+        userId: user?.id,
+        userRole: 'admin'
+      });
+
+      newSocket.emit('get-active-chats');
+    });
+
+    newSocket.on('active-chats', (chats) => {
+      console.log('📋 Active chats:', chats.length);
+      setActiveChats(chats);
+    });
+
+    newSocket.on('new-user-message', ({ userId, message }) => {
+      console.log('📩 Admin received new-user-message from user:', userId, message);
+      newSocket.emit('get-active-chats');
+      if (selectedChatRef.current && selectedChatRef.current.user_id === userId) {
+        setMessages(prev => [...prev, message]);
+      }
+    });
+
+    newSocket.on('new-message', (message) => {
+      console.log('📩 Admin received new-message:', message);
+      if (selectedChatRef.current && message.user_id === selectedChatRef.current.user_id) {
+        setMessages(prev => [...prev, message]);
+      }
+    });
+
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+
+    return () => {
+      newSocket.off('connect');
+      newSocket.off('active-chats');
+      newSocket.off('new-user-message');
+      newSocket.off('new-message');
+      newSocket.disconnect();
+    };
+  }, []);
+
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const selectChat = async (chat) => {
+    setSelectedChat(chat);
+    try {
+      const response = await fetch(`${API_URL}/admin/chat-history/${chat.user_id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMessages(data.messages);
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+    }
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim() || !selectedChat || !socket) return;
+
+    socket.emit('send-message', {
+      userId: selectedChat.user_id,
+      message: inputMessage,
+      senderType: 'admin'
+    });
+
+    setInputMessage('');
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  return (
+    <div className="glass-card mx-4 mt-4 p-6 animate-fade-in">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-xl font-bold">💬 Support Chat</h2>
+        <span className={`text-sm ${isAdminConnected ? 'text-[#00E676]' : 'text-[#FF5252]'}`}>
+          {isAdminConnected ? '● Connected' : '● Connecting...'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4" style={{ maxHeight: '500px' }}>
+        <div className="md:col-span-1 glass-card-light p-4 overflow-y-auto" style={{ maxHeight: '400px' }}>
+          <h3 className="font-bold text-sm mb-3">Active Chats</h3>
+          {activeChats.length === 0 ? (
+            <p className="text-gray-400 text-sm">No active chats</p>
+          ) : (
+            <div className="space-y-2">
+              {activeChats.map((chat) => (
+                <div
+                  key={chat.user_id}
+                  onClick={() => selectChat(chat)}
+                  className={`p-3 rounded-lg cursor-pointer transition-all ${
+                    selectedChat?.user_id === chat.user_id
+                      ? 'bg-[#00D9FF]/20 border border-[#00D9FF]'
+                      : 'bg-white/5 hover:bg-white/10'
+                  }`}
+                >
+                  <p className="font-semibold text-sm">
+                    {chat.first_name} {chat.last_name}
+                  </p>
+                  <p className="text-xs text-gray-400">{chat.email}</p>
+                  {chat.last_message && (
+                    <p className="text-xs text-gray-500 mt-1 truncate">
+                      {chat.last_message}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="md:col-span-2 glass-card-light flex flex-col" style={{ maxHeight: '400px' }}>
+          {selectedChat ? (
+            <>
+              <div className="p-4 border-b border-gray-700">
+                <h3 className="font-bold">
+                  {selectedChat.first_name} {selectedChat.last_name}
+                </h3>
+                <p className="text-sm text-gray-400">{selectedChat.email}</p>
+              </div>
+
+              <div className="flex-1 overflow-y-auto p-4 space-y-3">
+                {messages.map((msg, index) => (
+                  <div key={index}>
+                    <div className={`chat-message ${msg.sender_type}`}>
+                      <p>{msg.message}</p>
+                      <p className="text-xs opacity-70 mt-1">
+                        {formatTime(msg.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <div ref={messagesEndRef} />
+              </div>
+
+              <form onSubmit={sendMessage} className="p-4 border-t border-gray-700">
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    className="input-field flex-1"
+                    placeholder="Type your reply..."
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                  />
+                  <button type="submit" className="btn-primary">
+                    Send
+                  </button>
+                </div>
+              </form>
+            </>
+          ) : (
+            <div className="flex-1 flex items-center justify-center text-gray-400">
+              <div className="text-center">
+                <p className="text-4xl mb-2">💬</p>
+                <p>Select a chat to start messaging</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+
+    // ==================== DASHBOARD PAGE ====================
+    // ==================== DASHBOARD ====================
+
+    const Dashboard = ({ user, token, onLogout }) => {
+      const [accounts, setAccounts] = useState([]);
+      const [transactions, setTransactions] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [notification, setNotification] = useState(null);
+      const [activeTab, setActiveTab] = useState('overview');
+
+      // Form states
+      const [depositForm, setDepositForm] = useState({ accountId: '', amount: '' });
+      const [withdrawForm, setWithdrawForm] = useState({ accountId: '', amount: '' });
+      const [transferForm, setTransferForm] = useState({ fromAccount: '', toAccount: '', amount: '' });
+
+      useEffect(() => {
+        fetchAccounts();
+        fetchTransactions();
+      }, []);
+
+      const fetchAccounts = async () => {
+        try {
+          const response = await fetch(`${API_URL}/accounts/get-accounts`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await response.json();
+          if (data.success) {
+            setAccounts(data.accounts);
+            if (data.accounts.length > 0) {
+              setDepositForm({ ...depositForm, accountId: data.accounts[0].id });
+              setWithdrawForm({ ...withdrawForm, accountId: data.accounts[0].id });
+              setTransferForm({ ...transferForm, fromAccount: data.accounts[0].id });
+            }
+          }
+        } catch (error) {
+          console.error('Error fetching accounts:', error);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const fetchTransactions = async () => {
+        try {
+          const response = await fetch(`${API_URL}/accounts/transactions`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          const data = await response.json();
+          if (data.success) {
+            setTransactions(data.transactions);
+          }
+        } catch (error) {
+          console.error('Error fetching transactions:', error);
+        }
+      };
+
+      const createAccount = async () => {
+        try {
+          const response = await fetch(`${API_URL}/accounts/create-account`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            }
+          });
+          const data = await response.json();
+          if (data.success) {
+            setNotification({ message: 'Account created successfully!', type: 'success' });
+            fetchAccounts();
+          } else {
+            setNotification({ message: data.message, type: 'error' });
+          }
+        } catch (error) {
+          setNotification({ message: 'Failed to create account', type: 'error' });
+        }
+      };
+
+      const handleDeposit = async (e) => {
+        e.preventDefault();
+        try {
+          const response = await fetch(`${API_URL}/accounts/deposit`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              accountId: parseInt(depositForm.accountId),
+              amount: parseFloat(depositForm.amount)
+            })
+          });
+          const data = await response.json();
+          if (data.success) {
+            setNotification({ message: 'Deposit successful!', type: 'success' });
+            setDepositForm({ ...depositForm, amount: '' });
+            fetchAccounts();
+            fetchTransactions();
+          } else {
+            setNotification({ message: data.message, type: 'error' });
+          }
+        } catch (error) {
+          setNotification({ message: 'Deposit failed', type: 'error' });
+        }
+      };
+
+      const handleWithdraw = async (e) => {
+        e.preventDefault();
+        try {
+          const response = await fetch(`${API_URL}/accounts/withdraw`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              accountId: parseInt(withdrawForm.accountId),
+              amount: parseFloat(withdrawForm.amount)
+            })
+          });
+          const data = await response.json();
+          if (data.success) {
+            setNotification({ message: 'Withdrawal successful!', type: 'success' });
+            setWithdrawForm({ ...withdrawForm, amount: '' });
+            fetchAccounts();
+            fetchTransactions();
+          } else {
+            setNotification({ message: data.message, type: 'error' });
+          }
+        } catch (error) {
+          setNotification({ message: 'Withdrawal failed', type: 'error' });
+        }
+      };
+
+      const handleTransfer = async (e) => {
+        e.preventDefault();
+        try {
+          const response = await fetch(`${API_URL}/accounts/transfer`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              fromAccount: parseInt(transferForm.fromAccount),
+              toAccount: parseInt(transferForm.toAccount),
+              amount: parseFloat(transferForm.amount)
+            })
+          });
+          const data = await response.json();
+          if (data.success) {
+            setNotification({ message: 'Transfer successful!', type: 'success' });
+            setTransferForm({ ...transferForm, amount: '' });
+            fetchAccounts();
+            fetchTransactions();
+          } else {
+            setNotification({ message: data.message, type: 'error' });
+          }
+        } catch (error) {
+          setNotification({ message: 'Transfer failed', type: 'error' });
+        }
+      };
+
+      const handleLogout = () => {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        onLogout();
+      };
+
+      const totalBalance = accounts.reduce((sum, acc) => sum + parseFloat(acc.balance), 0);
+
+      if (loading) {
+        return (
+          <div className="min-h-screen flex items-center justify-center">
+            <div className="loading-spinner"></div>
+          </div>
+        );
+      }
+
+      return (
+        <div className="min-h-screen">
+          {notification && (
+            <Notification
+              message={notification.message}
+              type={notification.type}
+              onClose={() => setNotification(null)}
+            />
+          )}
+
+          {/* Header */}
+          <header className="glass-card mx-4 mt-4 p-6 mb-6 animate-fade-in">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-2xl font-bold bg-gradient-to-r from-[#00D9FF] to-[#FF6B9D] bg-clip-text text-transparent">
+                  Horizon Bank
+                </h1>
+                <p className="text-gray-400 mt-1">
+                  Welcome back, {user.first_name} {user.last_name}
+                  {user.role === 'admin' && <span className="ml-2 px-2 py-1 bg-[#FF6B9D] text-white text-xs rounded-full">Admin</span>}
+                </p>
+              </div>
+              <button
+                onClick={handleLogout}
+                className="btn-secondary"
+              >
+                Logout
+              </button>
+            </div>
+          </header>
+
+          {/* Admin Chat Panel - Only for admins */}
+          {user.role === 'admin' && <AdminChatPanel token={token} />}
+
+          {/* Main Content */}
+          <div className="px-4 pb-8">
+            {/* Stats Overview */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6 animate-slide-up">
+              <div className="stat-card">
+                <p className="text-gray-400 text-sm mb-1">Total Balance</p>
+                <p className="text-3xl font-bold text-[#00D9FF]">{formatCurrency(totalBalance)}</p>
+              </div>
+              <div className="stat-card">
+                <p className="text-gray-400 text-sm mb-1">Active Accounts</p>
+                <p className="text-3xl font-bold text-[#00E676]">{accounts.length}</p>
+              </div>
+              <div className="stat-card">
+                <p className="text-gray-400 text-sm mb-1">Recent Transactions</p>
+                <p className="text-3xl font-bold text-[#FF6B9D]">{transactions.length}</p>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="glass-card mb-6" style={{ animationDelay: '0.1s' }}>
+              <div className="flex border-b border-gray-700">
+                <button
+                  className={`tab-button ${activeTab === 'overview' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('overview')}
+                >
+                  Overview
+                </button>
+                <button
+                  className={`tab-button ${activeTab === 'deposit' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('deposit')}
+                >
+                  Deposit
+                </button>
+                <button
+                  className={`tab-button ${activeTab === 'withdraw' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('withdraw')}
+                >
+                  Withdraw
+                </button>
+                <button
+                  className={`tab-button ${activeTab === 'transfer' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('transfer')}
+                >
+                  Transfer
+                </button>
+              </div>
+
+              <div className="p-6">
+                {activeTab === 'overview' && (
+                  <div className="space-y-6">
+                    {/* Accounts */}
+                    <div>
+                      <div className="flex justify-between items-center mb-4">
+                        <h2 className="text-xl font-bold">Your Accounts</h2>
+                        <button onClick={createAccount} className="btn-primary">
+                          + New Account
+                        </button>
+                      </div>
+                      
+                      {accounts.length === 0 ? (
+                        <div className="text-center py-12 text-gray-400">
+                          <p className="mb-4">No accounts yet. Create your first account to get started!</p>
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          {accounts.map((account) => (
+                            <div key={account.id} className="account-card">
+                              <div className="relative z-10">
+                                <p className="text-gray-400 text-sm mb-1">Account {account.account_number}</p>
+                                <p className="text-2xl font-bold mb-2">{formatCurrency(account.balance)}</p>
+                                <p className="text-xs text-gray-500 mono">ID: {account.id}</p>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recent Transactions */}
+                    <div>
+                      <h2 className="text-xl font-bold mb-4">Recent Transactions</h2>
+                      {transactions.length === 0 ? (
+                        <div className="text-center py-8 text-gray-400">
+                          No transactions yet
+                        </div>
+                      ) : (
+                        <div className="glass-card-light">
+                          {transactions.slice(0, 10).map((tx) => (
+                            <div key={tx.id} className="transaction-item">
+                              <div className="flex justify-between items-start">
+                                <div>
+                                  <p className="font-semibold capitalize">
+                                    {tx.transaction_type}
+                                  </p>
+                                  <p className="text-sm text-gray-400">
+                                    {formatDate(tx.created_at)}
+                                  </p>
+                                  {tx.description && (
+                                    <p className="text-sm text-gray-500 mt-1">{tx.description}</p>
+                                  )}
+                                </div>
+                                <div className="text-right">
+                                  <p className={`font-bold text-lg ${
+                                    tx.transaction_type === 'deposit' ? 'text-[#00E676]' :
+                                    tx.transaction_type === 'withdraw' ? 'text-[#FF5252]' :
+                                    'text-[#00D9FF]'
+                                  }`}>
+                                    {tx.transaction_type === 'withdraw' ? '-' : '+'}
+                                    {formatCurrency(tx.amount)}
+                                  </p>
+                                  <p className="text-xs text-gray-500 mono">Acc: {tx.account_id}</p>
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'deposit' && (
+                  <form onSubmit={handleDeposit} className="max-w-md space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Select Account
+                      </label>
+                      <select
+                        className="input-field"
+                        value={depositForm.accountId}
+                        onChange={(e) => setDepositForm({ ...depositForm, accountId: e.target.value })}
+                        required
+                      >
+                        {accounts.map((acc) => (
+                          <option key={acc.id} value={acc.id}>
+                            Account {acc.account_number} - {formatCurrency(acc.balance)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Amount
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        className="input-field"
+                        placeholder="0.00"
+                        value={depositForm.amount}
+                        onChange={(e) => setDepositForm({ ...depositForm, amount: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn-primary w-full">
+                      Deposit Funds
+                    </button>
+                  </form>
+                )}
+
+                {activeTab === 'withdraw' && (
+                  <form onSubmit={handleWithdraw} className="max-w-md space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Select Account
+                      </label>
+                      <select
+                        className="input-field"
+                        value={withdrawForm.accountId}
+                        onChange={(e) => setWithdrawForm({ ...withdrawForm, accountId: e.target.value })}
+                        required
+                      >
+                        {accounts.map((acc) => (
+                          <option key={acc.id} value={acc.id}>
+                            Account {acc.account_number} - {formatCurrency(acc.balance)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Amount
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        className="input-field"
+                        placeholder="0.00"
+                        value={withdrawForm.amount}
+                        onChange={(e) => setWithdrawForm({ ...withdrawForm, amount: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn-primary w-full">
+                      Withdraw Funds
+                    </button>
+                  </form>
+                )}
+
+                {activeTab === 'transfer' && (
+                  <form onSubmit={handleTransfer} className="max-w-md space-y-5">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        From Account
+                      </label>
+                      <select
+                        className="input-field"
+                        value={transferForm.fromAccount}
+                        onChange={(e) => setTransferForm({ ...transferForm, fromAccount: e.target.value })}
+                        required
+                      >
+                        {accounts.map((acc) => (
+                          <option key={acc.id} value={acc.id}>
+                            Account {acc.account_number} - {formatCurrency(acc.balance)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        To Account
+                      </label>
+                      <select
+                        className="input-field"
+                        value={transferForm.toAccount}
+                        onChange={(e) => setTransferForm({ ...transferForm, toAccount: e.target.value })}
+                        required
+                      >
+                        <option value="">Select account...</option>
+                        {accounts.map((acc) => (
+                          <option key={acc.id} value={acc.id}>
+                            Account {acc.account_number} - {formatCurrency(acc.balance)}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">
+                        Amount
+                      </label>
+                      <input
+                        type="number"
+                        step="0.01"
+                        min="0.01"
+                        className="input-field"
+                        placeholder="0.00"
+                        value={transferForm.amount}
+                        onChange={(e) => setTransferForm({ ...transferForm, amount: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <button type="submit" className="btn-primary w-full">
+                      Transfer Funds
+                    </button>
+                  </form>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    };
+
+    // ==================== MAIN APP ====================
+
+    const App = () => {
+      const [isAuthenticated, setIsAuthenticated] = useState(false);
+      const [showLogin, setShowLogin] = useState(true);
+      const [user, setUser] = useState(null);
+      const [token, setToken] = useState(null);
+
+      useEffect(() => {
+        // Check for existing session
+        const savedToken = localStorage.getItem('token');
+        const savedUser = localStorage.getItem('user');
+        
+        if (savedToken && savedUser) {
+          setToken(savedToken);
+          setUser(JSON.parse(savedUser));
+          setIsAuthenticated(true);
+        }
+      }, []);
+
+      const handleLogin = (userData, userToken) => {
+        setUser(userData);
+        setToken(userToken);
+        setIsAuthenticated(true);
+      };
+
+      const handleRegister = (userData, userToken) => {
+        setUser(userData);
+        setToken(userToken);
+        setIsAuthenticated(true);
+      };
+
+      const handleLogout = () => {
+        setUser(null);
+        setToken(null);
+        setIsAuthenticated(false);
+      };
+
+      if (isAuthenticated && user && token) {
+        return <Dashboard user={user} token={token} onLogout={handleLogout} />;
+      }
+
+      return showLogin ? (
+        <LoginPage
+          onLogin={handleLogin}
+          onSwitchToRegister={() => setShowLogin(false)}
+        />
+      ) : (
+        <RegisterPage
+          onRegister={handleRegister}
+          onSwitchToLogin={() => setShowLogin(true)}
+        />
+      );
+    };
+
+    // Render the app
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<App />);
+  </script>
+</body>
+</html>
