@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <title>VolksCommercial Bank – Financial Services</title>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --teal-primary: #00596B;
+      --teal-dark: #003D4A;
+      --teal-light: #4A8B99;
+      --teal-pale: #E6F3F5;
+      --white: #FFFFFF;
+      --off-white: #F8FAFB;
+      --gray-50: #F9FAFB;
+      --gray-100: #F3F4F6;
+      --gray-200: #E5E7EB;
+      --gray-300: #D1D5DB;
+      --gray-400: #9CA3AF;
+      --gray-500: #6B7280;
+      --gray-600: #4B5563;
+      --gray-700: #374151;
+      --gray-800: #1F2937;
+      --gray-900: #111827;
+      --blue-accent: #0EA5E9;
+      --green-success: #10B981;
+      --red-error: #EF4444;
+      --orange-warning: #F59E0B;
+      --shadow-sm: 0 1px 2px 0 rgba(0,0,0,0.05);
+      --shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06);
+      --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+      --shadow-xl: 0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      color: var(--gray-900);
+      background: var(--white);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    h1, h2, h3, h4, h5, h6 { font-family: 'Source Serif 4', Georgia, serif; font-weight: 600; line-height: 1.2; }
+
+    /* MOBILE-FIRST RESPONSIVE */
+    .container { width: 100%; padding: 0 20px; margin: 0 auto; }
+    @media (min-width: 640px) { .container { max-width: 640px; } }
+    @media (min-width: 768px) { .container { max-width: 768px; padding: 0 32px; } }
+    @media (min-width: 1024px) { .container { max-width: 1024px; } }
+    @media (min-width: 1280px) { .container { max-width: 1200px; } }
+
+    /* TOP NAVIGATION */
+    .top-nav {
+      background: var(--white);
+      border-bottom: 1px solid var(--gray-200);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .top-nav-inner {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 70px;
+      padding: 0 20px;
+    }
+
+    @media (min-width: 1024px) {
+      .top-nav-inner { padding: 0 40px; }
+    }
+
+    .logo-box {
+      background: var(--teal-primary);
+      padding: 12px 20px;
+      border-radius: 4px;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .logo-text {
+      font-family: 'Source Serif 4', serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--white);
+      letter-spacing: -0.5px;
+      line-height: 1.1;
+      text-transform: uppercase;
+    }
+
+    .logo-tagline {
+      font-size: 9px;
+      color: rgba(255,255,255,0.85);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-top: 2px;
+    }
+
+    @media (min-width: 768px) {
+      .logo-text { font-size: 20px; }
+      .logo-tagline { font-size: 10px; }
+    }
+
+    .nav-links {
+      display: none;
+      gap: 32px;
+      align-items: center;
+    }
+
+    @media (min-width: 1024px) {
+      .nav-links { display: flex; }
+    }
+
+    .nav-link {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--gray-700);
+      text-decoration: none;
+      transition: color 0.2s;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+    }
+
+    .nav-link:hover, .nav-link.active { color: var(--teal-primary); }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .mobile-menu-btn {
+      display: flex;
+      background: none;
+      border: none;
+      font-size: 24px;
+      color: var(--gray-700);
+      cursor: pointer;
+      padding: 8px;
+    }
+
+    @media (min-width: 1024px) {
+      .mobile-menu-btn { display: none; }
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 4px;
+      font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      border: none;
+      font-family: inherit;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--teal-primary);
+      color: var(--white);
+    }
+
+    .btn-primary:hover {
+      background: var(--teal-dark);
+      transform: translateY(-1px);
+      box-shadow: var(--shadow);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--teal-primary);
+      border: 2px solid var(--teal-primary);
+    }
+
+    .btn-outline:hover {
+      background: var(--teal-primary);
+      color: var(--white);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--gray-700);
+    }
+
+    .btn-ghost:hover {
+      background: var(--gray-100);
+    }
+
+    .btn-sm { padding: 6px 14px; font-size: 13px; }
+    .btn-lg { padding: 14px 28px; font-size: 16px; }
+
+    /* MOBILE MENU OVERLAY */
+    .mobile-menu-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1100;
+      animation: fadeIn 0.2s;
+    }
+
+    .mobile-menu-overlay.open { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 85%;
+      max-width: 360px;
+      height: 100vh;
+      background: var(--white);
+      box-shadow: var(--shadow-xl);
+      transition: right 0.3s ease;
+      z-index: 1200;
+      overflow-y: auto;
+    }
+
+    .mobile-menu.open { right: 0; }
+
+    .mobile-menu-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .mobile-menu-close {
+      background: none;
+      border: none;
+      font-size: 28px;
+      color: var(--gray-700);
+      cursor: pointer;
+      padding: 4px;
+    }
+
+    .mobile-menu-items {
+      padding: 20px;
+    }
+
+    .mobile-menu-item {
+      display: block;
+      padding: 14px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--gray-700);
+      text-decoration: none;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+    }
+
+    .mobile-menu-item:hover, .mobile-menu-item.active {
+      color: var(--teal-primary);
+    }
+
+    /* HERO SECTION */
+    .hero {
+      position: relative;
+      height: 400px;
+      background: linear-gradient(135deg, var(--teal-dark) 0%, var(--teal-primary) 100%);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+    }
+
+    @media (min-width: 768px) {
+      .hero { height: 500px; }
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle at 20% 50%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, rgba(255,255,255,0.08) 0%, transparent 50%);
+      pointer-events: none;
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 10;
+      color: var(--white);
+      max-width: 800px;
+    }
+
+    .hero-label {
+      display: inline-block;
+      background: rgba(255,255,255,0.2);
+      padding: 8px 16px;
+      border-radius: 4px;
+      font-size: 13px;
+      font-weight: 600;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      margin-bottom: 20px;
+    }
+
+    .hero-title {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 16px;
+      line-height: 1.15;
+    }
+
+    @media (min-width: 768px) {
+      .hero-title { font-size: 48px; }
+    }
+
+    .hero-subtitle {
+      font-size: 16px;
+      line-height: 1.6;
+      opacity: 0.95;
+      max-width: 600px;
+    }
+
+    @media (min-width: 768px) {
+      .hero-subtitle { font-size: 18px; }
+    }
+
+    /* SECTIONS */
+    .section {
+      padding: 60px 0;
+    }
+
+    @media (min-width: 768px) {
+      .section { padding: 80px 0; }
+    }
+
+    .section-header {
+      text-align: center;
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: 32px;
+      color: var(--teal-primary);
+      margin-bottom: 12px;
+    }
+
+    @media (min-width: 768px) {
+      .section-title { font-size: 40px; }
+    }
+
+    .section-subtitle {
+      font-size: 16px;
+      color: var(--gray-600);
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+    }
+
+    /* CARDS */
+    .cards-grid {
+      display: grid;
+      gap: 24px;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1024px) {
+      .cards-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 28px;
+      transition: all 0.3s;
+      cursor: pointer;
+    }
+
+    .card:hover {
+      box-shadow: var(--shadow-lg);
+      transform: translateY(-4px);
+      border-color: var(--teal-light);
+    }
+
+    .card-icon {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      background: var(--teal-primary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      color: var(--white);
+      margin-bottom: 20px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 8px;
+    }
+
+    .card-description {
+      font-size: 14px;
+      color: var(--gray-600);
+      line-height: 1.6;
+    }
+
+    /* ACCOUNT CARDS */
+    .account-card {
+      background: linear-gradient(135deg, var(--teal-primary) 0%, var(--teal-dark) 100%);
+      color: var(--white);
+      border-radius: 12px;
+      padding: 28px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .account-card::after {
+      content: '';
+      position: absolute;
+      top: -50px;
+      right: -50px;
+      width: 150px;
+      height: 150px;
+      border-radius: 50%;
+      background: rgba(255,255,255,0.1);
+    }
+
+    .account-card-label {
+      font-size: 12px;
+      opacity: 0.8;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .account-card-number {
+      font-family: 'Inter', monospace;
+      font-size: 14px;
+      opacity: 0.75;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    .account-card-balance {
+      font-size: 36px;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .account-card-balance-label {
+      font-size: 13px;
+      opacity: 0.75;
+    }
+
+    .account-card.frozen {
+      background: linear-gradient(135deg, var(--gray-600) 0%, var(--gray-700) 100%);
+    }
+
+    /* STATS */
+    .stats-grid {
+      display: grid;
+      gap: 20px;
+      grid-template-columns: 1fr;
+    }
+
+    @media (min-width: 640px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1024px) {
+      .stats-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+
+    .stat-card {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 24px;
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--teal-primary);
+      margin-bottom: 4px;
+    }
+
+    .stat-label {
+      font-size: 14px;
+      color: var(--gray-600);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* TABLE */
+    .table-container {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .table th {
+      background: var(--gray-50);
+      padding: 14px 16px;
+      text-align: left;
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--gray-700);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      border-bottom: 2px solid var(--gray-200);
+    }
+
+    .table td {
+      padding: 14px 16px;
+      font-size: 14px;
+      color: var(--gray-900);
+      border-bottom: 1px solid var(--gray-200);
+    }
+
+    .table tr:last-child td { border-bottom: none; }
+    .table tr:hover { background: var(--gray-50); }
+
+    /* FORMS */
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--gray-700);
+      margin-bottom: 6px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 12px 16px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      color: var(--gray-900);
+      background: var(--white);
+      transition: all 0.2s;
+    }
+
+    .form-input:focus, .form-select:focus {
+      outline: none;
+      border-color: var(--teal-primary);
+      box-shadow: 0 0 0 3px var(--teal-pale);
+    }
+
+    .form-hint {
+      font-size: 13px;
+      color: var(--gray-500);
+      margin-top: 4px;
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 4px 12px;
+      border-radius: 100px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge-success { background: #D1FAE5; color: #065F46; }
+    .badge-error { background: #FEE2E2; color: #991B1B; }
+    .badge-warning { background: #FEF3C7; color: #92400E; }
+    .badge-info { background: #DBEAFE; color: #1E40AF; }
+
+    /* TOAST */
+    .toast {
+      position: fixed;
+      top: 80px;
+      right: 20px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 16px 20px;
+      box-shadow: var(--shadow-xl);
+      z-index: 2000;
+      animation: slideInRight 0.3s ease;
+      max-width: 400px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    @keyframes slideInRight {
+      from { transform: translateX(100%); opacity: 0; }
+      to { transform: translateX(0); opacity: 1; }
+    }
+
+    .toast.success { border-left: 4px solid var(--green-success); }
+    .toast.error { border-left: 4px solid var(--red-error); }
+    .toast.warning { border-left: 4px solid var(--orange-warning); }
+
+    /* CHAT FAB */
+    .chat-fab {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      background: var(--teal-primary);
+      color: var(--white);
+      font-size: 24px;
+      border: none;
+      cursor: pointer;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 900;
+      transition: all 0.3s;
+    }
+
+    .chat-fab:hover {
+      background: var(--teal-dark);
+      transform: scale(1.1);
+    }
+
+    /* CHAT PANEL */
+    .chat-panel {
+      position: fixed;
+      bottom: 100px;
+      right: 24px;
+      width: 90%;
+      max-width: 380px;
+      height: 500px;
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      border-radius: 12px;
+      box-shadow: var(--shadow-xl);
+      display: flex;
+      flex-direction: column;
+      z-index: 900;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .chat-header {
+      background: var(--teal-primary);
+      color: var(--white);
+      padding: 16px 20px;
+      border-radius: 12px 12px 0 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 16px;
+      background: var(--gray-50);
+    }
+
+    .chat-message {
+      margin-bottom: 12px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .chat-bubble {
+      padding: 10px 14px;
+      border-radius: 12px;
+      max-width: 75%;
+      word-wrap: break-word;
+    }
+
+    .chat-message.user { align-items: flex-end; }
+    .chat-message.user .chat-bubble {
+      background: var(--teal-primary);
+      color: var(--white);
+      border-bottom-right-radius: 4px;
+    }
+
+    .chat-message.admin { align-items: flex-start; }
+    .chat-message.admin .chat-bubble {
+      background: var(--white);
+      border: 1px solid var(--gray-200);
+      color: var(--gray-900);
+      border-bottom-left-radius: 4px;
+    }
+
+    .chat-time {
+      font-size: 11px;
+      color: var(--gray-500);
+      margin-top: 4px;
+      padding: 0 4px;
+    }
+
+    .chat-input-bar {
+      padding: 16px;
+      border-top: 1px solid var(--gray-200);
+      display: flex;
+      gap: 8px;
+    }
+
+    .chat-input {
+      flex: 1;
+      padding: 10px 14px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+    }
+
+    /* FOOTER */
+    .footer {
+      background: var(--teal-primary);
+      color: var(--white);
+      padding: 48px 0 32px;
+    }
+
+    .footer-grid {
+      display: grid;
+      gap: 32px;
+      grid-template-columns: 1fr;
+      margin-bottom: 32px;
+    }
+
+    @media (min-width: 768px) {
+      .footer-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (min-width: 1024px) {
+      .footer-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+
+    .footer-title {
+      font-size: 16px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .footer-link {
+      display: block;
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      font-size: 14px;
+      margin-bottom: 10px;
+      transition: color 0.2s;
+    }
+
+    .footer-link:hover { color: var(--white); }
+
+    .footer-bottom {
+      border-top: 1px solid rgba(255,255,255,0.2);
+      padding-top: 24px;
+      text-align: center;
+      font-size: 13px;
+      color: rgba(255,255,255,0.7);
+    }
+
+    /* LOADER */
+    .loader-container {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 400px;
+    }
+
+    .loader {
+      width: 48px;
+      height: 48px;
+      border: 4px solid var(--gray-200);
+      border-top-color: var(--teal-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* UTILITIES */
+    .text-center { text-align: center; }
+    .text-muted { color: var(--gray-600); }
+    .mb-4 { margin-bottom: 16px; }
+    .mb-6 { margin-bottom: 24px; }
+    .mt-4 { margin-top: 16px; }
+    .mt-6 { margin-top: 24px; }
+    .hidden { display: none; }
+
+    /* ALERT */
+    .alert {
+      padding: 14px 18px;
+      border-radius: 6px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+    }
+
+    .alert-warning { background: var(--orange-warning)/10; border: 1px solid var(--orange-warning); color: #92400E; }
+    .alert-error { background: #FEE2E2; border: 1px solid var(--red-error); color: #991B1B; }
+    .alert-info { background: #DBEAFE; border: 1px solid var(--blue-accent); color: #1E40AF; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const {useState,useEffect,useRef,useCallback}=React;
+    const API='http://localhost:5000/api';
+
+    // Currency conversion rates (relative to USD)
+    const CURRENCY_RATES={
+      USD:{rate:1,symbol:'$',name:'US Dollar'},
+      EUR:{rate:0.92,symbol:'€',name:'Euro'},
+      GBP:{rate:0.79,symbol:'£',name:'British Pound'},
+      JPY:{rate:151.5,symbol:'¥',name:'Japanese Yen'},
+      CNY:{rate:7.23,symbol:'¥',name:'Chinese Yuan'}
+    };
+
+    const fmt=(n,currency='USD')=>{
+      const rate=CURRENCY_RATES[currency]?.rate||1;
+      const symbol=CURRENCY_RATES[currency]?.symbol||'$';
+      const converted=(n||0)*rate;
+      return new Intl.NumberFormat('en-US',{style:'currency',currency:currency}).format(converted);
+    };
+    const fmtDate=d=>new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d));
+    const fmtTime=d=>new Date(d).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+    const initials=(f,l)=>`${(f||'')[0]||''}${(l||'')[0]||''}`.toUpperCase();
+
+    const Toast=({message,type,onClose})=>{
+      useEffect(()=>{const t=setTimeout(onClose,4000);return()=>clearTimeout(t)},[]);
+      return <div className={`toast ${type}`}><span style={{fontSize:20}}>{type==='success'?'✓':type==='error'?'✕':'ℹ'}</span><span>{message}</span></div>;
+    };
+
+    // AUTH PAGES
+    const AuthPage=({isLogin,onAuth,onSwitch})=>{
+      const [form,setForm]=useState(isLogin?{email:'',password:''}:{first_name:'',last_name:'',email:'',password:'',confirmPassword:''});
+      const [loading,setLoading]=useState(false);
+      const [toast,setToast]=useState(null);
+
+      const submit=async e=>{
+        e.preventDefault();
+        if(!isLogin&&form.password!==form.confirmPassword){setToast({message:'Passwords do not match',type:'error'});return;}
+        setLoading(true);
+        try{
+          const r=await fetch(`${API}/auth/${isLogin?'login':'register'}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(form)});
+          const d=await r.json();
+          if(d.success){localStorage.setItem('token',d.token);localStorage.setItem('user',JSON.stringify(d.user));onAuth(d.user,d.token);}
+          else setToast({message:d.message||`${isLogin?'Login':'Registration'} failed`,type:'error'});
+        }catch{setToast({message:'Connection error',type:'error'});}finally{setLoading(false);}
+      };
+
+      return <div>
+        {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
+        <div className="hero">
+          <div className="container">
+            <div className="hero-content">
+              <div className="hero-label">Financial Services</div>
+              <h1 className="hero-title">Banking built for the modern world</h1>
+              <p className="hero-subtitle">Secure, fast and reliable financial services for individuals and businesses. Your financial future starts here.</p>
+            </div>
+          </div>
+        </div>
+        <div className="section">
+          <div className="container">
+            <div style={{maxWidth:480,margin:'0 auto'}}>
+              <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32,boxShadow:'var(--shadow-lg)'}}>
+                <h2 style={{fontSize:28,marginBottom:8,color:'var(--teal-primary)'}}>{isLogin?'Welcome back':'Open your account'}</h2>
+                <p style={{fontSize:14,color:'var(--gray-600)',marginBottom:32}}>{isLogin?'Sign in to access your account':'Join thousands of customers banking with us'}</p>
+                <form onSubmit={submit}>
+                  {!isLogin&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                    <div className="form-group"><label className="form-label">First name</label><input className="form-input" placeholder="John" value={form.first_name} onChange={e=>setForm({...form,first_name:e.target.value})} required/></div>
+                    <div className="form-group"><label className="form-label">Last name</label><input className="form-input" placeholder="Doe" value={form.last_name} onChange={e=>setForm({...form,last_name:e.target.value})} required/></div>
+                  </div>}
+                  <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="your@email.com" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required/></div>
+                  <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} required/></div>
+                  {!isLogin&&<div className="form-group"><label className="form-label">Confirm Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={e=>setForm({...form,confirmPassword:e.target.value})} required/></div>}
+                  <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}} disabled={loading}>{loading?'Please wait...':(isLogin?'Sign in':'Create account')}</button>
+                  <p style={{textAlign:'center',marginTop:20,fontSize:14,color:'var(--gray-600)'}}>
+                    {isLogin?'New customer?':'Already have an account?'} <button type="button" onClick={onSwitch} style={{background:'none',border:'none',color:'var(--teal-primary)',fontWeight:600,cursor:'pointer',fontFamily:'inherit',fontSize:14}}>{isLogin?'Open an account':'Sign in'}</button>
+                  </p>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>;
+    };
+
+    // LIVE CHAT
+    const LiveChat=({user})=>{
+      const [open,setOpen]=useState(false);
+      const [messages,setMessages]=useState([]);
+      const [input,setInput]=useState('');
+      const [socket,setSocket]=useState(null);
+      const [connected,setConnected]=useState(false);
+      const [typing,setTyping]=useState(false);
+      const bottomRef=useRef(null);
+      const chatEndRef=useRef(null);
+
+      useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[messages,open]);
+
+      useEffect(()=>{
+        const s=io('http://localhost:5000',{
+          reconnection:true,
+          reconnectionAttempts:5,
+          reconnectionDelay:1000
+        });
+
+        s.on('connect',()=>{
+          console.log('Chat connected:',s.id);
+          setConnected(true);
+          s.emit('join-chat',{userId:user.id,userRole:user.role});
+        });
+
+        s.on('disconnect',()=>{setConnected(false);console.log('Chat disconnected');});
+
+        s.on('connect_error',(err)=>{console.error('Chat connection error:',err);});
+
+        s.on('chat-history',msgs=>{
+          console.log('Received chat history:',msgs.length,'messages');
+          setMessages(msgs);
+        });
+
+        s.on('new-message',msg=>{
+          console.log('New message received:',msg);
+          setMessages(prev=>[...prev,msg]);
+          if(msg.sender_type==='admin')setTyping(false);
+        });
+
+        s.on('admin-typing',()=>setTyping(true));
+        s.on('admin-stop-typing',()=>setTyping(false));
+
+        setSocket(s);
+
+        return()=>{
+          console.log('Disconnecting chat...');
+          s.disconnect();
+        };
+      },[user.id]);
+
+      const send=e=>{
+        e.preventDefault();
+        if(!input.trim()||!socket)return;
+        console.log('Sending message:',input);
+        socket.emit('send-message',{userId:user.id,message:input.trim(),senderType:'user'});
+        setInput('');
+      };
+
+      return <>
+        <button className="chat-fab" onClick={()=>setOpen(!open)} style={{position:'fixed',bottom:24,right:24,width:60,height:60,borderRadius:'50%',background:'var(--teal-primary)',color:'var(--white)',fontSize:24,border:'none',cursor:'pointer',boxShadow:'var(--shadow-xl)',display:'flex',alignItems:'center',justifyContent:'center',zIndex:900}}>
+          💬{!connected&&<span style={{position:'absolute',top:-4,right:-4,width:12,height:12,background:'var(--red-error)',borderRadius:'50%',border:'2px solid var(--white)'}}/>}
+        </button>
+        {open&&<div className="chat-panel" style={{position:'fixed',bottom:100,right:24,width:'90%',maxWidth:380,height:500,background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,boxShadow:'var(--shadow-xl)',display:'flex',flexDirection:'column',zIndex:900}}>
+          <div className="chat-header" style={{background:'var(--teal-primary)',color:'var(--white)',padding:'16px 20px',borderRadius:'12px 12px 0 0',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
+            <div>
+              <div style={{fontWeight:700,fontSize:15,display:'flex',alignItems:'center',gap:8}}>
+                VolksCommercial Support
+                {connected?<span style={{width:8,height:8,background:'var(--green-success)',borderRadius:'50%'}}/>:<span style={{width:8,height:8,background:'var(--red-error)',borderRadius:'50%'}}/>}
+              </div>
+              <div style={{fontSize:12,opacity:0.9}}>{connected?(typing?'Support is typing...':'Online'):'Connecting...'}</div>
+            </div>
+            <button onClick={()=>setOpen(false)} style={{background:'none',border:'none',color:'var(--white)',fontSize:24,cursor:'pointer'}}>✕</button>
+          </div>
+          <div className="chat-messages" style={{flex:1,overflowY:'auto',padding:'16px',background:'var(--gray-50)'}}>
+            {messages.length===0?<div style={{textAlign:'center',color:'var(--gray-500)',padding:'40px 20px'}}><div style={{fontSize:40,marginBottom:12}}>👋</div><div style={{fontSize:15,fontWeight:600,color:'var(--gray-700)'}}>How can we help?</div><div style={{fontSize:13,marginTop:6}}>Send us a message and we'll get back to you</div></div>
+            :messages.map((m,i)=><div key={i} className={`chat-message ${m.sender_type}`} style={{display:'flex',flexDirection:m.sender_type==='user'?'column':'column',alignItems:m.sender_type==='user'?'flex-end':'flex-start',marginBottom:12}}><div className="chat-bubble" style={{padding:'10px 14px',borderRadius:12,maxWidth:'75%',wordWrap:'break-word',background:m.sender_type==='user'?'var(--teal-primary)':'var(--white)',color:m.sender_type==='user'?'var(--white)':'var(--gray-900)',border:m.sender_type==='admin'?'1px solid var(--gray-200)':'none'}}>{m.message}</div><div className="chat-time" style={{fontSize:11,color:'var(--gray-500)',marginTop:4,padding:'0 4px'}}>{fmtTime(m.created_at)}</div></div>)}
+            {typing&&<div style={{fontSize:12,color:'var(--gray-500)',fontStyle:'italic',padding:'8px 16px'}}>Support is typing...</div>}
+            <div ref={bottomRef}/>
+          </div>
+          <form onSubmit={send} className="chat-input-bar" style={{padding:'16px',borderTop:'1px solid var(--gray-200)',display:'flex',gap:8}}>
+            <input className="chat-input" placeholder="Type your message..." value={input} onChange={e=>setInput(e.target.value)} style={{flex:1,padding:'10px 14px',border:'1px solid var(--gray-300)',borderRadius:6,fontSize:14,fontFamily:'inherit'}}/>
+            <button type="submit" className="btn btn-primary" disabled={!connected||!input.trim()}>Send</button>
+          </form>
+        </div>}
+      </>;
+    };
+
+    // ADMIN SUPPORT CHAT PANEL
+    const AdminSupportChat=({auth,API,showToast})=>{
+      const [activeChats,setActiveChats]=useState([]);
+      const [selectedChat,setSelectedChat]=useState(null);
+      const [messages,setMessages]=useState([]);
+      const [input,setInput]=useState('');
+      const [socket,setSocket]=useState(null);
+      const [connected,setConnected]=useState(false);
+      const [loading,setLoading]=useState(false);
+      const messagesEndRef=useRef(null);
+      const selectedChatRef=useRef(null);
+
+      React.useEffect(()=>{selectedChatRef.current=selectedChat;},[selectedChat]);
+
+      useEffect(()=>{
+        const s=io('http://localhost:5000',{reconnection:true,reconnectionAttempts:5,reconnectionDelay:1000});
+
+        s.on('connect',()=>{
+          console.log('🔌 Admin chat connected:',s.id);
+          setConnected(true);
+          s.emit('join-chat',{userId:auth.user.id,userRole:'admin'});
+          s.emit('get-active-chats');
+        });
+
+        s.on('disconnect',()=>{setConnected(false);console.log('Admin chat disconnected');});
+
+        s.on('active-chats',(chats)=>{
+          console.log('📋 Active chats:',chats.length);
+          setActiveChats(chats);
+        });
+
+        s.on('new-user-message',({userId,message})=>{
+          console.log('📩 Admin received message from user',userId,message);
+          s.emit('get-active-chats');
+          if(selectedChatRef.current&&selectedChatRef.current.user_id===userId){
+            setMessages(prev=>[...prev,message]);
+          }
+        });
+
+        s.on('new-message',(message)=>{
+          if(selectedChatRef.current&&message.user_id===selectedChatRef.current.user_id){
+            setMessages(prev=>[...prev,message]);
+          }
+        });
+
+        setSocket(s);
+
+        return()=>{
+          s.off('connect');
+          s.off('disconnect');
+          s.off('active-chats');
+          s.off('new-user-message');
+          s.off('new-message');
+          s.disconnect();
+        };
+      },[]);
+
+      useEffect(()=>{messagesEndRef.current?.scrollIntoView({behavior:'smooth'});},[messages]);
+
+      const selectChat=async(chat)=>{
+        setLoading(true);
+        setSelectedChat(chat);
+        try{
+          const r=await fetch(`${API}/admin/chat-history/${chat.user_id}`,{headers:{Authorization:`Bearer ${auth.token}`}});
+          const d=await r.json();
+          if(d.success)setMessages(d.messages);
+          else showToast(d.message,'error');
+        }catch{showToast('Failed to load chat history','error');}
+        setLoading(false);
+      };
+
+      const send=e=>{
+        e.preventDefault();
+        if(!input.trim()||!selectedChat||!socket)return;
+        socket.emit('send-message',{userId:selectedChat.user_id,message:input.trim(),senderType:'admin'});
+        setInput('');
+      };
+
+      return <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:20,marginBottom:24}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+          <div>
+            <h3 style={{fontSize:18,fontWeight:600,color:'var(--teal-primary)',display:'flex',alignItems:'center',gap:8}}>
+              💬 Support Chat Inbox
+              {connected&&<span style={{width:8,height:8,background:'var(--green-success)',borderRadius:'50%'}}/>}
+            </h3>
+            <p style={{fontSize:13,color:'var(--gray-500)',marginTop:4}}>{activeChats.length} active conversation{activeChats.length!==1?'s':''}</p>
+          </div>
+          {!connected&&<span style={{fontSize:12,color:'var(--orange-warning)'}}>Connecting...</span>}
+        </div>
+
+        <div style={{display:'grid',gridTemplateColumns:'1fr 2fr',gap:16,minHeight:'400px'}}>
+          {/* Chat List */}
+          <div style={{border:'1px solid var(--gray-200)',borderRadius:8,overflow:'hidden'}}>
+            <div style={{padding:'12px 16px',background:'var(--gray-50)',borderBottom:'1px solid var(--gray-200)',fontWeight:600,fontSize:14}}>Active Chats</div>
+            <div style={{maxHeight:'350px',overflowY:'auto'}}>
+              {activeChats.length===0?<div style={{padding:20,textAlign:'center',color:'var(--gray-500)',fontSize:13}}>No active chats</div>:
+                activeChats.map(chat=>
+                  <div key={chat.user_id} onClick={()=>selectChat(chat)} style={{padding:'12px 16px',borderBottom:'1px solid var(--gray-100)',cursor:'pointer',background:selectedChat?.user_id===chat.user_id?'var(--teal-pale)':'var(--white)',transition:'background 0.2s'}} onMouseEnter={e=>{if(selectedChat?.user_id!==chat.user_id)e.currentTarget.style.background='var(--gray-50)';}} onMouseLeave={e=>{if(selectedChat?.user_id!==chat.user_id)e.currentTarget.style.background='var(--white)';}}>
+                    <div style={{fontWeight:600,fontSize:14,color:'var(--gray-900)'}}>{chat.first_name} {chat.last_name}</div>
+                    <div style={{fontSize:12,color:'var(--gray-500)',marginTop:2}}>{chat.email}</div>
+                    {chat.last_message&&<div style={{fontSize:12,color:'var(--gray-600)',marginTop:6,overflow:'hidden',textOverflow:'ellipsis',whiteSpace:'nowrap'}}>{chat.last_message}</div>}
+                    {chat.last_message_time&&<div style={{fontSize:10,color:'var(--gray-400)',marginTop:4}}>{fmtTime(chat.last_message_time)}</div>}
+                  </div>
+                )
+              }
+            </div>
+          </div>
+
+          {/* Chat Window */}
+          <div style={{border:'1px solid var(--gray-200)',borderRadius:8,display:'flex',flexDirection:'column',overflow:'hidden'}}>
+            {selectedChat?<>
+              <div style={{padding:'12px 16px',borderBottom:'1px solid var(--gray-200)',background:'var(--gray-50)'}}>
+                <div style={{fontWeight:600,fontSize:14}}>{selectedChat.first_name} {selectedChat.last_name}</div>
+                <div style={{fontSize:12,color:'var(--gray-500)'}}>{selectedChat.email}</div>
+              </div>
+              <div style={{flex:1,overflowY:'auto',padding:16,background:'var(--gray-50)'}}>
+                {loading?<div style={{textAlign:'center',padding:20,color:'var(--gray-500)'}}>Loading...</div>:
+                  messages.length===0?<div style={{textAlign:'center',padding:40,color:'var(--gray-500)'}}>
+                    <div style={{fontSize:32,marginBottom:8}}>💬</div>
+                    <div>No messages yet</div>
+                  </div>:
+                  messages.map((m,i)=>
+                    <div key={i} style={{display:'flex',flexDirection:'column',alignItems:m.sender_type==='user'?'flex-start':'flex-end',marginBottom:12}}>
+                      <div style={{padding:'10px 14px',borderRadius:12,maxWidth:'75%',wordWrap:'break-word',background:m.sender_type==='user'?'var(--white)':'var(--teal-primary)',color:m.sender_type==='user'?'var(--gray-900)':'var(--white)',border:m.sender_type==='user'?'1px solid var(--gray-200)':'none',alignSelf:m.sender_type==='user'?'flex-start':'flex-end'}}>
+                        {m.message}
+                      </div>
+                      <div style={{fontSize:10,color:'var(--gray-500)',marginTop:4,padding:'0 4px'}}>{fmtTime(m.created_at)}</div>
+                    </div>
+                  )
+                }
+                <div ref={messagesEndRef}/>
+              </div>
+              <form onSubmit={send} style={{padding:'12px 16px',borderTop:'1px solid var(--gray-200)',display:'flex',gap:8,background:'var(--white)'}}>
+                <input type="text" value={input} onChange={e=>setInput(e.target.value)} placeholder="Type your reply..." style={{flex:1,padding:'10px 14px',border:'1px solid var(--gray-300)',borderRadius:6,fontSize:14,fontFamily:'inherit'}}/>
+                <button type="submit" className="btn btn-primary" disabled={!connected||!input.trim()}>Send</button>
+              </form>
+            </>:
+              <div style={{flex:1,display:'flex',alignItems:'center',justifyContent:'center',color:'var(--gray-500)',padding:40}}>
+                <div style={{textAlign:'center'}}>
+                  <div style={{fontSize:48,marginBottom:16}}>💬</div>
+                  <div style={{fontSize:15,fontWeight:600,color:'var(--gray-700)'}}>Select a chat to start messaging</div>
+                  <div style={{fontSize:13,color:'var(--gray-500)',marginTop:4}}>Choose a conversation from the list</div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>;
+    };
+
+    // CUSTOMER MANAGEMENT COMPONENT (ADMIN ONLY)
+    const CustomerManagement=({adminData,auth,showToast,loadData,API,currency})=>{
+      const [viewingUser,setViewingUser]=useState(null);
+      const [userAccounts,setUserAccounts]=useState([]);
+      const [showChat,setShowChat]=useState(true);
+
+      const loadUserAccounts=async(userId)=>{
+        try{
+          const r=await fetch(`${API}/admin/user-accounts/${userId}`,{headers:{Authorization:`Bearer ${auth.token}`}});
+          const d=await r.json();
+          if(d.success){setUserAccounts(d.accounts);setViewingUser(userId);}
+          else showToast(d.message,'error');
+        }catch{showToast('Failed to load accounts','error');}
+      };
+
+      const toggleFreeze=async(accountId,currentStatus)=>{
+        try{
+          const newStatus=currentStatus==='frozen'?'active':'frozen';
+          const endpoint=newStatus==='frozen'?'freeze':'unfreeze';
+          const r=await fetch(`${API}/admin/${endpoint}`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({accountId})});
+          const d=await r.json();
+          if(d.success){
+            showToast(`Account ${newStatus==='frozen'?'frozen':'unfrozen'} successfully!`);
+            if(viewingUser)loadUserAccounts(viewingUser);
+            loadData(auth.token,auth.user);
+          }else showToast(d.message,'error');
+        }catch(err){console.error(err);showToast('Action failed','error');}
+      };
+
+      const deleteUser=async(userId,name)=>{
+        if(!confirm(`Are you sure you want to delete ${name}? This will delete all their accounts and transactions.`))return;
+        try{
+          const r=await fetch(`${API}/admin/delete-user`,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({userId})});
+          const d=await r.json();
+          if(d.success){showToast('User deleted successfully');loadData(auth.token,auth.user);}
+          else showToast(d.message,'error');
+        }catch{showToast('Failed to delete user','error');}
+      };
+
+      const customers=adminData.users.filter(u=>u.role!=='admin');
+
+      return <div>
+        <div className="section-header">
+          <h2 className="section-title">Customer Management</h2>
+          <p className="section-subtitle">View and manage all customer accounts</p>
+        </div>
+
+        {/* Support Chat Inbox */}
+        <div style={{marginBottom:24}}>
+          <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+            <button className="btn btn-sm" style={{background:showChat?'var(--teal-primary)':'var(--white)',color:showChat?'var(--white)':'var(--teal-primary)'}} onClick={()=>setShowChat(true)}>💬 Support Chat</button>
+            <button className="btn btn-sm" style={{background:!showChat?'var(--teal-primary)':'var(--white)',color:!showChat?'var(--white)':'var(--teal-primary)'}} onClick={()=>setShowChat(false)}>👥 Customers</button>
+          </div>
+          {showChat?<AdminSupportChat auth={auth} API={API} showToast={showToast}/>:
+            <>
+        {viewingUser!==null&&<div style={{background:'var(--off-white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:20,marginBottom:24}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
+            <h3 style={{fontSize:18,fontWeight:600,color:'var(--teal-primary)'}}>Account Details</h3>
+            <button className="btn btn-ghost btn-sm" onClick={()=>{setViewingUser(null);setUserAccounts([]);}}>✕ Close</button>
+          </div>
+          {userAccounts.length===0?<p style={{color:'var(--gray-500)',textAlign:'center',padding:20}}>No accounts found</p>:
+            <div className="cards-grid" style={{gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))'}}>
+              {userAccounts.map(acc=>
+                <div key={acc.id} className={`account-card ${acc.status==='frozen'?'frozen':''}`} style={{padding:20}}>
+                  <div className="account-card-label">{acc.status==='frozen'?'🔒 FROZEN':'Checking Account'}</div>
+                  <div className="account-card-number">{acc.account_number}</div>
+                  <div className="account-card-balance">{fmt(acc.balance,currency)}</div>
+                  <div className="account-card-balance-label">Available balance</div>
+                  <div style={{marginTop:16,display:'flex',gap:8}}>
+                    <button className="btn btn-sm" style={{background:'var(--white)',color:'var(--teal-primary)',flex:1}} onClick={()=>toggleFreeze(acc.id,acc.status)}>
+                      {acc.status==='frozen'?'❄️ Unfreeze':'🔒 Freeze'}
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          }
+        </div>}
+
+        <div className="table-container">
+          <table className="table">
+            <thead><tr><th>Customer</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
+            <tbody>
+              {customers.map(u=>
+                <tr key={u.id}>
+                  <td><div style={{fontWeight:600}}>{u.first_name} {u.last_name}</div><div style={{fontSize:12,color:'var(--gray-500)',fontFamily:'monospace'}}>ID #{u.id}</div></td>
+                  <td style={{color:'var(--gray-600)'}}>{u.email}</td>
+                  <td><span className={`badge ${u.role==='admin'?'badge-warning':'badge-info'}`}>{u.role||'user'}</span></td>
+                  <td>
+                    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                      <button className="btn btn-outline btn-sm" onClick={()=>loadUserAccounts(u.id)}>👁️ View Accounts</button>
+                      <button className="btn btn-outline btn-sm" style={{color:'var(--red-error)',borderColor:'var(--red-error)'}} onClick={()=>deleteUser(u.id,`${u.first_name} ${u.last_name}`)}>🗑️ Delete</button>
+                    </div>
+                  </td>
+                </tr>
+              )}
+              {customers.length===0&&<tr><td colSpan="4" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No customers found</td></tr>}
+            </tbody>
+          </table>
+        </div>
+            </>
+          }
+        </div>
+      </div>;
+    };
+
+    // MAIN APP
+    const App=()=>{
+      const [auth,setAuth]=useState(null);
+      const [showLogin,setShowLogin]=useState(true);
+      const [view,setView]=useState('overview');
+      const [mobileMenuOpen,setMobileMenuOpen]=useState(false);
+      const [accounts,setAccounts]=useState([]);
+      const [transactions,setTransactions]=useState([]);
+      const [adminData,setAdminData]=useState({users:[],allTransactions:[]});
+      const [loading,setLoading]=useState(true);
+      const [toast,setToast]=useState(null);
+      const [currency,setCurrency]=useState('USD');
+
+      useEffect(()=>{const t=localStorage.getItem('token'),u=localStorage.getItem('user');if(t&&u){const userObj=JSON.parse(u);setAuth({user:userObj,token:t});loadData(t,userObj);}},[]);
+
+      const loadData=async(token,userObj)=>{
+        try{
+          const [ar,tr]=await Promise.all([fetch(`${API}/accounts/get-accounts`,{headers:{Authorization:`Bearer ${token}`}}),fetch(`${API}/accounts/transactions`,{headers:{Authorization:`Bearer ${token}`}})]);
+          const [ad,td]=await Promise.all([ar.json(),tr.json()]);
+          if(ad.success)setAccounts(ad.accounts);
+          if(td.success)setTransactions(td.transactions);
+
+          // Load admin data if admin - use userObj instead of auth.state
+          if(userObj?.role==='admin'){
+            const [ur,atr]=await Promise.all([fetch(`${API}/admin/users`,{headers:{Authorization:`Bearer ${token}`}}),fetch(`${API}/admin/transactions`,{headers:{Authorization:`Bearer ${token}`}})]);
+            const [ud,atd]=await Promise.all([ur.json(),atr.json()]);
+            if(ud.success)setAdminData({users:ud.users||[],allTransactions:atd.transactions||[]});
+          }
+        }catch(err){console.error('Load data error:',err);}finally{setLoading(false);}
+      };
+
+      const showToast=(message,type='success')=>setToast({message,type});
+      const logout=()=>{localStorage.clear();setAuth(null);setShowLogin(true);};
+
+      if(!auth)return <AuthPage isLogin={showLogin} onAuth={(u,t)=>{setAuth({user:u,token:t});loadData(t);}} onSwitch={()=>setShowLogin(!showLogin)}/>;
+
+      const totalBalance=accounts.reduce((s,a)=>s+parseFloat(a.balance||0),0);
+      const frozenCount=accounts.filter(a=>a.status==='frozen').length;
+
+      return <div>
+        {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
+        
+        {/* TOP NAV */}
+        <nav className="top-nav">
+          <div className="top-nav-inner">
+            <div className="logo-box">
+              <div className="logo-text">VolksCommercial Bank</div>
+              <div className="logo-tagline">Financial Services</div>
+            </div>
+            <div className="nav-links">
+              <button className={`nav-link ${view==='overview'?'active':''}`} onClick={()=>setView('overview')}>Overview</button>
+              {auth.user.role!=='admin'&&<>
+                <button className={`nav-link ${view==='accounts'?'active':''}`} onClick={()=>setView('accounts')}>Accounts</button>
+                <button className={`nav-link ${view==='transactions'?'active':''}`} onClick={()=>setView('transactions')}>Transactions</button>
+                <button className={`nav-link ${view==='transfer'?'active':''}`} onClick={()=>setView('transfer')}>Transfer</button>
+              </>}
+              {auth.user.role==='admin'&&<>
+                <button className={`nav-link ${view==='customers'?'active':''}`} onClick={()=>setView('customers')}>Customers</button>
+                <button className={`nav-link ${view==='deposit'?'active':''}`} onClick={()=>setView('deposit')}>Process Deposit</button>
+                <button className={`nav-link ${view==='admin-transactions'?'active':''}`} onClick={()=>setView('admin-transactions')}>All Transactions</button>
+              </>}
+              <button className={`nav-link ${view==='branches'?'active':''}`} onClick={()=>setView('branches')}>Branches</button>
+            </div>
+            <div className="nav-actions">
+              <select value={currency} onChange={e=>setCurrency(e.target.value)} style={{padding:'8px 12px',border:'1px solid var(--gray-300)',borderRadius:6,fontSize:14,background:'var(--white)',cursor:'pointer',marginRight:12}}>
+                {Object.entries(CURRENCY_RATES).map(([code,{name,symbol}])=>
+                  <option key={code} value={code}>{symbol} - {code} ({name})</option>
+                )}
+              </select>
+              <button className="btn btn-outline btn-sm" onClick={logout}>Sign out</button>
+              <button className="mobile-menu-btn" onClick={()=>setMobileMenuOpen(true)}>☰</button>
+            </div>
+          </div>
+        </nav>
+
+        {/* MOBILE MENU */}
+        <div className={`mobile-menu-overlay ${mobileMenuOpen?'open':''}`} onClick={()=>setMobileMenuOpen(false)}/>
+        <div className={`mobile-menu ${mobileMenuOpen?'open':''}`}>
+          <div className="mobile-menu-header">
+            <div style={{fontWeight:700,fontSize:16}}>{auth.user.first_name} {auth.user.last_name}</div>
+            <button className="mobile-menu-close" onClick={()=>setMobileMenuOpen(false)}>✕</button>
+          </div>
+          <div className="mobile-menu-items">
+            <button className={`mobile-menu-item ${view==='overview'?'active':''}`} onClick={()=>{setView('overview');setMobileMenuOpen(false);}}>Overview</button>
+            {auth.user.role!=='admin'&&<>
+              <button className={`mobile-menu-item ${view==='accounts'?'active':''}`} onClick={()=>{setView('accounts');setMobileMenuOpen(false);}}>Accounts</button>
+              <button className={`mobile-menu-item ${view==='transactions'?'active':''}`} onClick={()=>{setView('transactions');setMobileMenuOpen(false);}}>Transactions</button>
+              <button className={`mobile-menu-item ${view==='transfer'?'active':''}`} onClick={()=>{setView('transfer');setMobileMenuOpen(false);}}>Transfer</button>
+            </>}
+            {auth.user.role==='admin'&&<>
+              <button className={`mobile-menu-item ${view==='customers'?'active':''}`} onClick={()=>{setView('customers');setMobileMenuOpen(false);}}>Customers</button>
+              <button className={`mobile-menu-item ${view==='deposit'?'active':''}`} onClick={()=>{setView('deposit');setMobileMenuOpen(false);}}>Process Deposit</button>
+              <button className={`mobile-menu-item ${view==='admin-transactions'?'active':''}`} onClick={()=>{setView('admin-transactions');setMobileMenuOpen(false);}}>All Transactions</button>
+            </>}
+            <button className={`mobile-menu-item ${view==='branches'?'active':''}`} onClick={()=>{setView('branches');setMobileMenuOpen(false);}}>Branches</button>
+            <button className="mobile-menu-item" onClick={logout}>Sign out</button>
+          </div>
+        </div>
+
+        {/* HERO */}
+        <div className="hero">
+          <div className="container">
+            <div className="hero-content">
+              <div className="hero-label">{auth.user.role==='admin'?'Admin Dashboard':(view==='overview'?'Dashboard':view.charAt(0).toUpperCase()+view.slice(1))}</div>
+              <h1 className="hero-title">Welcome back, {auth.user.first_name}</h1>
+              <p className="hero-subtitle">{auth.user.role==='admin'?'Manage customers, process deposits, and oversee all banking operations':'Your complete banking solution at your fingertips'}</p>
+            </div>
+          </div>
+        </div>
+
+        {/* CONTENT */}
+        {loading?<div className="loader-container"><div className="loader"/></div>:<div className="section">
+          <div className="container">
+            {frozenCount>0&&<div className="alert alert-warning">⚠️ <div><strong>Account Frozen:</strong> {frozenCount} of your account{frozenCount>1?'s are':' is'} currently frozen. Please contact support.</div></div>}
+
+            {view==='overview'&&<div>
+              {auth.user.role==='admin'?<>
+                <div className="stats-grid mb-6">
+                  <div className="stat-card"><div className="stat-value">{adminData.users.length}</div><div className="stat-label">Total Customers</div></div>
+                  <div className="stat-card"><div className="stat-value">{adminData.allTransactions.length}</div><div className="stat-label">All Transactions</div></div>
+                  <div className="stat-card"><div className="stat-value">{adminData.users.filter(u=>u.role!=='admin').length}</div><div className="stat-label">Active Customers</div></div>
+                </div>
+                <h2 style={{fontSize:24,marginBottom:24,color:'var(--teal-primary)'}}>Recent System Activity</h2>
+                <div className="table-container">
+                  <table className="table">
+                    <thead><tr><th>Type</th><th>Account</th><th>Amount</th><th>Date</th></tr></thead>
+                    <tbody>
+                      {adminData.allTransactions.slice(0,10).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontFamily:'monospace',fontSize:13}}>#{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td style={{color:'var(--gray-600)',fontSize:13}}>{fmtDate(tx.created_at)}</td></tr>})}
+                      {adminData.allTransactions.length===0&&<tr><td colSpan="4" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              </>:<>
+                <div className="stats-grid mb-6">
+                  <div className="stat-card"><div className="stat-value">{fmt(totalBalance,currency)}</div><div className="stat-label">Total Balance</div></div>
+                  <div className="stat-card"><div className="stat-value">{accounts.length}</div><div className="stat-label">Active Accounts</div></div>
+                  <div className="stat-card"><div className="stat-value">{transactions.length}</div><div className="stat-label">Transactions</div></div>
+                </div>
+
+                <h2 style={{fontSize:24,marginBottom:24,color:'var(--teal-primary)'}}>Your Accounts</h2>
+                <div className="cards-grid mb-6">
+                  {accounts.map(a=><div key={a.id} className={`account-card ${a.status==='frozen'?'frozen':''}`}>
+                    <div className="account-card-label">{a.status==='frozen'?'🔒 FROZEN':'Checking Account'}</div>
+                    <div className="account-card-number">{a.account_number}</div>
+                    <div className="account-card-balance">{fmt(a.balance,currency)}</div>
+                    <div className="account-card-balance-label">Available balance</div>
+                  </div>)}
+                  {accounts.length===0&&<div className="card" style={{gridColumn:'1/-1',padding:60,textAlign:'center'}}><div style={{fontSize:48,marginBottom:16}}>🏦</div><h3 style={{marginBottom:8}}>No accounts yet</h3><p style={{color:'var(--gray-600)',marginBottom:24}}>Open your first account to start banking with VolksCommercial</p><button className="btn btn-primary" onClick={async()=>{try{const r=await fetch(`${API}/accounts/create-account`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`}});const d=await r.json();if(d.success){showToast('Account opened successfully!');loadData(auth.token,auth.user);}else{showToast(d.message,'error');}}catch{showToast('Failed to open account','error');}}}>Open Account</button></div>}
+                </div>
+
+                <h2 style={{fontSize:24,marginBottom:24,color:'var(--teal-primary)'}}>Recent Activity</h2>
+                <div className="table-container">
+                  <table className="table">
+                    <thead><tr><th>Type</th><th>Amount</th><th>Date</th></tr></thead>
+                    <tbody>
+                      {transactions.slice(0,10).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td style={{color:'var(--gray-600)'}}>{fmtDate(tx.created_at)}</td></tr>})}
+                      {transactions.length===0&&<tr><td colSpan="3" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
+              </>}
+            </div>}
+
+            {view==='accounts'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Your Accounts</h2>
+                <p className="section-subtitle">Manage your checking and savings accounts</p>
+              </div>
+              <div className="cards-grid">
+                {accounts.map(a=><div key={a.id} className={`account-card ${a.status==='frozen'?'frozen':''}`}>
+                  <div className="account-card-label">{a.status==='frozen'?'🔒 FROZEN':'Checking Account'}</div>
+                  <div className="account-card-number">{a.account_number}</div>
+                  <div className="account-card-balance">{fmt(a.balance,currency)}</div>
+                  <div className="account-card-balance-label">Available balance</div>
+                </div>)}
+                {accounts.length===0&&<div className="card" style={{gridColumn:'1/-1',padding:60,textAlign:'center'}}><div style={{fontSize:48,marginBottom:16}}>🏦</div><h3 style={{marginBottom:8}}>No accounts yet</h3><p style={{color:'var(--gray-600)',marginBottom:24}}>Open your first account to start banking with VolksCommercial</p><button className="btn btn-primary" onClick={async()=>{try{const r=await fetch(`${API}/accounts/create-account`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`}});const d=await r.json();if(d.success){showToast('Account opened successfully!');loadData(auth.token,auth.user);}else{showToast(d.message,'error');}}catch{showToast('Failed to open account','error');}}}>Open Account</button></div>}
+              </div>
+            </div>}
+
+            {view==='transactions'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Transaction History</h2>
+                <p className="section-subtitle">View all your account activity</p>
+              </div>
+              <div className="table-container">
+                <table className="table">
+                  <thead><tr><th>Date</th><th>Type</th><th>Account</th><th>Amount</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {transactions.map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{color:'var(--gray-600)'}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontFamily:'monospace',fontSize:13}}>···{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td><span className="badge badge-success">Completed</span></td></tr>})}
+                    {transactions.length===0&&<tr><td colSpan="5" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>}
+
+            {view==='transfer'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Transfer Funds</h2>
+                <p className="section-subtitle">Send money to another account instantly</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32}}>
+                  <form onSubmit={async e=>{
+                    e.preventDefault();
+                    const fd=new FormData(e.target);
+                    try{
+                      // Find destination account by account number
+                      const toAccRes=await fetch(`${API}/accounts/get-accounts`,{headers:{Authorization:`Bearer ${auth.token}`}});
+                      const toAccData=await toAccRes.json();
+                      const allAccounts=toAccData.accounts||[];
+                      const toAcc=allAccounts.find(a=>a.account_number===fd.get('to'));
+                      if(!toAcc){showToast('Recipient account not found','error');return;}
+                      const r=await fetch(`${API}/accounts/transfer`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({fromAccount:parseInt(fd.get('from')),toAccount:toAcc.id,amount:parseFloat(fd.get('amount'))})});
+                      const d=await r.json();
+                      if(d.success){showToast('Transfer successful!');loadData(auth.token,auth.user);e.target.reset();}
+                      else showToast(d.message,'error');
+                    }catch(err){console.error(err);showToast('Transfer failed','error');}
+                  }}>
+                    <div className="form-group">
+                      <label className="form-label">From Account</label>
+                      <select name="from" className="form-select" required>
+                        {accounts.filter(a=>a.status!=='frozen').map(a=><option key={a.id} value={a.id}>{a.account_number} — {fmt(a.balance,currency)}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">To Account Number</label>
+                      <input name="to" className="form-input" placeholder="ACC1234567890" required/>
+                      <div className="form-hint">Enter the recipient's full account number</div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Amount (USD)</label>
+                      <input name="amount" type="number" step="0.01" min="0.01" className="form-input" placeholder="0.00" required/>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}}>Send Transfer</button>
+                  </form>
+                </div>
+              </div>
+            </div>}
+
+            {view==='branches'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Our Global Branches</h2>
+                <p className="section-subtitle">VolksCommercial Bank operates in the world's most important financial markets</p>
+              </div>
+
+              <div style={{background:'var(--teal-pale)',border:'1px solid var(--teal-light)',borderRadius:8,padding:20,marginBottom:32,textAlign:'center'}}>
+                <div style={{fontSize:14,color:'var(--teal-dark)',marginBottom:8}}>💱 Current Display Currency</div>
+                <div style={{fontSize:24,fontWeight:700,color:'var(--teal-primary)'}}>{CURRENCY_RATES[currency]?.symbol} {currency} - {CURRENCY_RATES[currency]?.name}</div>
+                <div style={{fontSize:13,color:'var(--gray-600)',marginTop:8}}>Select a different currency from the dropdown in the navigation bar</div>
+              </div>
+
+              <div className="cards-grid">
+                {[
+                  {city:'New York, USA',flag:'🇺🇸',currency:'USD',address:'DFE541 Street \nNew York, NY USA',phone:'+1 (903) 517-0151'},
+                  
+                  {city:'Berlin, Germany',flag:'🇩🇪',currency:'EUR',address:'Eichborndamm 167\n13403 Berlin Germany',phone:'+49 16 301 54371'},
+                  
+                ].map((b,i)=><div key={i} className="card">
+                  <div style={{fontSize:32,marginBottom:16}}>{b.flag}</div>
+                  <h3 style={{fontSize:18,fontWeight:600,marginBottom:8}}>{b.city}</h3>
+                  <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:12}}>
+                    <span className="badge badge-info" style={{fontSize:12}}>{b.currency}</span>
+                    <span style={{fontSize:13,color:'var(--gray-500)'}}>Local Currency</span>
+                  </div>
+                  <p style={{fontSize:14,color:'var(--gray-600)',whiteSpace:'pre-line',marginBottom:12}}>{b.address}</p>
+                  <p style={{fontSize:14,fontWeight:600,color:'var(--teal-primary)'}}>{b.phone}</p>
+                  <div style={{marginTop:16,fontSize:13,color:'var(--gray-500)'}}>
+                    Exchange Rate: 1 {currency} = {(CURRENCY_RATES[b.currency]?.rate / (CURRENCY_RATES[currency]?.rate||1)).toFixed(4)} {b.currency}
+                  </div>
+                </div>)}
+              </div>
+            </div>}
+
+            {view==='customers'&&auth.user.role==='admin'&&<CustomerManagement adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} currency={currency}/>}
+
+            {view==='deposit'&&auth.user.role==='admin'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Process Customer Deposit</h2>
+                <p className="section-subtitle">Process deposits on behalf of customers from verified sources</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <div className="alert alert-info">💡 <strong>Admin Action:</strong> Process deposits from cash, checks, wires, ATM, or mobile deposits</div>
+                <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32}}>
+                  <form onSubmit={async e=>{
+                    e.preventDefault();
+                    const fd=new FormData(e.target);
+                    const userId=fd.get('user');
+                    // First get user's accounts
+                    try{
+                      const ar=await fetch(`${API}/admin/user-accounts/${userId}`,{headers:{Authorization:`Bearer ${auth.token}`}});
+                      const ad=await ar.json();
+                      if(ad.success&&ad.accounts.length>0){
+                        const r=await fetch(`${API}/accounts/deposit`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({accountId:ad.accounts[0].id,amount:parseFloat(fd.get('amount'))})});
+                        const d=await r.json();
+                        if(d.success){showToast('Deposit processed successfully!');loadData(auth.token,auth.user);e.target.reset();}
+                        else showToast(d.message,'error');
+                      }else{showToast('User has no accounts','error');}
+                    }catch(err){console.error(err);showToast('Deposit failed','error');}
+                  }}>
+                    <div className="form-group">
+                      <label className="form-label">Select Customer</label>
+                      <select name="user" className="form-select" required>
+                        <option value="">Choose a customer...</option>
+                        {adminData.users.filter(u=>u.role!=='admin').map(u=><option key={u.id} value={u.id}>{u.first_name} {u.last_name} ({u.email})</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Deposit Source</label>
+                      <select name="source" className="form-select" required>
+                        <option value="">Select source...</option>
+                        <option value="Cash">💵 Cash Deposit (Teller)</option>
+                        <option value="Check">📝 Check Deposit</option>
+                        <option value="Wire">🏦 Wire Transfer</option>
+                        <option value="ATM">🏧 ATM Deposit</option>
+                        <option value="Mobile">📱 Mobile Check Deposit</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Reference Number</label>
+                      <input name="ref" className="form-input" placeholder="CHK-12345, WIRE-67890, TXN-00001" required/>
+                      <div className="form-hint">Enter check number, transaction ID, or reference</div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Amount (USD)</label>
+                      <input name="amount" type="number" step="0.01" min="0.01" className="form-input" placeholder="0.00" required/>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}}>Process Deposit</button>
+                  </form>
+                </div>
+              </div>
+            </div>}
+
+            {view==='admin-transactions'&&auth.user.role==='admin'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">All System Transactions</h2>
+                <p className="section-subtitle">Complete transaction history across all accounts</p>
+              </div>
+              <div className="table-container">
+                <table className="table">
+                  <thead><tr><th>Date</th><th>Type</th><th>Account ID</th><th>Amount</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {adminData.allTransactions.slice(0,100).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{color:'var(--gray-600)',fontSize:13}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontFamily:'monospace',fontSize:13}}>#{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td><span className="badge badge-success">Complete</span></td></tr>})}
+                    {adminData.allTransactions.length===0&&<tr><td colSpan="5" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </div>}
+          </div>
+        </div>}
+
+        <LiveChat user={auth.user}/>
+
+        {/* FOOTER */}
+        <footer className="footer">
+          <div className="container">
+            <div className="footer-grid">
+              <div><h4 className="footer-title">About Us</h4>{['About','Leadership','Careers','Contact'].map(l=><a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div><h4 className="footer-title">Services</h4>{['Personal Banking','Business Banking','Investments','Insurance'].map(l=><a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div><h4 className="footer-title">Support</h4>{['Help Center','Security','FAQs','Contact Support'].map(l=><a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div><h4 className="footer-title">Legal</h4>{['Privacy Policy','Terms of Service','Compliance','Accessibility'].map(l=><a key={l} href="#" className="footer-link">{l}</a>)}</div>
+            </div>
+            <div className="footer-bottom">© 2026 VolksCommercial Bank Financial Services. All rights reserved.</div>
+          </div>
+        </footer>
+      </div>;
+    };
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+  </script>
+</body>
+</html>

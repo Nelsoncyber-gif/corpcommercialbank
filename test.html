@@ -1,0 +1,340 @@
+// ==================== LIVE CHAT COMPONENT ====================
+// Add this BEFORE your Dashboard component in index.html
+
+const LiveChat = ({ user, token }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [socket, setSocket] = useState(null);
+  const [isAdminOnline, setIsAdminOnline] = useState(false);
+  const messagesEndRef = React.useRef(null);
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  };
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
+
+  useEffect(() => {
+    // Initialize Socket.io connection
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    // Join chat room
+    newSocket.emit('join-chat', { 
+      userId: user.id, 
+      userRole: user.role 
+    });
+
+    // Listen for chat history
+    newSocket.on('chat-history', (history) => {
+      setMessages(history);
+    });
+
+    // Listen for new messages
+    newSocket.on('new-message', (message) => {
+      setMessages(prev => [...prev, message]);
+    });
+
+    // Listen for admin online status
+    newSocket.on('admin-online', ({ adminCount }) => {
+      setIsAdminOnline(adminCount > 0);
+    });
+
+    // Cleanup on unmount
+    return () => {
+      newSocket.disconnect();
+    };
+  }, [user.id, user.role]);
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim()) return;
+
+    socket.emit('send-message', {
+      userId: user.id,
+      message: inputMessage,
+      senderType: user.role === 'admin' ? 'admin' : 'user'
+    });
+
+    setInputMessage('');
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  return (
+    <>
+      {/* Chat Button */}
+      <div className="chat-widget">
+        <button 
+          className="chat-button"
+          onClick={() => setIsOpen(!isOpen)}
+          title="Live Chat Support"
+        >
+          💬
+        </button>
+      </div>
+
+      {/* Chat Window */}
+      {isOpen && (
+        <div className="chat-window">
+          {/* Header */}
+          <div className="chat-header">
+            <div>
+              <h3 className="font-bold text-lg">Live Support</h3>
+              <p className="text-xs text-gray-400">
+                {isAdminOnline ? (
+                  <span className="text-green-400">● Admin Online</span>
+                ) : (
+                  <span className="text-gray-400">○ Offline - Leave a message</span>
+                )}
+              </p>
+            </div>
+            <button 
+              onClick={() => setIsOpen(false)}
+              className="text-gray-400 hover:text-white text-xl"
+            >
+              ✕
+            </button>
+          </div>
+
+          {/* Messages */}
+          <div className="chat-messages">
+            {messages.length === 0 ? (
+              <div className="text-center text-gray-400 py-8">
+                <p>👋 Welcome to Horizon Bank Support!</p>
+                <p className="text-sm mt-2">How can we help you today?</p>
+              </div>
+            ) : (
+              messages.map((msg, index) => (
+                <div key={index}>
+                  <div className={`chat-message ${msg.sender_type}`}>
+                    <p>{msg.message}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {formatTime(msg.created_at)}
+                    </p>
+                  </div>
+                </div>
+              ))
+            )}
+            <div ref={messagesEndRef} />
+          </div>
+
+          {/* Input */}
+          <form onSubmit={sendMessage} className="chat-input-container">
+            <input
+              type="text"
+              className="chat-input"
+              placeholder="Type your message..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+            />
+            <button type="submit" className="send-button">
+              Send
+            </button>
+          </form>
+        </div>
+      )}
+    </>
+  );
+};
+
+
+// ==================== ADMIN CHAT PANEL ====================
+// Add this BEFORE your Dashboard component as well
+
+const AdminChatPanel = ({ token }) => {
+  const [activeChats, setActiveChats] = useState([]);
+  const [selectedChat, setSelectedChat] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [inputMessage, setInputMessage] = useState('');
+  const [socket, setSocket] = useState(null);
+  const messagesEndRef = React.useRef(null);
+  const selectedChatRef = React.useRef(null);
+
+  // Keep ref in sync with selectedChat state
+  React.useEffect(() => {
+    selectedChatRef.current = selectedChat;
+  }, [selectedChat]);
+
+  useEffect(() => {
+    const newSocket = io('http://localhost:5000');
+    setSocket(newSocket);
+
+    // Join as admin
+    newSocket.emit('join-chat', {
+      userId: JSON.parse(localStorage.getItem('user')).id,
+      userRole: 'admin'
+    });
+
+    // Get active chats
+    newSocket.emit('get-active-chats');
+
+    // Listen for active chats
+    newSocket.on('active-chats', (chats) => {
+      setActiveChats(chats);
+    });
+
+    // Listen for new user messages - refresh active chats list
+    newSocket.on('new-user-message', ({ userId, message }) => {
+      console.log('📩 Admin received new-user-message from user:', userId, message);
+      // Refresh active chats
+      newSocket.emit('get-active-chats');
+
+      // If this is the selected chat, add message (use ref to avoid stale closure)
+      if (selectedChatRef.current && selectedChatRef.current.user_id === userId) {
+        setMessages(prev => [...prev, message]);
+      }
+    });
+
+    // Listen for new messages in selected chat
+    newSocket.on('new-message', (message) => {
+      console.log('📩 Admin received new-message:', message);
+      if (selectedChatRef.current && message.user_id === selectedChatRef.current.user_id) {
+        setMessages(prev => [...prev, message]);
+      }
+    });
+
+    return () => {
+      newSocket.off('active-chats');
+      newSocket.off('new-user-message');
+      newSocket.off('new-message');
+      newSocket.disconnect();
+    };
+  }, []);
+
+  const selectChat = async (chat) => {
+    setSelectedChat(chat);
+    
+    // Fetch chat history for this user
+    try {
+      const response = await fetch(`http://localhost:5000/api/admin/chat-history/${chat.user_id}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await response.json();
+      if (data.success) {
+        setMessages(data.messages);
+      }
+    } catch (error) {
+      console.error('Error fetching chat history:', error);
+    }
+  };
+
+  const sendMessage = (e) => {
+    e.preventDefault();
+    if (!inputMessage.trim() || !selectedChat) return;
+
+    socket.emit('send-message', {
+      userId: selectedChat.user_id,
+      message: inputMessage,
+      senderType: 'admin'
+    });
+
+    setInputMessage('');
+  };
+
+  const formatTime = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    });
+  };
+
+  return (
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-[600px]">
+      {/* Chat List */}
+      <div className="glass-card-light p-4 overflow-y-auto">
+        <h3 className="font-bold text-lg mb-4">Active Chats</h3>
+        {activeChats.length === 0 ? (
+          <p className="text-gray-400 text-sm">No active chats</p>
+        ) : (
+          <div className="space-y-2">
+            {activeChats.map((chat) => (
+              <div
+                key={chat.user_id}
+                onClick={() => selectChat(chat)}
+                className={`p-3 rounded-lg cursor-pointer transition-all ${
+                  selectedChat?.user_id === chat.user_id
+                    ? 'bg-[#00D9FF]/20 border border-[#00D9FF]'
+                    : 'bg-white/5 hover:bg-white/10'
+                }`}
+              >
+                <p className="font-semibold text-sm">
+                  {chat.first_name} {chat.last_name}
+                </p>
+                <p className="text-xs text-gray-400">{chat.email}</p>
+                {chat.last_message && (
+                  <p className="text-xs text-gray-500 mt-1 truncate">
+                    {chat.last_message}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Chat Window */}
+      <div className="md:col-span-2 glass-card-light flex flex-col">
+        {selectedChat ? (
+          <>
+            {/* Header */}
+            <div className="p-4 border-b border-gray-700">
+              <h3 className="font-bold">
+                {selectedChat.first_name} {selectedChat.last_name}
+              </h3>
+              <p className="text-sm text-gray-400">{selectedChat.email}</p>
+            </div>
+
+            {/* Messages */}
+            <div className="flex-1 overflow-y-auto p-4 space-y-3">
+              {messages.map((msg, index) => (
+                <div key={index}>
+                  <div className={`chat-message ${msg.sender_type}`}>
+                    <p>{msg.message}</p>
+                    <p className="text-xs opacity-70 mt-1">
+                      {formatTime(msg.created_at)}
+                    </p>
+                  </div>
+                </div>
+              ))}
+              <div ref={messagesEndRef} />
+            </div>
+
+            {/* Input */}
+            <form onSubmit={sendMessage} className="p-4 border-t border-gray-700">
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  className="input-field"
+                  placeholder="Type your reply..."
+                  value={inputMessage}
+                  onChange={(e) => setInputMessage(e.target.value)}
+                />
+                <button type="submit" className="btn-primary">
+                  Send
+                </button>
+              </div>
+            </form>
+          </>
+        ) : (
+          <div className="flex-1 flex items-center justify-center text-gray-400">
+            <div className="text-center">
+              <p className="text-4xl mb-2">💬</p>
+              <p>Select a chat to start messaging</p>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
