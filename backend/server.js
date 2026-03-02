@@ -4,6 +4,7 @@ const express = require('express');
 const cors = require('cors');
 const http = require('http');
 const { Server } = require('socket.io');
+const path = require('path');
 const pool = require('./config/db');
 
 
@@ -40,6 +41,14 @@ app.use('/api/admin', adminRoutes);
 app.use('/api/admin', chatRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/cards', cardRoutes);
+
+// Serve static files from frontend
+app.use(express.static(path.join(__dirname, '../frontend')));
+
+// Catch-all route to serve React app (Express 5.x compatible)
+app.get('/*path', (req, res) => {
+  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+});
 
 // Socket.io for real-time chat
 const activeAdmins = new Map(); // Map<adminUserId, socketId>
@@ -155,13 +164,6 @@ io.on('connection', (socket) => {
 
 const PORT = process.env.PORT || 5000;
 
-// Start server
-server.listen(PORT, () => {
-  console.log(`🚀 Server running at http://localhost:${PORT}`);
-  console.log(`🌐 Frontend: ${process.env.FRONTEND_URL || 'http://localhost:3000'}`);
-  console.log(`💬 Socket.io enabled for live chat`);
-});
-
 // Simple database connection test
 pool.query('SELECT NOW()', (err, res) => {
   if (err) {
@@ -169,4 +171,8 @@ pool.query('SELECT NOW()', (err, res) => {
   } else {
     console.log('✅ Database connected successfully');
   }
+});
+
+server.listen(PORT, () => {
+  console.log(`🚀 Server running on port ${PORT}`);
 });

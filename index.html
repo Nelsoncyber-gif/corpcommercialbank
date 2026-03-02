@@ -892,7 +892,9 @@
 
   <script type="text/babel">
     const {useState,useEffect,useRef,useCallback}=React;
-    const API='http://localhost:5000/api';
+    const API = window.location.hostname === 'localhost' 
+      ? 'http://localhost:5000/api' 
+      : '/api';
 
     // Currency conversion rates (relative to USD)
     const CURRENCY_RATES={
@@ -1040,7 +1042,7 @@
       useEffect(()=>{bottomRef.current?.scrollIntoView({behavior:'smooth'})},[messages,open]);
 
       useEffect(()=>{
-        const s=io('http://localhost:5000',{
+        const s = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
           reconnection:true,
           reconnectionAttempts:5,
           reconnectionDelay:1000
@@ -1130,7 +1132,11 @@
       React.useEffect(()=>{selectedChatRef.current=selectedChat;},[selectedChat]);
 
       useEffect(()=>{
-        const s=io('http://localhost:5000',{reconnection:true,reconnectionAttempts:5,reconnectionDelay:1000});
+        const s = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000
+        });
 
         s.on('connect',()=>{
           console.log('🔌 Admin chat connected:',s.id);
