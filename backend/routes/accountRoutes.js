@@ -3,14 +3,16 @@ const router = express.Router();
 
 const { validate } = require('../middleware/validation');
 const { protect } = require('../middleware/auth');
-const { 
+const {
   createAccount,
   getAccounts,
-  deposit, 
-  withdraw, 
-  transfer, 
-  transactions 
+  deposit,
+  withdraw,
+  transfer,
+  transactions,
+  findAccountByNumber
 } = require('../controllers/accountController');
+const { generateReceipt } = require('../controllers/receiptController');
 
 // Log to confirm loading
 console.log("Account routes file loaded");
@@ -30,6 +32,14 @@ router.post('/create-account', protect, createAccount);
  * @access Protected
  */
 router.get('/get-accounts', protect, getAccounts);
+
+/**
+ * Find an account by account number (for transfers)
+ * @route GET /api/accounts/find
+ * @access Protected
+ * @query {string} accountNumber - Required
+ */
+router.get('/find', protect, findAccountByNumber);
 
 // ==================== BANKING OPERATIONS ====================
 
@@ -86,6 +96,13 @@ router.post(
  * @query {number} limit - Optional (default: 10)
  */
 router.get('/transactions', protect, transactions);
+
+/**
+ * Generate receipt for a specific transaction
+ * @route GET /api/accounts/transactions/:transactionId/receipt
+ * @access Protected (Both user and admin)
+ */
+router.get('/transactions/:transactionId/receipt', protect, generateReceipt);
 
 // ==================== TEST ROUTE ====================
 

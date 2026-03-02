@@ -1,30 +1,43 @@
 const pool = require('../config/db');
 
 // ==================== CREATE ACCOUNT ====================
+// Create account - UPDATED WITH ONE ACCOUNT LIMIT
 exports.createAccount = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const accountNumber =
-      'ACC' + Date.now() + Math.floor(Math.random() * 1000).toString().padStart(3, '0');
-
-    const result = await pool.query(
-      `INSERT INTO accounts (user_id, account_number, balance, status)
-       VALUES ($1, $2, $3, $4) RETURNING *`,
-      [userId, accountNumber, 0, 'active']
+    // ✅ CHECK IF USER ALREADY HAS AN ACCOUNT
+    const existingAccounts = await pool.query(
+      'SELECT id FROM accounts WHERE user_id = $1',
+      [userId]
     );
 
-    res.status(201).json({
+    if (existingAccounts.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'Account creation failed. Each user is limited to one account.'
+      });
+    }
+
+    // Generate unique account number
+    const accountNumber = 'ACC' + Date.now() + Math.floor(Math.random() * 1000);
+
+    // Create account
+    const result = await pool.query(
+      'INSERT INTO accounts (user_id, account_number, balance, status) VALUES ($1, $2, $3, $4) RETURNING *',
+      [userId, accountNumber, 0.00, 'active']
+    );
+
+    res.json({
       success: true,
-      message: "Account created successfully",
+      message: 'Account created successfully',
       account: result.rows[0]
     });
-
-  } catch (err) {
-    console.error('Create account error:', err);
+  } catch (error) {
+    console.error('Create account error:', error);
     res.status(500).json({
       success: false,
-      message: "Failed to create account"
+      message: 'Failed to create account'
     });
   }
 };
@@ -49,6 +62,47 @@ exports.getAccounts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to retrieve accounts"
+    });
+  }
+};
+
+// ==================== FIND ACCOUNT BY NUMBER ====================
+exports.findAccountByNumber = async (req, res) => {
+  try {
+    const { accountNumber } = req.query;
+
+    if (!accountNumber) {
+      return res.status(400).json({
+        success: false,
+        message: "Account number is required"
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT a.id, a.account_number, a.balance, a.status, u.id as user_id, u.first_name, u.last_name
+       FROM accounts a
+       JOIN users u ON a.user_id = u.id
+       WHERE a.account_number = $1`,
+      [accountNumber]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Account not found"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      account: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error('Find account error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to find account"
     });
   }
 };
@@ -101,9 +155,9 @@ exports.deposit = async (req, res) => {
 
     // Fix: Use 'type' and provide both sender_account and receiver_account
     await pool.query(
-      `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [accountId, 'deposit', parseFloat(amount), account.account_number, account.account_number]
+      `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account, receiver_name, receiver_account_number, bank_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [accountId, 'deposit', parseFloat(amount), account.account_number, account.account_number, 'Self Deposit', account.account_number, 'N/A']
     );
 
     res.status(200).json({
@@ -175,9 +229,9 @@ exports.withdraw = async (req, res) => {
 
     // Fix: Use 'type' and provide both sender_account and receiver_account
     await pool.query(
-      `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [accountId, 'withdraw', parseFloat(amount), account.account_number, account.account_number]
+      `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account, receiver_name, receiver_account_number, bank_name)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [accountId, 'withdraw', parseFloat(amount), account.account_number, account.account_number, 'Self Withdrawal', account.account_number, 'N/A']
     );
 
     res.status(200).json({
@@ -197,7 +251,7 @@ exports.withdraw = async (req, res) => {
 // ==================== TRANSFER ====================
 exports.transfer = async (req, res) => {
   try {
-    const { fromAccount, toAccount, amount } = req.body;
+    const { fromAccount, toAccount, amount, bankName } = req.body;
     const userId = req.user.id;
 
     if (!fromAccount || !toAccount || !amount) {
@@ -279,6 +333,15 @@ exports.transfer = async (req, res) => {
       });
     }
 
+    // Get receiver's name from users table
+    const receiverUser = await pool.query(
+      "SELECT first_name, last_name FROM users WHERE id = $1",
+      [receiver.user_id]
+    );
+    const receiverName = receiverUser.rows.length > 0
+      ? `${receiverUser.rows[0].first_name} ${receiverUser.rows[0].last_name}`
+      : 'Unknown';
+
     const client = await pool.connect();
 
     try {
@@ -295,15 +358,15 @@ exports.transfer = async (req, res) => {
       );
 
       await client.query(
-        `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account)
-         VALUES ($1, 'transfer_out', $2, $3, $4)`,
-        [sender.id, parseFloat(amount), sender.account_number, receiver.account_number]
+        `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account, receiver_name, receiver_account_number, bank_name)
+         VALUES ($1, 'transfer_out', $2, $3, $4, $5, $6, $7)`,
+        [sender.id, parseFloat(amount), sender.account_number, receiver.account_number, receiverName, receiver.account_number, bankName||null]
       );
 
       await client.query(
-        `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account)
-         VALUES ($1, 'transfer_in', $2, $3, $4)`,
-        [receiver.id, parseFloat(amount), sender.account_number, receiver.account_number]
+        `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account, receiver_name, receiver_account_number, bank_name)
+         VALUES ($1, 'transfer_in', $2, $3, $4, $5, $6, $7)`,
+        [receiver.id, parseFloat(amount), sender.account_number, receiver.account_number, receiverName, receiver.account_number, bankName||null]
       );
 
       await client.query("COMMIT");

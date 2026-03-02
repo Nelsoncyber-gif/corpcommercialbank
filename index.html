@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
-  <title>VolksCommercial Bank – Financial Services</title>
+  <title>CorpCommercial Bank – Financial Services</title>
   <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
@@ -847,6 +847,44 @@
     .alert-warning { background: var(--orange-warning)/10; border: 1px solid var(--orange-warning); color: #92400E; }
     .alert-error { background: #FEE2E2; border: 1px solid var(--red-error); color: #991B1B; }
     .alert-info { background: #DBEAFE; border: 1px solid var(--blue-accent); color: #1E40AF; }
+
+    /* AUTH PAGE BACKGROUND */
+    .auth-background {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1920&q=80') center/cover no-repeat;
+      z-index: -1;
+    }
+
+    .auth-background::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(135deg, rgba(0,89,107,0.85) 0%, rgba(0,61,74,0.9) 100%);
+    }
+
+    /* Auth page specific styles */
+    .auth-page .hero {
+      background: transparent;
+      height: 300px;
+    }
+
+    .auth-page .hero::before {
+      display: none;
+    }
+
+    .auth-page .form-container {
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255,255,255,0.2);
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+    }
   </style>
 </head>
 <body>
@@ -862,13 +900,15 @@
       EUR:{rate:0.92,symbol:'€',name:'Euro'},
       GBP:{rate:0.79,symbol:'£',name:'British Pound'},
       JPY:{rate:151.5,symbol:'¥',name:'Japanese Yen'},
-      CNY:{rate:7.23,symbol:'¥',name:'Chinese Yuan'}
+      CNY:{rate:7.23,symbol:'¥',name:'Chinese Yuan'},
+      CAD:{rate:1.36,symbol:'C$',name:'Canadian Dollar'}
     };
 
     const fmt=(n,currency='USD')=>{
       const rate=CURRENCY_RATES[currency]?.rate||1;
-      const symbol=CURRENCY_RATES[currency]?.symbol||'$';
+      // Convert from USD to target currency
       const converted=(n||0)*rate;
+      // Format with proper currency symbol and locale
       return new Intl.NumberFormat('en-US',{style:'currency',currency:currency}).format(converted);
     };
     const fmtDate=d=>new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',year:'numeric',hour:'2-digit',minute:'2-digit'}).format(new Date(d));
@@ -882,7 +922,26 @@
 
     // AUTH PAGES
     const AuthPage=({isLogin,onAuth,onSwitch})=>{
-      const [form,setForm]=useState(isLogin?{email:'',password:''}:{first_name:'',last_name:'',email:'',password:'',confirmPassword:''});
+      const [form,setForm]=useState(isLogin?{email:'',password:''}:{
+        first_name:'',
+        last_name:'',
+        email:'',
+        password:'',
+        confirmPassword:'',
+        phone:'',
+        address:'',
+        city:'',
+        state:'',
+        zip:'',
+        country:'',
+        dob:'',
+        occupation:'',
+        taxId:'',
+        nextOfKinName:'',
+        nextOfKinPhone:'',
+        nextOfKinRelation:'',
+        profilePicture:''
+      });
       const [loading,setLoading]=useState(false);
       const [toast,setToast]=useState(null);
 
@@ -898,8 +957,9 @@
         }catch{setToast({message:'Connection error',type:'error'});}finally{setLoading(false);}
       };
 
-      return <div>
+      return <div className="auth-page">
         {toast&&<Toast {...toast} onClose={()=>setToast(null)}/>}
+        <div className="auth-background"/>
         <div className="hero">
           <div className="container">
             <div className="hero-content">
@@ -911,15 +971,46 @@
         </div>
         <div className="section">
           <div className="container">
-            <div style={{maxWidth:480,margin:'0 auto'}}>
-              <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32,boxShadow:'var(--shadow-lg)'}}>
+            <div style={{maxWidth:600,margin:'0 auto'}}>
+              <div className="form-container" style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32,boxShadow:'var(--shadow-lg)'}}>
                 <h2 style={{fontSize:28,marginBottom:8,color:'var(--teal-primary)'}}>{isLogin?'Welcome back':'Open your account'}</h2>
                 <p style={{fontSize:14,color:'var(--gray-600)',marginBottom:32}}>{isLogin?'Sign in to access your account':'Join thousands of customers banking with us'}</p>
                 <form onSubmit={submit}>
-                  {!isLogin&&<div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
-                    <div className="form-group"><label className="form-label">First name</label><input className="form-input" placeholder="John" value={form.first_name} onChange={e=>setForm({...form,first_name:e.target.value})} required/></div>
-                    <div className="form-group"><label className="form-label">Last name</label><input className="form-input" placeholder="Doe" value={form.last_name} onChange={e=>setForm({...form,last_name:e.target.value})} required/></div>
-                  </div>}
+                  {!isLogin&&<>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                      <div className="form-group"><label className="form-label">First name</label><input className="form-input" placeholder="John" value={form.first_name} onChange={e=>setForm({...form,first_name:e.target.value})} required/></div>
+                      <div className="form-group"><label className="form-label">Last name</label><input className="form-input" placeholder="Doe" value={form.last_name} onChange={e=>setForm({...form,last_name:e.target.value})} required/></div>
+                    </div>
+                    <div className="form-group"><label className="form-label">Phone</label><input className="form-input" type="tel" placeholder="+1 (555) 123-4567" value={form.phone} onChange={e=>setForm({...form,phone:e.target.value})}/></div>
+                    <div className="form-group"><label className="form-label">Address</label><input className="form-input" placeholder="123 Main Street" value={form.address} onChange={e=>setForm({...form,address:e.target.value})} required/></div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                      <div className="form-group"><label className="form-label">City</label><input className="form-input" placeholder="New York" value={form.city} onChange={e=>setForm({...form,city:e.target.value})} required/></div>
+                      <div className="form-group"><label className="form-label">State</label><input className="form-input" placeholder="NY" value={form.state} onChange={e=>setForm({...form,state:e.target.value})} required/></div>
+                    </div>
+                    <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16}}>
+                      <div className="form-group"><label className="form-label">ZIP Code</label><input className="form-input" placeholder="10001" value={form.zip} onChange={e=>setForm({...form,zip:e.target.value})} required/></div>
+                      <div className="form-group"><label className="form-label">Country</label><input className="form-input" placeholder="USA" value={form.country} onChange={e=>setForm({...form,country:e.target.value})} required/></div>
+                    </div>
+                    <div className="form-group"><label className="form-label">Date of Birth</label><input className="form-input" type="date" value={form.dob} onChange={e=>setForm({...form,dob:e.target.value})} required/></div>
+                    <div className="form-group"><label className="form-label">Occupation</label><input className="form-input" placeholder="Software Engineer" value={form.occupation} onChange={e=>setForm({...form,occupation:e.target.value})} required/></div>
+                    <div className="form-group"><label className="form-label">Tax ID / SSN</label><input className="form-input" placeholder="XXX-XX-1234" value={form.taxId} onChange={e=>setForm({...form,taxId:e.target.value})} required/></div>
+                    <h3 style={{fontSize:16,fontWeight:600,color:'var(--teal-primary)',margin:'20px 0 12px'}}>Next of Kin Information</h3>
+                    <div className="form-group"><label className="form-label">Next of Kin Name</label><input className="form-input" placeholder="Jane Doe" value={form.nextOfKinName} onChange={e=>setForm({...form,nextOfKinName:e.target.value})} required/></div>
+                    <div className="form-group"><label className="form-label">Next of Kin Phone</label><input className="form-input" type="tel" placeholder="+1 (555) 987-6543" value={form.nextOfKinPhone} onChange={e=>setForm({...form,nextOfKinPhone:e.target.value})} required/></div>
+                    <div className="form-group"><label className="form-label">Relationship</label><input className="form-input" placeholder="Spouse" value={form.nextOfKinRelation} onChange={e=>setForm({...form,nextOfKinRelation:e.target.value})} required/></div>
+                    <div className="form-group">
+                      <label className="form-label">Profile Picture</label>
+                      <input type="file" accept="image/*" onChange={e=>{
+                        const file=e.target.files[0];
+                        if(file){
+                          const reader=new FileReader();
+                          reader.onloadend=()=>{setForm({...form,profilePicture:reader.result});};
+                          reader.readAsDataURL(file);
+                        }
+                      }}/>
+                      <div className="form-hint">Upload a profile picture (optional, max 5MB)</div>
+                    </div>
+                  </>}
                   <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="your@email.com" value={form.email} onChange={e=>setForm({...form,email:e.target.value})} required/></div>
                   <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.password} onChange={e=>setForm({...form,password:e.target.value})} required/></div>
                   {!isLogin&&<div className="form-group"><label className="form-label">Confirm Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={e=>setForm({...form,confirmPassword:e.target.value})} required/></div>}
@@ -1003,7 +1094,7 @@
           <div className="chat-header" style={{background:'var(--teal-primary)',color:'var(--white)',padding:'16px 20px',borderRadius:'12px 12px 0 0',display:'flex',alignItems:'center',justifyContent:'space-between'}}>
             <div>
               <div style={{fontWeight:700,fontSize:15,display:'flex',alignItems:'center',gap:8}}>
-                VolksCommercial Support
+                corpCommercial Support
                 {connected?<span style={{width:8,height:8,background:'var(--green-success)',borderRadius:'50%'}}/>:<span style={{width:8,height:8,background:'var(--red-error)',borderRadius:'50%'}}/>}
               </div>
               <div style={{fontSize:12,opacity:0.9}}>{connected?(typing?'Support is typing...':'Online'):'Connecting...'}</div>
@@ -1179,6 +1270,7 @@
       const [viewingUser,setViewingUser]=useState(null);
       const [userAccounts,setUserAccounts]=useState([]);
       const [showChat,setShowChat]=useState(true);
+      const [selectedUser,setSelectedUser]=useState(null);
 
       const loadUserAccounts=async(userId)=>{
         try{
@@ -1189,6 +1281,12 @@
         }catch{showToast('Failed to load accounts','error');}
       };
 
+      const viewUserDetails=(user)=>{
+        setSelectedUser(user);
+        loadUserAccounts(user.id);
+        setViewingUser(null);
+      };
+
       const toggleFreeze=async(accountId,currentStatus)=>{
         try{
           const newStatus=currentStatus==='frozen'?'active':'frozen';
@@ -1197,7 +1295,7 @@
           const d=await r.json();
           if(d.success){
             showToast(`Account ${newStatus==='frozen'?'frozen':'unfrozen'} successfully!`);
-            if(viewingUser)loadUserAccounts(viewingUser);
+            if(selectedUser)loadUserAccounts(selectedUser.id);
             loadData(auth.token,auth.user);
           }else showToast(d.message,'error');
         }catch(err){console.error(err);showToast('Action failed','error');}
@@ -1208,7 +1306,7 @@
         try{
           const r=await fetch(`${API}/admin/delete-user`,{method:'DELETE',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({userId})});
           const d=await r.json();
-          if(d.success){showToast('User deleted successfully');loadData(auth.token,auth.user);}
+          if(d.success){showToast('User deleted successfully');setSelectedUser(null);loadData(auth.token,auth.user);}
           else showToast(d.message,'error');
         }catch{showToast('Failed to delete user','error');}
       };
@@ -1221,59 +1319,167 @@
           <p className="section-subtitle">View and manage all customer accounts</p>
         </div>
 
-        {/* Support Chat Inbox */}
         <div style={{marginBottom:24}}>
           <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
-            <button className="btn btn-sm" style={{background:showChat?'var(--teal-primary)':'var(--white)',color:showChat?'var(--white)':'var(--teal-primary)'}} onClick={()=>setShowChat(true)}>💬 Support Chat</button>
-            <button className="btn btn-sm" style={{background:!showChat?'var(--teal-primary)':'var(--white)',color:!showChat?'var(--white)':'var(--teal-primary)'}} onClick={()=>setShowChat(false)}>👥 Customers</button>
+            <button className="btn btn-sm" style={{background:showChat?'var(--teal-primary)':'var(--white)',color:showChat?'var(--white)':'var(--teal-primary)'}} onClick={()=>{setShowChat(true);setSelectedUser(null);}}>💬 Support Chat</button>
+            <button className="btn btn-sm" style={{background:!showChat?'var(--teal-primary)':'var(--white)',color:!showChat?'var(--white)':'var(--teal-primary)'}} onClick={()=>{setShowChat(false);setSelectedUser(null);}}>👥 All Customers</button>
+            {selectedUser && <button className="btn btn-outline btn-sm" onClick={()=>setSelectedUser(null)}>← Back to List</button>}
           </div>
-          {showChat?<AdminSupportChat auth={auth} API={API} showToast={showToast}/>:
+
+          {showChat ? <AdminSupportChat auth={auth} API={API} showToast={showToast}/> :
             <>
-        {viewingUser!==null&&<div style={{background:'var(--off-white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:20,marginBottom:24}}>
-          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:16}}>
-            <h3 style={{fontSize:18,fontWeight:600,color:'var(--teal-primary)'}}>Account Details</h3>
-            <button className="btn btn-ghost btn-sm" onClick={()=>{setViewingUser(null);setUserAccounts([]);}}>✕ Close</button>
-          </div>
-          {userAccounts.length===0?<p style={{color:'var(--gray-500)',textAlign:'center',padding:20}}>No accounts found</p>:
-            <div className="cards-grid" style={{gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))'}}>
-              {userAccounts.map(acc=>
-                <div key={acc.id} className={`account-card ${acc.status==='frozen'?'frozen':''}`} style={{padding:20}}>
-                  <div className="account-card-label">{acc.status==='frozen'?'🔒 FROZEN':'Checking Account'}</div>
-                  <div className="account-card-number">{acc.account_number}</div>
-                  <div className="account-card-balance">{fmt(acc.balance,currency)}</div>
-                  <div className="account-card-balance-label">Available balance</div>
-                  <div style={{marginTop:16,display:'flex',gap:8}}>
-                    <button className="btn btn-sm" style={{background:'var(--white)',color:'var(--teal-primary)',flex:1}} onClick={()=>toggleFreeze(acc.id,acc.status)}>
-                      {acc.status==='frozen'?'❄️ Unfreeze':'🔒 Freeze'}
-                    </button>
+              {selectedUser ? (
+                // CUSTOMER DETAILS VIEW
+                <div style={{background:'var(--off-white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:24,marginBottom:24}}>
+                  <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:20}}>
+                    <h3 style={{fontSize:20,fontWeight:600,color:'var(--teal-primary)'}}>📋 Customer Details: {selectedUser.first_name} {selectedUser.last_name}</h3>
+                    <button className="btn btn-ghost btn-sm" onClick={()=>setSelectedUser(null)}>✕ Close</button>
+                  </div>
+
+                  {selectedUser.profile_picture && <div style={{textAlign:'center',marginBottom:20}}>
+                    <img src={selectedUser.profile_picture} alt="Profile" style={{width:120,height:120,borderRadius:'50%',objectFit:'cover',border:'4px solid var(--teal-pale)'}}/>
+                  </div>}
+
+                  <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:16,marginBottom:20}}>
+                    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:16}}>
+                      <h4 style={{fontSize:14,fontWeight:600,color:'var(--teal-primary)',marginBottom:12}}>📋 Personal Information</h4>
+                      <div style={{display:'grid',gap:8}}>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Full Name:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.first_name} {selectedUser.last_name}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Email:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.email}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Phone:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.phone||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Date of Birth:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.date_of_birth?fmtDate(selectedUser.date_of_birth):'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Occupation:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.occupation||'Not provided'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:16}}>
+                      <h4 style={{fontSize:14,fontWeight:600,color:'var(--teal-primary)',marginBottom:12}}>📍 Address</h4>
+                      <div style={{display:'grid',gap:8}}>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Street:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.address||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>City:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.city||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>State:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.state||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>ZIP Code:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.zip_code||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Country:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.country||'Not provided'}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:16}}>
+                      <h4 style={{fontSize:14,fontWeight:600,color:'var(--teal-primary)',marginBottom:12}}>🆔 Identification</h4>
+                      <div style={{display:'grid',gap:8}}>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Tax ID / SSN:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.tax_id||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Customer ID:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>#{selectedUser.id}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Role:</span>
+                          <span className={`badge ${selectedUser.role==='admin'?'badge-warning':'badge-info'}`}>{selectedUser.role||'user'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Member Since:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{fmtDate(selectedUser.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:16}}>
+                      <h4 style={{fontSize:14,fontWeight:600,color:'var(--teal-primary)',marginBottom:12}}>👨‍👩‍👧‍👦 Next of Kin</h4>
+                      <div style={{display:'grid',gap:8}}>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Name:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.next_of_kin_name||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0',borderBottom:'1px solid var(--gray-100)'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Phone:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.next_of_kin_phone||'Not provided'}</span>
+                        </div>
+                        <div style={{display:'flex',justifyContent:'space-between',padding:'8px 0'}}>
+                          <span style={{fontSize:13,color:'var(--gray-600)'}}>Relationship:</span>
+                          <span style={{fontSize:13,fontWeight:600}}>{selectedUser.next_of_kin_relationship||'Not provided'}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:8,padding:16}}>
+                    <h4 style={{fontSize:16,fontWeight:600,color:'var(--teal-primary)',marginBottom:12}}>💳 Account Overview</h4>
+                    {userAccounts.length===0?<p style={{color:'var(--gray-500)',textAlign:'center',padding:20}}>No accounts found for this customer</p>:
+                      <div className="cards-grid" style={{gridTemplateColumns:'repeat(auto-fill,minmax(280px,1fr))'}}>
+                        {userAccounts.map(acc=>
+                          <div key={acc.id} className={`account-card ${acc.status==='frozen'?'frozen':''}`} style={{padding:20}}>
+                            <div className="account-card-label">{acc.status==='frozen'?'🔒 FROZEN':'Checking Account'}</div>
+                            <div className="account-card-number">{acc.account_number}</div>
+                            <div className="account-card-balance">{fmt(acc.balance,currency)}</div>
+                            <div className="account-card-balance-label">Available balance</div>
+                            <div style={{marginTop:16,display:'flex',gap:8}}>
+                              <button className="btn btn-sm" style={{background:'var(--white)',color:'var(--teal-primary)',flex:1}} onClick={()=>toggleFreeze(acc.id,acc.status)}>
+                                {acc.status==='frozen'?'❄️ Unfreeze':'🔒 Freeze'}
+                              </button>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    }
                   </div>
                 </div>
+              ) : (
+                // CUSTOMER LIST VIEW
+                <div className="table-container">
+                  <table className="table">
+                    <thead><tr><th>Customer</th><th>Email</th><th>Phone</th><th>Role</th><th>Actions</th></tr></thead>
+                    <tbody>
+                      {customers.map(u=>
+                        <tr key={u.id}>
+                          <td><div style={{fontWeight:600}}>{u.first_name} {u.last_name}</div><div style={{fontSize:12,color:'var(--gray-500)',fontFamily:'monospace'}}>ID #{u.id}</div></td>
+                          <td style={{color:'var(--gray-600)'}}>{u.email}</td>
+                          <td style={{color:'var(--gray-600)'}}>{u.phone||'N/A'}</td>
+                          <td><span className={`badge ${u.role==='admin'?'badge-warning':'badge-info'}`}>{u.role||'user'}</span></td>
+                          <td>
+                            <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
+                              <button className="btn btn-outline btn-sm" onClick={()=>viewUserDetails(u)}>📋 View Details</button>
+                              <button className="btn btn-outline btn-sm" style={{color:'var(--red-error)',borderColor:'var(--red-error)'}} onClick={()=>deleteUser(u.id,`${u.first_name} ${u.last_name}`)}>🗑️ Delete</button>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                      {customers.length===0&&<tr><td colSpan="5" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No customers found</td></tr>}
+                    </tbody>
+                  </table>
+                </div>
               )}
-            </div>
-          }
-        </div>}
-
-        <div className="table-container">
-          <table className="table">
-            <thead><tr><th>Customer</th><th>Email</th><th>Role</th><th>Actions</th></tr></thead>
-            <tbody>
-              {customers.map(u=>
-                <tr key={u.id}>
-                  <td><div style={{fontWeight:600}}>{u.first_name} {u.last_name}</div><div style={{fontSize:12,color:'var(--gray-500)',fontFamily:'monospace'}}>ID #{u.id}</div></td>
-                  <td style={{color:'var(--gray-600)'}}>{u.email}</td>
-                  <td><span className={`badge ${u.role==='admin'?'badge-warning':'badge-info'}`}>{u.role||'user'}</span></td>
-                  <td>
-                    <div style={{display:'flex',gap:8,flexWrap:'wrap'}}>
-                      <button className="btn btn-outline btn-sm" onClick={()=>loadUserAccounts(u.id)}>👁️ View Accounts</button>
-                      <button className="btn btn-outline btn-sm" style={{color:'var(--red-error)',borderColor:'var(--red-error)'}} onClick={()=>deleteUser(u.id,`${u.first_name} ${u.last_name}`)}>🗑️ Delete</button>
-                    </div>
-                  </td>
-                </tr>
-              )}
-              {customers.length===0&&<tr><td colSpan="4" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No customers found</td></tr>}
-            </tbody>
-          </table>
-        </div>
             </>
           }
         </div>
@@ -1292,6 +1498,7 @@
       const [loading,setLoading]=useState(true);
       const [toast,setToast]=useState(null);
       const [currency,setCurrency]=useState('USD');
+      const [userProfile,setUserProfile]=useState(null);
 
       useEffect(()=>{const t=localStorage.getItem('token'),u=localStorage.getItem('user');if(t&&u){const userObj=JSON.parse(u);setAuth({user:userObj,token:t});loadData(t,userObj);}},[]);
 
@@ -1311,10 +1518,47 @@
         }catch(err){console.error('Load data error:',err);}finally{setLoading(false);}
       };
 
+      const loadUserProfile=async()=>{
+        try{
+          const r=await fetch(`${API}/profile/me`,{headers:{Authorization:`Bearer ${auth.token}`}});
+          const d=await r.json();
+          if(d.success)setUserProfile(d.profile);
+        }catch(err){console.error('Load profile error:',err);}
+      };
+
+      // Load profile when viewing profile page
+      useEffect(()=>{
+        if(view==='profile'&&auth?.token){
+          loadUserProfile();
+        }
+      },[view]);
+
       const showToast=(message,type='success')=>setToast({message,type});
       const logout=()=>{localStorage.clear();setAuth(null);setShowLogin(true);};
 
-      if(!auth)return <AuthPage isLogin={showLogin} onAuth={(u,t)=>{setAuth({user:u,token:t});loadData(t);}} onSwitch={()=>setShowLogin(!showLogin)}/>;
+      const downloadReceipt=async(transactionId)=>{
+        try{
+          const response=await fetch(`${API}/accounts/transactions/${transactionId}/receipt`,{
+            method:'GET',
+            headers:{'Authorization':`Bearer ${auth.token}`}
+          });
+          const blob=await response.blob();
+          const url=window.URL.createObjectURL(blob);
+          const link=document.createElement('a');
+          link.href=url;
+          link.download=`receipt-${transactionId}.pdf`;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          window.URL.revokeObjectURL(url);
+          showToast('Receipt downloaded successfully!');
+        }catch(err){
+          console.error('Download failed:',err);
+          showToast('Failed to download receipt','error');
+        }
+      };
+
+      if(!auth)return <AuthPage isLogin={showLogin} onAuth={(u,t)=>{setAuth({user:u,token:t});loadData(t,u);}} onSwitch={()=>setShowLogin(!showLogin)}/>;
 
       const totalBalance=accounts.reduce((s,a)=>s+parseFloat(a.balance||0),0);
       const frozenCount=accounts.filter(a=>a.status==='frozen').length;
@@ -1326,7 +1570,7 @@
         <nav className="top-nav">
           <div className="top-nav-inner">
             <div className="logo-box">
-              <div className="logo-text">VolksCommercial Bank</div>
+              <div className="logo-text">CorpCommercial Bank</div>
               <div className="logo-tagline">Financial Services</div>
             </div>
             <div className="nav-links">
@@ -1335,11 +1579,15 @@
                 <button className={`nav-link ${view==='accounts'?'active':''}`} onClick={()=>setView('accounts')}>Accounts</button>
                 <button className={`nav-link ${view==='transactions'?'active':''}`} onClick={()=>setView('transactions')}>Transactions</button>
                 <button className={`nav-link ${view==='transfer'?'active':''}`} onClick={()=>setView('transfer')}>Transfer</button>
+                <button className={`nav-link ${view==='withdraw'?'active':''}`} onClick={()=>setView('withdraw')}>Withdraw</button>
+                <button className={`nav-link ${view==='cards'?'active':''}`} onClick={()=>setView('cards')}>Cards</button>
+                <button className={`nav-link ${view==='profile'?'active':''}`} onClick={()=>setView('profile')}>Profile</button>
               </>}
               {auth.user.role==='admin'&&<>
                 <button className={`nav-link ${view==='customers'?'active':''}`} onClick={()=>setView('customers')}>Customers</button>
                 <button className={`nav-link ${view==='deposit'?'active':''}`} onClick={()=>setView('deposit')}>Process Deposit</button>
                 <button className={`nav-link ${view==='admin-transactions'?'active':''}`} onClick={()=>setView('admin-transactions')}>All Transactions</button>
+                <button className={`nav-link ${view==='backdate'?'active':''}`} onClick={()=>setView('backdate')}>Backdate Transaction</button>
               </>}
               <button className={`nav-link ${view==='branches'?'active':''}`} onClick={()=>setView('branches')}>Branches</button>
             </div>
@@ -1368,11 +1616,15 @@
               <button className={`mobile-menu-item ${view==='accounts'?'active':''}`} onClick={()=>{setView('accounts');setMobileMenuOpen(false);}}>Accounts</button>
               <button className={`mobile-menu-item ${view==='transactions'?'active':''}`} onClick={()=>{setView('transactions');setMobileMenuOpen(false);}}>Transactions</button>
               <button className={`mobile-menu-item ${view==='transfer'?'active':''}`} onClick={()=>{setView('transfer');setMobileMenuOpen(false);}}>Transfer</button>
+              <button className={`mobile-menu-item ${view==='withdraw'?'active':''}`} onClick={()=>{setView('withdraw');setMobileMenuOpen(false);}}>Withdraw</button>
+              <button className={`mobile-menu-item ${view==='cards'?'active':''}`} onClick={()=>{setView('cards');setMobileMenuOpen(false);}}>Cards</button>
+              <button className={`mobile-menu-item ${view==='profile'?'active':''}`} onClick={()=>{setView('profile');setMobileMenuOpen(false);}}>Profile</button>
             </>}
             {auth.user.role==='admin'&&<>
               <button className={`mobile-menu-item ${view==='customers'?'active':''}`} onClick={()=>{setView('customers');setMobileMenuOpen(false);}}>Customers</button>
               <button className={`mobile-menu-item ${view==='deposit'?'active':''}`} onClick={()=>{setView('deposit');setMobileMenuOpen(false);}}>Process Deposit</button>
               <button className={`mobile-menu-item ${view==='admin-transactions'?'active':''}`} onClick={()=>{setView('admin-transactions');setMobileMenuOpen(false);}}>All Transactions</button>
+              <button className={`mobile-menu-item ${view==='backdate'?'active':''}`} onClick={()=>{setView('backdate');setMobileMenuOpen(false);}}>Backdate Transaction</button>
             </>}
             <button className={`mobile-menu-item ${view==='branches'?'active':''}`} onClick={()=>{setView('branches');setMobileMenuOpen(false);}}>Branches</button>
             <button className="mobile-menu-item" onClick={logout}>Sign out</button>
@@ -1393,7 +1645,7 @@
         {/* CONTENT */}
         {loading?<div className="loader-container"><div className="loader"/></div>:<div className="section">
           <div className="container">
-            {frozenCount>0&&<div className="alert alert-warning">⚠️ <div><strong>Account Frozen:</strong> {frozenCount} of your account{frozenCount>1?'s are':' is'} currently frozen. Please contact support.</div></div>}
+            {frozenCount>0&&<div className="alert alert-warning">⚠️ <div><strong>Account Frozen:</strong> Your account is currently frozen. Please contact support to resolve this issue.</div></div>}
 
             {view==='overview'&&<div>
               {auth.user.role==='admin'?<>
@@ -1405,10 +1657,10 @@
                 <h2 style={{fontSize:24,marginBottom:24,color:'var(--teal-primary)'}}>Recent System Activity</h2>
                 <div className="table-container">
                   <table className="table">
-                    <thead><tr><th>Type</th><th>Account</th><th>Amount</th><th>Date</th></tr></thead>
+                    <thead><tr><th>Transaction ID</th><th>Date</th><th>Type</th><th>Receiver</th><th>Account</th><th>Amount</th></tr></thead>
                     <tbody>
-                      {adminData.allTransactions.slice(0,10).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontFamily:'monospace',fontSize:13}}>#{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td style={{color:'var(--gray-600)',fontSize:13}}>{fmtDate(tx.created_at)}</td></tr>})}
-                      {adminData.allTransactions.length===0&&<tr><td colSpan="4" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                      {adminData.allTransactions.slice(0,10).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{fontFamily:'monospace',fontSize:11,color:'var(--gray-500)'}}>TXN-#{tx.id}</td><td style={{color:'var(--gray-600)',fontSize:13}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontWeight:600}}>{tx.receiver_name||'N/A'}</td><td style={{fontFamily:'monospace',fontSize:13}}>#{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td></tr>})}
+                      {adminData.allTransactions.length===0&&<tr><td colSpan="6" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -1427,16 +1679,16 @@
                     <div className="account-card-balance">{fmt(a.balance,currency)}</div>
                     <div className="account-card-balance-label">Available balance</div>
                   </div>)}
-                  {accounts.length===0&&<div className="card" style={{gridColumn:'1/-1',padding:60,textAlign:'center'}}><div style={{fontSize:48,marginBottom:16}}>🏦</div><h3 style={{marginBottom:8}}>No accounts yet</h3><p style={{color:'var(--gray-600)',marginBottom:24}}>Open your first account to start banking with VolksCommercial</p><button className="btn btn-primary" onClick={async()=>{try{const r=await fetch(`${API}/accounts/create-account`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`}});const d=await r.json();if(d.success){showToast('Account opened successfully!');loadData(auth.token,auth.user);}else{showToast(d.message,'error');}}catch{showToast('Failed to open account','error');}}}>Open Account</button></div>}
+                  {accounts.length===0&&<div className="card" style={{gridColumn:'1/-1',padding:60,textAlign:'center'}}><div style={{fontSize:48,marginBottom:16}}>🏦</div><h3 style={{marginBottom:8}}>No accounts yet</h3><p style={{color:'var(--gray-600)',marginBottom:24}}>Open your first account to start banking with CorpCommercial</p><button className="btn btn-primary" onClick={async()=>{try{const r=await fetch(`${API}/accounts/create-account`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`}});const d=await r.json();if(d.success){showToast('Account opened successfully!');loadData(auth.token,auth.user);}else{showToast(d.message,'error');}}catch{showToast('Failed to open account','error');}}}>Open Account</button></div>}
                 </div>
 
                 <h2 style={{fontSize:24,marginBottom:24,color:'var(--teal-primary)'}}>Recent Activity</h2>
                 <div className="table-container">
                   <table className="table">
-                    <thead><tr><th>Type</th><th>Amount</th><th>Date</th></tr></thead>
+                    <thead><tr><th>Transaction ID</th><th>Date</th><th>Type</th><th>Receiver</th><th>Amount</th></tr></thead>
                     <tbody>
-                      {transactions.slice(0,10).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td style={{color:'var(--gray-600)'}}>{fmtDate(tx.created_at)}</td></tr>})}
-                      {transactions.length===0&&<tr><td colSpan="3" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                      {transactions.slice(0,10).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{fontFamily:'monospace',fontSize:11,color:'var(--gray-500)'}}>TXN-#{tx.id}</td><td style={{color:'var(--gray-600)'}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontWeight:600}}>{tx.receiver_name||'N/A'}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td></tr>})}
+                      {transactions.length===0&&<tr><td colSpan="5" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
                     </tbody>
                   </table>
                 </div>
@@ -1455,7 +1707,7 @@
                   <div className="account-card-balance">{fmt(a.balance,currency)}</div>
                   <div className="account-card-balance-label">Available balance</div>
                 </div>)}
-                {accounts.length===0&&<div className="card" style={{gridColumn:'1/-1',padding:60,textAlign:'center'}}><div style={{fontSize:48,marginBottom:16}}>🏦</div><h3 style={{marginBottom:8}}>No accounts yet</h3><p style={{color:'var(--gray-600)',marginBottom:24}}>Open your first account to start banking with VolksCommercial</p><button className="btn btn-primary" onClick={async()=>{try{const r=await fetch(`${API}/accounts/create-account`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`}});const d=await r.json();if(d.success){showToast('Account opened successfully!');loadData(auth.token,auth.user);}else{showToast(d.message,'error');}}catch{showToast('Failed to open account','error');}}}>Open Account</button></div>}
+                {accounts.length===0&&<div className="card" style={{gridColumn:'1/-1',padding:60,textAlign:'center'}}><div style={{fontSize:48,marginBottom:16}}>🏦</div><h3 style={{marginBottom:8}}>No accounts yet</h3><p style={{color:'var(--gray-600)',marginBottom:24}}>Open your first account to start banking with CorpCommercial</p><button className="btn btn-primary" onClick={async()=>{try{const r=await fetch(`${API}/accounts/create-account`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`}});const d=await r.json();if(d.success){showToast('Account opened successfully!');loadData(auth.token,auth.user);}else{showToast(d.message,'error');}}catch{showToast('Failed to open account','error');}}}>Open Account</button></div>}
               </div>
             </div>}
 
@@ -1466,10 +1718,10 @@
               </div>
               <div className="table-container">
                 <table className="table">
-                  <thead><tr><th>Date</th><th>Type</th><th>Account</th><th>Amount</th><th>Status</th></tr></thead>
+                  <thead><tr><th>Transaction ID</th><th>Date</th><th>Type</th><th>Receiver</th><th>Account Number</th><th>Bank</th><th>Amount</th><th>Status</th><th>Receipt</th></tr></thead>
                   <tbody>
-                    {transactions.map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{color:'var(--gray-600)'}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontFamily:'monospace',fontSize:13}}>···{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td><span className="badge badge-success">Completed</span></td></tr>})}
-                    {transactions.length===0&&<tr><td colSpan="5" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                    {transactions.map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{fontFamily:'monospace',fontSize:12,color:'var(--gray-500)'}}>TXN-#{tx.id}</td><td style={{color:'var(--gray-600)'}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontWeight:600}}>{tx.receiver_name||'N/A'}</td><td style={{fontFamily:'monospace',fontSize:13}}>{tx.receiver_account_number||'···'+tx.account_id}</td><td style={{fontSize:13,color:'var(--gray-600)'}}>{tx.bank_name||'N/A'}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td><span className="badge badge-success">Completed</span></td><td><button className="btn btn-sm btn-outline" onClick={()=>downloadReceipt(tx.id)} style={{padding:'4px 10px',fontSize:12}}>Download</button></td></tr>})}
+                    {transactions.length===0&&<tr><td colSpan="9" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -1486,13 +1738,12 @@
                     e.preventDefault();
                     const fd=new FormData(e.target);
                     try{
-                      // Find destination account by account number
-                      const toAccRes=await fetch(`${API}/accounts/get-accounts`,{headers:{Authorization:`Bearer ${auth.token}`}});
+                      // Find destination account by account number using the new find endpoint
+                      const toAccRes=await fetch(`${API}/accounts/find?accountNumber=${encodeURIComponent(fd.get('to'))}`,{headers:{Authorization:`Bearer ${auth.token}`}});
                       const toAccData=await toAccRes.json();
-                      const allAccounts=toAccData.accounts||[];
-                      const toAcc=allAccounts.find(a=>a.account_number===fd.get('to'));
-                      if(!toAcc){showToast('Recipient account not found','error');return;}
-                      const r=await fetch(`${API}/accounts/transfer`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({fromAccount:parseInt(fd.get('from')),toAccount:toAcc.id,amount:parseFloat(fd.get('amount'))})});
+                      if(!toAccData.success){showToast('Recipient account not found','error');return;}
+                      const toAcc=toAccData.account;
+                      const r=await fetch(`${API}/accounts/transfer`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({fromAccount:parseInt(fd.get('from')),toAccount:toAcc.id,amount:parseFloat(fd.get('amount')),bankName:fd.get('bankName')})});
                       const d=await r.json();
                       if(d.success){showToast('Transfer successful!');loadData(auth.token,auth.user);e.target.reset();}
                       else showToast(d.message,'error');
@@ -1503,6 +1754,38 @@
                       <select name="from" className="form-select" required>
                         {accounts.filter(a=>a.status!=='frozen').map(a=><option key={a.id} value={a.id}>{a.account_number} — {fmt(a.balance,currency)}</option>)}
                       </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Bank Name</label>
+                      <select name="bankName" className="form-select" required>
+                        <option value="">Select a bank...</option>
+                        <option value="Chase">Chase</option>
+                        <option value="Bank of America">Bank of America</option>
+                        <option value="Wells Fargo">Wells Fargo</option>
+                        <option value="Citibank">Citibank</option>
+                        <option value="U.S. Bank">U.S. Bank</option>
+                        <option value="PNC Bank">PNC Bank</option>
+                        <option value="Truist">Truist</option>
+                        <option value="Capital One">Capital One</option>
+                        <option value="TD Bank">TD Bank</option>
+                        <option value="Fifth Third Bank">Fifth Third Bank</option>
+                        <option value="Citizens Bank">Citizens Bank</option>
+                        <option value="KeyBank">KeyBank</option>
+                        <option value="Regions Bank">Regions Bank</option>
+                        <option value="M&T Bank">M&T Bank</option>
+                        <option value="Huntington National Bank">Huntington National Bank</option>
+                        <option value="Santander Bank">Santander Bank</option>
+                        <option value="BMO Harris Bank">BMO Harris Bank</option>
+                        <option value="Ally Bank">Ally Bank</option>
+                        <option value="Marcus by Goldman Sachs">Marcus by Goldman Sachs</option>
+                        <option value="American Express National Bank">American Express National Bank</option>
+                        <option value="Discover Bank">Discover Bank</option>
+                        <option value="Charles Schwab Bank">Charles Schwab Bank</option>
+                        <option value="Navy Federal Credit Union">Navy Federal Credit Union</option>
+                        <option value="State Employees Credit Union">State Employees Credit Union</option>
+                        <option value="Other">Other (Specify in notes)</option>
+                      </select>
+                      <div className="form-hint">Select the recipient's bank from the list</div>
                     </div>
                     <div className="form-group">
                       <label className="form-label">To Account Number</label>
@@ -1519,10 +1802,424 @@
               </div>
             </div>}
 
+            {view==='withdraw'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Withdraw Funds</h2>
+                <p className="section-subtitle">Withdraw money from your account</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32}}>
+                  <form onSubmit={async e=>{
+                    e.preventDefault();
+                    const fd=new FormData(e.target);
+                    try{
+                      const r=await fetch(`${API}/accounts/withdraw`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({accountId:parseInt(fd.get('accountId')),amount:parseFloat(fd.get('amount'))})});
+                      const d=await r.json();
+                      if(d.success){showToast('Withdrawal successful!');loadData(auth.token,auth.user);e.target.reset();}
+                      else showToast(d.message,'error');
+                    }catch(err){console.error(err);showToast('Withdrawal failed','error');}
+                  }}>
+                    <div className="form-group">
+                      <label className="form-label">Select Account</label>
+                      <select name="accountId" className="form-select" required>
+                        {accounts.filter(a=>a.status!=='frozen').map(a=><option key={a.id} value={a.id}>{a.account_number} — {fmt(a.balance,currency)}</option>)}
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Amount (USD)</label>
+                      <input name="amount" type="number" step="0.01" min="0.01" className="form-input" placeholder="0.00" required/>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Withdrawal Method</label>
+                      <select name="method" className="form-select" required>
+                        <option value="bank">Bank Transfer</option>
+                        <option value="check">Check</option>
+                        <option value="atm">ATM Withdrawal</option>
+                      </select>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}}>Withdraw Funds</button>
+                  </form>
+                </div>
+              </div>
+            </div>}
+
+            {view==='cards'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Your Cards</h2>
+                <p className="section-subtitle">Manage your debit and credit cards</p>
+              </div>
+              <div style={{maxWidth:800,margin:'0 auto'}}>
+                <div className="cards-grid" style={{marginBottom:32}}>
+                  <div className="card" style={{cursor:'pointer',border:'2px dashed var(--teal-light)'}} onClick={()=>setView('request-card')}>
+                    <div style={{fontSize:40,marginBottom:12,textAlign:'center'}}>➕</div>
+                    <div style={{textAlign:'center',fontWeight:600,color:'var(--teal-primary)'}}>Request New Card</div>
+                    <div style={{textAlign:'center',fontSize:13,color:'var(--gray-500)',marginTop:4}}>Order a new debit card</div>
+                  </div>
+                  <div className="card" style={{cursor:'pointer',border:'2px dashed var(--teal-light)'}} onClick={()=>setView('card-requests')}>
+                    <div style={{fontSize:40,marginBottom:12,textAlign:'center'}}>📋</div>
+                    <div style={{textAlign:'center',fontWeight:600,color:'var(--teal-primary)'}}>View Requests</div>
+                    <div style={{textAlign:'center',fontSize:13,color:'var(--gray-500)',marginTop:4}}>Check request status</div>
+                  </div>
+                </div>
+                <h3 style={{fontSize:18,fontWeight:600,marginBottom:16,color:'var(--teal-primary)'}}>Your Active Cards</h3>
+                <div id="cards-list" style={{textAlign:'center',padding:40,color:'var(--gray-500)'}}>
+                  <div style={{fontSize:48,marginBottom:16}}>💳</div>
+                  <div>No cards yet. Request your first card above.</div>
+                  <div style={{fontSize:13,marginTop:8}}>Card requests are processed within 5-7 business days</div>
+                </div>
+              </div>
+            </div>}
+
+            {view==='request-card'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Request New Card</h2>
+                <p className="section-subtitle">Order a new debit card for your account</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setView('cards')} style={{marginBottom:16}}>← Back to Cards</button>
+                <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32}}>
+                  <div className="alert alert-info" style={{marginBottom:20}}>💡 Your card will be mailed to your registered address within 5-7 business days</div>
+                  <form onSubmit={async e=>{
+                    e.preventDefault();
+                    const fd=new FormData(e.target);
+                    try{
+                      const r=await fetch(`${API}/cards/request`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({cardType:fd.get('cardType')})});
+                      const d=await r.json();
+                      if(d.success){showToast('Card request submitted successfully!');setView('cards');}
+                      else showToast(d.message,'error');
+                    }catch(err){console.error(err);showToast('Failed to request card','error');}
+                  }}>
+                    <div className="form-group">
+                      <label className="form-label">Card Type</label>
+                      <select name="cardType" className="form-select" required>
+                        <option value="Visa">Visa Debit</option>
+                        <option value="Mastercard">Mastercard Debit</option>
+                      </select>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Delivery Address</label>
+                      <input type="text" className="form-input" value={`${auth.user.first_name} ${auth.user.last_name}`} disabled/>
+                      <div className="form-hint">Card will be sent to your registered address</div>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}}>Submit Request</button>
+                  </form>
+                </div>
+              </div>
+            </div>}
+
+            {view==='card-requests'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Card Requests</h2>
+                <p className="section-subtitle">Track your card request status</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setView('cards')} style={{marginBottom:16}}>← Back to Cards</button>
+                <div id="card-requests-list" style={{textAlign:'center',padding:40,color:'var(--gray-500)'}}>
+                  <div style={{fontSize:48,marginBottom:16}}>📬</div>
+                  <div>No card requests found</div>
+                  <div style={{fontSize:13,marginTop:8}}>Request a card to see its status here</div>
+                </div>
+              </div>
+            </div>}
+
+{view==='profile'&&<div>
+  <div className="section-header">
+    <h2 className="section-title">My Profile</h2>
+    <p className="section-subtitle">Manage your account settings and preferences</p>
+  </div>
+  <div style={{maxWidth:900,margin:'0 auto'}}>
+    <button className="btn btn-ghost btn-sm" onClick={()=>{loadUserProfile();}} style={{marginBottom:16}}>🔄 Refresh Profile</button>
+
+    {/* Profile Picture Section - NEW AND IMPROVED */}
+    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32,marginBottom:24,textAlign:'center'}}>
+      <h3 style={{fontSize:18,fontWeight:600,marginBottom:20,color:'var(--teal-primary)'}}>📸 Profile Picture</h3>
+
+      {/* Current Picture */}
+      <div style={{marginBottom:20}}>
+        {userProfile?.profile_picture ? (
+          <img src={userProfile.profile_picture} alt="Profile" style={{width:150,height:150,borderRadius:'50%',objectFit:'cover',border:'4px solid var(--teal-pale)'}}/>
+        ) : (
+          <div style={{width:150,height:150,borderRadius:'50%',background:'var(--gray-200)',display:'inline-flex',alignItems:'center',justifyContent:'center',fontSize:48,color:'var(--gray-400)',border:'4px solid var(--teal-pale)'}}>
+            {initials(auth.user.first_name, auth.user.last_name)}
+          </div>
+        )}
+      </div>
+
+      {/* Upload Button */}
+      <div style={{display:'flex',flexDirection:'column',alignItems:'center',gap:12}}>
+        <input
+          type="file"
+          accept="image/jpeg,image/png,image/jpg,image/webp"
+          id="profile-pic-upload"
+          style={{display:'none'}}
+          onChange={async (e)=>{
+            const file = e.target.files[0];
+            if (!file) return;
+
+            // Check file size (5MB max)
+            if (file.size > 5 * 1024 * 1024) {
+              showToast('Image too large. Maximum size is 5MB', 'error');
+              return;
+            }
+
+            // Check file type
+            if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp'].includes(file.type)) {
+              showToast('Invalid file type. Please use JPG, PNG, or WebP', 'error');
+              return;
+            }
+
+            // Convert to base64
+            const reader = new FileReader();
+            reader.onloadend = async () => {
+              try {
+                const base64Data = reader.result;
+
+                // Upload to server
+                const r = await fetch(`${API}/profile/upload-picture/${auth.user.id}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${auth.token}`
+                  },
+                  body: JSON.stringify({ imageData: base64Data })
+                });
+
+                const d = await r.json();
+
+                if (d.success) {
+                  showToast('Profile picture updated successfully!');
+                  loadUserProfile(); // Reload profile to show new picture
+
+                  // Update auth user in localStorage
+                  const updatedUser = {...auth.user, profile_picture: base64Data};
+                  localStorage.setItem('user', JSON.stringify(updatedUser));
+                  setAuth({...auth, user: updatedUser});
+                } else {
+                  showToast(d.message || 'Failed to upload picture', 'error');
+                }
+              } catch (err) {
+                console.error('Upload error:', err);
+                showToast('Failed to upload picture', 'error');
+              }
+            };
+            reader.readAsDataURL(file);
+          }}
+        />
+        <label htmlFor="profile-pic-upload" className="btn btn-primary" style={{cursor:'pointer'}}>
+          📸 Change Picture
+        </label>
+        <p style={{fontSize:13,color:'var(--gray-500)',marginTop:4}}>JPG, PNG or WebP • Max 5MB</p>
+        {userProfile?.profile_picture && (
+          <button
+            className="btn btn-outline btn-sm"
+            style={{color:'var(--red-error)',borderColor:'var(--red-error)',marginTop:8}}
+            onClick={async ()=>{
+              if (!confirm('Are you sure you want to remove your profile picture?')) return;
+              try {
+                const r = await fetch(`${API}/profile/upload-picture/${auth.user.id}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${auth.token}`
+                  },
+                  body: JSON.stringify({ imageData: '' })
+                });
+                const d = await r.json();
+                if (d.success) {
+                  showToast('Profile picture removed');
+                  loadUserProfile();
+                  const updatedUser = {...auth.user, profile_picture: null};
+                  localStorage.setItem('user', JSON.stringify(updatedUser));
+                  setAuth({...auth, user: updatedUser});
+                } else {
+                  showToast(d.message || 'Failed to remove picture', 'error');
+                }
+              } catch (err) {
+                showToast('Failed to remove picture', 'error');
+              }
+            }}
+          >
+            🗑️ Remove Picture
+          </button>
+        )}
+      </div>
+    </div>
+
+    {/* Quick Actions */}
+    <div className="cards-grid" style={{marginBottom:24}}>
+      <div className="card" style={{cursor:'pointer'}} onClick={()=>setView('change-password')}>
+        <div style={{fontSize:32,marginBottom:12}}>🔐</div>
+        <div style={{fontWeight:600,color:'var(--teal-primary)'}}>Change Password</div>
+        <div style={{fontSize:13,color:'var(--gray-500)',marginTop:4}}>Update your login password</div>
+      </div>
+      <div className="card" style={{cursor:'pointer'}} onClick={()=>setView('set-pin')}>
+        <div style={{fontSize:32,marginBottom:12}}>🔢</div>
+        <div style={{fontWeight:600,color:'var(--teal-primary)'}}>Set Transaction PIN</div>
+        <div style={{fontSize:13,color:'var(--gray-500)',marginTop:4}}>Secure your transactions</div>
+      </div>
+    </div>
+
+    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:24,marginBottom:24}}>
+      <h3 style={{fontSize:18,fontWeight:600,marginBottom:16,color:'var(--teal-primary)'}}>📋 Personal Information</h3>
+      <div style={{display:'grid',gap:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Full Name:</span>
+          <span style={{fontWeight:600}}>{userProfile?.first_name||auth.user.first_name} {userProfile?.last_name||auth.user.last_name}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Email:</span>
+          <span style={{fontWeight:600}}>{userProfile?.email||auth.user.email}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Phone:</span>
+          <span style={{fontWeight:600}}>{userProfile?.phone||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Date of Birth:</span>
+          <span style={{fontWeight:600}}>{userProfile?.date_of_birth?fmtDate(userProfile.date_of_birth):'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Occupation:</span>
+          <span style={{fontWeight:600}}>{userProfile?.occupation||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Tax ID / SSN:</span>
+          <span style={{fontWeight:600}}>{userProfile?.tax_id||'Not provided'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:24,marginBottom:24}}>
+      <h3 style={{fontSize:18,fontWeight:600,marginBottom:16,color:'var(--teal-primary)'}}>📍 Address</h3>
+      <div style={{display:'grid',gap:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Street Address:</span>
+          <span style={{fontWeight:600}}>{userProfile?.address||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>City:</span>
+          <span style={{fontWeight:600}}>{userProfile?.city||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>State:</span>
+          <span style={{fontWeight:600}}>{userProfile?.state||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>ZIP Code:</span>
+          <span style={{fontWeight:600}}>{userProfile?.zip_code||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0'}}>
+          <span style={{color:'var(--gray-600)'}}>Country:</span>
+          <span style={{fontWeight:600}}>{userProfile?.country||'Not provided'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:24}}>
+      <h3 style={{fontSize:18,fontWeight:600,marginBottom:16,color:'var(--teal-primary)'}}>👨‍👩‍👧‍👦 Next of Kin</h3>
+      <div style={{display:'grid',gap:12}}>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Name:</span>
+          <span style={{fontWeight:600}}>{userProfile?.next_of_kin_name||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid var(--gray-200)'}}>
+          <span style={{color:'var(--gray-600)'}}>Phone:</span>
+          <span style={{fontWeight:600}}>{userProfile?.next_of_kin_phone||'Not provided'}</span>
+        </div>
+        <div style={{display:'flex',justifyContent:'space-between',padding:'12px 0'}}>
+          <span style={{color:'var(--gray-600)'}}>Relationship:</span>
+          <span style={{fontWeight:600}}>{userProfile?.next_of_kin_relationship||'Not provided'}</span>
+        </div>
+      </div>
+    </div>
+
+    <div className="alert alert-info" style={{marginTop:24}}>
+      💡 <strong>Need to update your information?</strong> Only admins can edit profile details for security reasons. Please contact support or visit a branch.
+    </div>
+  </div>
+</div>}
+
+            {view==='change-password'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Change Password</h2>
+                <p className="section-subtitle">Update your login password</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setView('profile')} style={{marginBottom:16}}>← Back to Profile</button>
+                <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32}}>
+                  <form onSubmit={async e=>{
+                    e.preventDefault();
+                    const fd=new FormData(e.target);
+                    if(fd.get('newPassword')!==fd.get('confirmPassword')){showToast('Passwords do not match','error');return;}
+                    try{
+                      const r=await fetch(`${API}/auth/change-password`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({oldPassword:fd.get('oldPassword'),newPassword:fd.get('newPassword')})});
+                      const d=await r.json();
+                      if(d.success){showToast('Password changed successfully!');setView('profile');e.target.reset();}
+                      else showToast(d.message,'error');
+                    }catch(err){console.error(err);showToast('Failed to change password','error');}
+                  }}>
+                    <div className="form-group">
+                      <label className="form-label">Current Password</label>
+                      <input name="oldPassword" type="password" className="form-input" placeholder="••••••••" required/>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">New Password</label>
+                      <input name="newPassword" type="password" className="form-input" placeholder="••••••••" required/>
+                      <div className="form-hint">Must be at least 6 characters</div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Confirm New Password</label>
+                      <input name="confirmPassword" type="password" className="form-input" placeholder="••••••••" required/>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}}>Change Password</button>
+                  </form>
+                </div>
+              </div>
+            </div>}
+
+            {view==='set-pin'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Set Transaction PIN</h2>
+                <p className="section-subtitle">Create a 6-digit PIN for transaction verification</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <button className="btn btn-ghost btn-sm" onClick={()=>setView('profile')} style={{marginBottom:16}}>← Back to Profile</button>
+                <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32}}>
+                  <form onSubmit={async e=>{
+                    e.preventDefault();
+                    const fd=new FormData(e.target);
+                    if(!/^\d{6}$/.test(fd.get('pin'))){showToast('PIN must be exactly 6 digits','error');return;}
+                    if(fd.get('pin')!==fd.get('confirmPin')){showToast('PINs do not match','error');return;}
+                    try{
+                      const r=await fetch(`${API}/profile/set-pin`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({pin:fd.get('pin'),currentPassword:fd.get('password')})});
+                      const d=await r.json();
+                      if(d.success){showToast('Transaction PIN set successfully!');setView('profile');e.target.reset();}
+                      else showToast(d.message,'error');
+                    }catch(err){console.error(err);showToast('Failed to set PIN','error');}
+                  }}>
+                    <div className="form-group">
+                      <label className="form-label">Current Password</label>
+                      <input name="password" type="password" className="form-input" placeholder="••••••••" required/>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">6-Digit PIN</label>
+                      <input name="pin" type="password" maxLength="6" className="form-input" placeholder="000000" required/>
+                      <div className="form-hint">Enter exactly 6 digits</div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Confirm PIN</label>
+                      <input name="confirmPin" type="password" maxLength="6" className="form-input" placeholder="000000" required/>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}}>Set PIN</button>
+                  </form>
+                </div>
+              </div>
+            </div>}
+
             {view==='branches'&&<div>
               <div className="section-header">
                 <h2 className="section-title">Our Global Branches</h2>
-                <p className="section-subtitle">VolksCommercial Bank operates in the world's most important financial markets</p>
+                <p className="section-subtitle">CorpCommercial Bank operates in the world's most important financial markets</p>
               </div>
 
               <div style={{background:'var(--teal-pale)',border:'1px solid var(--teal-light)',borderRadius:8,padding:20,marginBottom:32,textAlign:'center'}}>
@@ -1534,9 +2231,11 @@
               <div className="cards-grid">
                 {[
                   {city:'New York, USA',flag:'🇺🇸',currency:'USD',address:'DFE541 Street \nNew York, NY USA',phone:'+1 (903) 517-0151'},
-                  
+
                   {city:'Berlin, Germany',flag:'🇩🇪',currency:'EUR',address:'Eichborndamm 167\n13403 Berlin Germany',phone:'+49 16 301 54371'},
-                  
+
+                  {city:'Toronto, Canada',flag:'🇨🇦',currency:'CAD',address:'100 King Street West\nToronto, ON M5X 1C9 Canada',phone:'+1 (416) 555-0199'},
+
                 ].map((b,i)=><div key={i} className="card">
                   <div style={{fontSize:32,marginBottom:16}}>{b.flag}</div>
                   <h3 style={{fontSize:18,fontWeight:600,marginBottom:8}}>{b.city}</h3>
@@ -1619,12 +2318,49 @@
               </div>
               <div className="table-container">
                 <table className="table">
-                  <thead><tr><th>Date</th><th>Type</th><th>Account ID</th><th>Amount</th><th>Status</th></tr></thead>
+                  <thead><tr><th>Transaction ID</th><th>Date</th><th>Type</th><th>Receiver</th><th>Account Number</th><th>Bank</th><th>Account ID</th><th>Amount</th><th>Status</th></tr></thead>
                   <tbody>
-                    {adminData.allTransactions.slice(0,100).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{color:'var(--gray-600)',fontSize:13}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontFamily:'monospace',fontSize:13}}>#{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td><span className="badge badge-success">Complete</span></td></tr>})}
-                    {adminData.allTransactions.length===0&&<tr><td colSpan="5" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
+                    {adminData.allTransactions.slice(0,100).map(tx=>{const c=tx.type==='deposit'||tx.type==='transfer_in';return<tr key={tx.id}><td style={{fontFamily:'monospace',fontSize:12,color:'var(--gray-500)'}}>TXN-#{tx.id}</td><td style={{color:'var(--gray-600)',fontSize:13}}>{fmtDate(tx.created_at)}</td><td style={{textTransform:'capitalize'}}>{tx.type?.replace('_',' ')}</td><td style={{fontWeight:600}}>{tx.receiver_name||'N/A'}</td><td style={{fontFamily:'monospace',fontSize:13}}>{tx.receiver_account_number||'N/A'}</td><td style={{fontSize:13,color:'var(--gray-600)'}}>{tx.bank_name||'N/A'}</td><td style={{fontFamily:'monospace',fontSize:13}}>#{tx.account_id}</td><td style={{color:c?'var(--green-success)':'var(--red-error)',fontWeight:600}}>{c?'+':'-'}{fmt(tx.amount,currency)}</td><td><span className="badge badge-success">Complete</span></td></tr>})}
+                    {adminData.allTransactions.length===0&&<tr><td colSpan="9" style={{textAlign:'center',color:'var(--gray-500)',padding:40}}>No transactions yet</td></tr>}
                   </tbody>
                 </table>
+              </div>
+            </div>}
+
+            {view==='backdate'&&auth.user.role==='admin'&&<div>
+              <div className="section-header">
+                <h2 className="section-title">Backdate Transaction</h2>
+                <p className="section-subtitle">Update the date of an existing transaction</p>
+              </div>
+              <div style={{maxWidth:600,margin:'0 auto'}}>
+                <div className="alert alert-info">💡 <strong>Admin Action:</strong> Change the transaction date for corrections or adjustments</div>
+                <div style={{background:'var(--white)',border:'1px solid var(--gray-200)',borderRadius:12,padding:32}}>
+                  <div className="alert alert-info" style={{marginBottom:20}}>
+                    <strong>📋 How to find Transaction ID:</strong> Go to "All Transactions" view and look for the TXN-# number in the first column. Enter only the number (e.g., if TXN-#5, enter 5).
+                  </div>
+                  <form onSubmit={async e=>{
+                    e.preventDefault();
+                    const fd=new FormData(e.target);
+                    try{
+                      const r=await fetch(`${API}/admin/backdate-transaction`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${auth.token}`},body:JSON.stringify({transactionId:parseInt(fd.get('transactionId')),newDate:fd.get('newDate')})});
+                      const d=await r.json();
+                      if(d.success){showToast('Transaction backdated successfully!');loadData(auth.token,auth.user);e.target.reset();}
+                      else showToast(d.message,'error');
+                    }catch(err){console.error(err);showToast('Failed to backdate transaction','error');}
+                  }}>
+                    <div className="form-group">
+                      <label className="form-label">Transaction ID</label>
+                      <input name="transactionId" type="number" className="form-input" placeholder="e.g., 1, 2, 3" required/>
+                      <div className="form-hint">Enter only the number from TXN-# (e.g., if TXN-#5, enter 5)</div>
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">New Date/Time</label>
+                      <input name="newDate" type="datetime-local" className="form-input" required/>
+                      <div className="form-hint">Select the date and time to assign to this transaction</div>
+                    </div>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{width:'100%'}}>Backdate Transaction</button>
+                  </form>
+                </div>
               </div>
             </div>}
           </div>
@@ -1641,7 +2377,7 @@
               <div><h4 className="footer-title">Support</h4>{['Help Center','Security','FAQs','Contact Support'].map(l=><a key={l} href="#" className="footer-link">{l}</a>)}</div>
               <div><h4 className="footer-title">Legal</h4>{['Privacy Policy','Terms of Service','Compliance','Accessibility'].map(l=><a key={l} href="#" className="footer-link">{l}</a>)}</div>
             </div>
-            <div className="footer-bottom">© 2026 VolksCommercial Bank Financial Services. All rights reserved.</div>
+            <div className="footer-bottom">© 2026 CorpCommercial Bank Financial Services. All rights reserved.</div>
           </div>
         </footer>
       </div>;

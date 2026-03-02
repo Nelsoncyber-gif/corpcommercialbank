@@ -8,7 +8,25 @@ exports.register = async (req, res) => {
   console.log('🔵 Register endpoint called');
   console.log('Request body:', req.body);
 
-  const { first_name, last_name, email, password, phone } = req.body;
+  const {
+    first_name,
+    last_name,
+    email,
+    password,
+    phone,
+    address,
+    city,
+    state,
+    zip,
+    country,
+    dob,
+    occupation,
+    taxId,
+    nextOfKinName,
+    nextOfKinPhone,
+    nextOfKinRelation,
+    profilePicture
+  } = req.body;
 
   // Validate required fields
   if (!first_name || !last_name || !email || !password) {
@@ -41,12 +59,23 @@ exports.register = async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     console.log('💾 Creating user in database...');
-    // Create user
+    // Create user with all fields
     const result = await pool.query(
-      `INSERT INTO users(first_name, last_name, email, password, phone)
-       VALUES($1, $2, $3, $4, $5)
-       RETURNING id, first_name, last_name, email, phone, role, created_at`,
-      [first_name, last_name, email, hashed, phone]
+      `INSERT INTO users(
+        first_name, last_name, email, password, phone,
+        address, city, state, zip_code, country,
+        date_of_birth, occupation, tax_id,
+        next_of_kin_name, next_of_kin_phone, next_of_kin_relationship,
+        profile_picture
+      ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
+       RETURNING id, first_name, last_name, email, phone, address, city, state, zip_code, country, date_of_birth, occupation, tax_id, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship, profile_picture, role, created_at`,
+      [
+        first_name, last_name, email, hashed, phone,
+        address, city, state, zip, country,
+        dob, occupation, taxId,
+        nextOfKinName, nextOfKinPhone, nextOfKinRelation,
+        profilePicture
+      ]
     );
 
     const newUser = result.rows[0];

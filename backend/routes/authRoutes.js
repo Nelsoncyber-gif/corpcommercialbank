@@ -31,7 +31,7 @@ router.get('/profile', protect, (req, res) => {
   });
 });
 
-router.put('/change-password', protect, changePassword);
+router.post('/change-password', protect, changePassword);
 
 // ==================== TEST ROUTES ====================
 

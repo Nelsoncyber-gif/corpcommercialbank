@@ -4,7 +4,12 @@ const pool = require('../config/db');
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await pool.query(
-      "SELECT id, first_name, last_name, email, phone, role FROM users"
+      `SELECT id, first_name, last_name, email, phone, role,
+              address, city, state, zip_code, country,
+              date_of_birth, occupation, tax_id,
+              next_of_kin_name, next_of_kin_phone, next_of_kin_relationship,
+              profile_picture, created_at
+       FROM users`
     );
 
     res.json({
