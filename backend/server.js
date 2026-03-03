@@ -42,12 +42,12 @@ app.use('/api/admin', chatRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/cards', cardRoutes);
 
-// Serve static files from frontend
-app.use(express.static(path.join(__dirname, '../frontend')));
+// Serve static files from root directory
+app.use(express.static(path.join(__dirname, '..')));
 
-// Catch-all route to serve React app (Express 5.x compatible)
+// Catch-all route to serve index.html
 app.get('/*path', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+  res.sendFile(path.join(__dirname, '..', 'index.html'));
 });
 
 // Socket.io for real-time chat
