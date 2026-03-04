@@ -5,6 +5,8 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
+    "migrate": "node backend/scripts/migrate.js",
+    "deploy": "npm run migrate && npm start",
     "dev": "nodemon backend/server.js",
     "build": "echo 'No build step required'",
     "postinstall": "echo 'Installation complete'"
@@ -18,7 +20,7 @@
   ],
   "author": "",
   "license": "ISC",
- "dependencies": {
+  "dependencies": {
     "bcrypt": "^6.0.0",
     "cors": "^2.8.6",
     "dotenv": "^17.2.3",
