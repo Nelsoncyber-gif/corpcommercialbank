@@ -25,10 +25,10 @@ async function runMigrations() {
         occupation VARCHAR(100),
         tax_id VARCHAR(50),
         phone VARCHAR(20),
-         next_of_kin_name VARCHAR(100),
+        next_of_kin_name VARCHAR(100),
         next_of_kin_phone VARCHAR(20),
         next_of_kin_relationship VARCHAR(50),
-         address TEXT,
+        address TEXT,
         city VARCHAR(100),
         state VARCHAR(100),
         zip_code VARCHAR(20),
@@ -36,12 +36,11 @@ async function runMigrations() {
         profile_picture TEXT,
         role VARCHAR(20) DEFAULT 'user',
         is_verified BOOLEAN DEFAULT FALSE,
+        transaction_pin VARCHAR(255),
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
-
-
 
     // Create accounts table
     await pool.query(`
@@ -56,8 +55,6 @@ async function runMigrations() {
       );
     `);
 
-
-
     // Create transactions table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS transactions (
@@ -65,19 +62,51 @@ async function runMigrations() {
         account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
         type VARCHAR(20) NOT NULL,
         amount DECIMAL(15, 2) NOT NULL,
-         sender_account VARCHAR(50),
-          receiver_account VARCHAR(50),
-           receiver_name VARCHAR(100),
-           receiver_account_number VARCHAR(50),
-            bank_name VARCHAR(100),
+        sender_account VARCHAR(50),
+        receiver_account VARCHAR(50),
+        receiver_name VARCHAR(100),
+        receiver_account_number VARCHAR(50),
+        bank_name VARCHAR(100),
         description TEXT,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);
 
+    // Create card_requests table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS card_requests (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        card_type VARCHAR(50) DEFAULT 'Visa',
+        status VARCHAR(20) DEFAULT 'pending',
+        requested_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
 
+    // Create cards table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS cards (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        card_number TEXT NOT NULL,
+        card_holder_name VARCHAR(100) NOT NULL,
+        expiry_date VARCHAR(7) NOT NULL,
+        cvv TEXT NOT NULL,
+        card_type VARCHAR(50) DEFAULT 'Visa',
+        status VARCHAR(20) DEFAULT 'inactive',
+        balance DECIMAL(15, 2) DEFAULT 0.00,
+        daily_limit DECIMAL(15, 2) DEFAULT 1000.00,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
 
-
+    // Create indexes for better performance
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_card_requests_user_id ON card_requests(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_cards_user_id ON cards(user_id)`);
 
     console.log('✅ Database tables created successfully');
     await pool.end();
