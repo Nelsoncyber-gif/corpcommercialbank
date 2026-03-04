@@ -3,18 +3,15 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL,
-  ssl: {
-    rejectUnauthorized: false  // ← This is CRITICAL for Railway
-  }
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 async function runMigrations() {
   try {
     console.log('🔌 Connecting to database...');
-    await pool.connect();
-    console.log('✅ Connected successfully');
     
+    // Create users table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -30,11 +27,11 @@ async function runMigrations() {
       );
     `);
     
-    console.log('✅ Migrations complete - users table ready');
+    console.log('✅ Database tables created successfully');
     await pool.end();
+    process.exit(0);
   } catch (err) {
     console.error('❌ Migration failed:', err.message);
-    console.error('Full error:', err);
     process.exit(1);
   }
 }

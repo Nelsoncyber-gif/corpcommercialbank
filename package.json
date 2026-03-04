@@ -5,11 +5,9 @@
   "main": "backend/server.js",
   "scripts": {
     "start": "node backend/server.js",
-    "migrate": "node backend/scripts/migrate.js",
-    "deploy": "npm run migrate && npm start",
     "dev": "nodemon backend/server.js",
-    "build": "echo 'No build step required'",
-    "postinstall": "echo 'Installation complete'"
+    "migrate": "node backend/scripts/migrate.js",
+    "build": "echo 'Build complete'"
   },
   "engines": {
     "node": ">=18.0.0"
