@@ -2,7 +2,12 @@
 require('dotenv').config({ path: './backend/.env' });
 const { Pool } = require('pg');
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Parse DATABASE_URL and add SSL options only for production (Railway)
+const isProduction = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway');
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: isProduction ? { rejectUnauthorized: false } : false
+});
 
 async function runMigrations() {
   try {
@@ -10,8 +15,14 @@ async function runMigrations() {
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
         email VARCHAR(255) UNIQUE NOT NULL,
-        password_hash VARCHAR(255) NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW()
+        password VARCHAR(255) NOT NULL,
+        first_name VARCHAR(100),
+        last_name VARCHAR(100),
+        dob DATE,
+        phone VARCHAR(20),
+        is_verified BOOLEAN DEFAULT FALSE,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW()
       );
       -- Add other tables as needed
     `);
