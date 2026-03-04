@@ -1,12 +1,23 @@
 // backend/scripts/migrate.js
+// Try multiple .env locations for local and Railway environments
 require('dotenv').config({ path: './backend/.env' });
+require('dotenv').config({ path: '.env' });
+
 const { Pool } = require('pg');
 
-// Parse DATABASE_URL and add SSL options only for production (Railway)
-const isProduction = process.env.DATABASE_URL && process.env.DATABASE_URL.includes('railway');
+// Parse DATABASE_URL and remove any sslmode parameters that conflict
+let connectionString = process.env.DATABASE_URL;
+if (connectionString) {
+  // Remove sslmode from connection string to avoid conflicts
+  connectionString = connectionString.replace(/[?&]sslmode=[^&]*/gi, '');
+}
+
+// SSL configuration for production databases (Railway, etc.)
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: isProduction ? { rejectUnauthorized: false } : false
+  connectionString: connectionString,
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
 async function runMigrations() {
