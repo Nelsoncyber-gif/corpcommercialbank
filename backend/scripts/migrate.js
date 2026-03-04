@@ -49,7 +49,6 @@ async function runMigrations() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         account_number VARCHAR(50) UNIQUE NOT NULL,
-        account_type VARCHAR(50) NOT NULL,
         balance DECIMAL(15, 2) DEFAULT 0.00,
         status VARCHAR(20) DEFAULT 'active',
         created_at TIMESTAMPTZ DEFAULT NOW(),
@@ -76,7 +75,7 @@ async function runMigrations() {
       );
     `);
 
-    
+
 
 
 
