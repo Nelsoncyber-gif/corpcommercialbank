@@ -101,12 +101,24 @@ async function runMigrations() {
       );
     `);
 
+    // Create chat_messages table
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS chat_messages (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        sender_type VARCHAR(20) NOT NULL,
+        message TEXT NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      );
+    `);
+
     // Create indexes for better performance
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON accounts(user_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON transactions(account_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_transactions_created_at ON transactions(created_at)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_card_requests_user_id ON card_requests(user_id)`);
     await pool.query(`CREATE INDEX IF NOT EXISTS idx_cards_user_id ON cards(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id ON chat_messages(user_id)`);
 
     console.log('✅ Database tables created successfully');
     await pool.end();
