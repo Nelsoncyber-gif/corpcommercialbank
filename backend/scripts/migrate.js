@@ -1,27 +1,20 @@
 // backend/scripts/migrate.js
-// Try multiple .env locations for local and Railway environments
-require('dotenv').config({ path: './backend/.env' });
-require('dotenv').config({ path: '.env' });
-
+require('dotenv').config();
 const { Pool } = require('pg');
 
-// Parse DATABASE_URL and remove any sslmode parameters that conflict
-let connectionString = process.env.DATABASE_URL;
-if (connectionString) {
-  // Remove sslmode from connection string to avoid conflicts
-  connectionString = connectionString.replace(/[?&]sslmode=[^&]*/gi, '');
-}
-
-// SSL configuration for production databases (Railway, etc.)
-const pool = new Pool({
-  connectionString: connectionString,
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL || process.env.DATABASE_PUBLIC_URL,
   ssl: {
-    rejectUnauthorized: false
+    rejectUnauthorized: false  // ← This is CRITICAL for Railway
   }
 });
 
 async function runMigrations() {
   try {
+    console.log('🔌 Connecting to database...');
+    await pool.connect();
+    console.log('✅ Connected successfully');
+    
     await pool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -35,12 +28,13 @@ async function runMigrations() {
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
-      -- Add other tables as needed
     `);
-    console.log('✅ Migrations complete');
+    
+    console.log('✅ Migrations complete - users table ready');
     await pool.end();
   } catch (err) {
-    console.error('❌ Migration failed:', err);
+    console.error('❌ Migration failed:', err.message);
+    console.error('Full error:', err);
     process.exit(1);
   }
 }
