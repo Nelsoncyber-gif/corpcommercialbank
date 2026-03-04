@@ -1,12 +1,17 @@
+// backend/config/db.js
+require('dotenv').config();
 const { Pool } = require('pg');
-require('dotenv').config({ path: './backend/.env' });
-require('dotenv').config({ path: '.env' });
 
-const pool = new Pool({
+const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  ssl: {
+  ssl: process.env.NODE_ENV === 'production' ? {
     rejectUnauthorized: false
-  }
+  } : false
 });
+
+// Test connection
+pool.connect()
+  .then(() => console.log('✅ Database connected successfully'))
+  .catch(err => console.error('❌ Database connection error:', err));
 
 module.exports = pool;
