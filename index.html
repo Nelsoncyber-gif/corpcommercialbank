@@ -197,18 +197,21 @@
     }
 
     .mobile-menu-btn {
-      display: flex;
+      display: flex !important;
       background: none;
       border: none;
       font-size: 24px;
       color: var(--gray-700);
       cursor: pointer;
       padding: 8px;
+      z-index: 1001;
+      touch-action: manipulation;
+      -webkit-tap-highlight-color: transparent;
     }
 
     @media (min-width: 1024px) {
       .mobile-menu-btn {
-        display: none;
+        display: none !important;
       }
     }
 
@@ -276,14 +279,14 @@
       position: fixed;
       inset: 0;
       background: rgba(0, 0, 0, 0.5);
-      z-index: 1100;
+      z-index: 9998 !important;
       animation: fadeIn 0.2s;
       -webkit-tap-highlight-color: transparent;
       touch-action: manipulation;
     }
 
     .mobile-menu-overlay.open {
-      display: block;
+      display: block !important;
     }
 
     @keyframes fadeIn {
@@ -307,13 +310,17 @@
       background: var(--white);
       box-shadow: var(--shadow-xl);
       transition: right 0.3s ease;
-      z-index: 1200;
+      z-index: 9999 !important;
       overflow-y: auto;
       -webkit-overflow-scrolling: touch;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
 
     .mobile-menu.open {
-      right: 0;
+      right: 0 !important;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
 
     .mobile-menu-header {
@@ -335,10 +342,11 @@
 
     .mobile-menu-items {
       padding: 20px;
+      padding-bottom: 60px !important;
     }
 
     .mobile-menu-item {
-      display: block;
+      display: block !important;
       padding: 14px 0;
       font-size: 16px;
       font-weight: 500;
@@ -346,13 +354,15 @@
       text-decoration: none;
       border-bottom: 1px solid var(--gray-100);
       cursor: pointer;
-      background: none;
+      background: none !important;
       border-left: none;
       border-right: none;
       border-top: none;
       width: 100%;
       text-align: left;
       font-family: inherit;
+      visibility: visible !important;
+      opacity: 1 !important;
     }
 
     .mobile-menu-item:hover,
