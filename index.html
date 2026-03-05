@@ -100,7 +100,7 @@
       }
     }
 
-    /* TOP NAVIGATION */
+    /* TOP NAVIGATION - IMPROVED MOBILE RESPONSIVENESS */
     .top-nav {
       background: var(--white);
       border-bottom: 1px solid var(--gray-200);
@@ -115,27 +115,31 @@
       align-items: center;
       justify-content: space-between;
       height: 70px;
-      padding: 0 20px;
+      padding: 0 16px;
+      max-width: 100%;
     }
 
     @media (min-width: 1024px) {
       .top-nav-inner {
         padding: 0 40px;
+        max-width: 1400px;
+        margin: 0 auto;
       }
     }
 
     .logo-box {
       background: var(--teal-primary);
-      padding: 12px 20px;
+      padding: 10px 16px;
       border-radius: 4px;
       display: flex;
       flex-direction: column;
       align-items: flex-start;
+      flex-shrink: 0;
     }
 
     .logo-text {
       font-family: 'Source Serif 4', serif;
-      font-size: 18px;
+      font-size: 14px;
       font-weight: 700;
       color: var(--white);
       letter-spacing: -0.5px;
@@ -144,21 +148,22 @@
     }
 
     .logo-tagline {
-      font-size: 9px;
-      color: rgba(255, 255, 255, 0.85);
+      font-size: 8px;
+      color: rgba(255,255,255,0.85);
       text-transform: uppercase;
-      letter-spacing: 1.5px;
+      letter-spacing: 1px;
       margin-top: 2px;
     }
 
     @media (min-width: 768px) {
-      .logo-text {
-        font-size: 20px;
-      }
+      .logo-text { font-size: 18px; }
+      .logo-tagline { font-size: 9px; }
+      .logo-box { padding: 12px 20px; }
+    }
 
-      .logo-tagline {
-        font-size: 10px;
-      }
+    @media (min-width: 1024px) {
+      .logo-text { font-size: 20px; }
+      .logo-tagline { font-size: 10px; }
     }
 
     .nav-links {
@@ -168,9 +173,7 @@
     }
 
     @media (min-width: 1024px) {
-      .nav-links {
-        display: flex;
-      }
+      .nav-links { display: flex; }
     }
 
     .nav-link {
@@ -185,34 +188,173 @@
       font-family: inherit;
     }
 
-    .nav-link:hover,
-    .nav-link.active {
-      color: var(--teal-primary);
-    }
+    .nav-link:hover, .nav-link.active { color: var(--teal-primary); }
 
     .nav-actions {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 8px;
+    }
+
+    @media (min-width: 768px) {
+      .nav-actions { gap: 12px; }
+    }
+
+    /* Currency selector - hide on very small screens */
+    .nav-actions select {
+      display: none;
+    }
+
+    @media (min-width: 480px) {
+      .nav-actions select {
+        display: block;
+        padding: 6px 8px;
+        border: 1px solid var(--gray-300);
+        border-radius: 6px;
+        font-size: 12px;
+        background: var(--white);
+        cursor: pointer;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .nav-actions select {
+        padding: 8px 12px;
+        font-size: 14px;
+      }
     }
 
     .mobile-menu-btn {
-      display: flex !important;
+      display: flex;
       background: none;
       border: none;
-      font-size: 24px;
+      font-size: 28px;
       color: var(--gray-700);
       cursor: pointer;
       padding: 8px;
-      z-index: 1001;
-      touch-action: manipulation;
-      -webkit-tap-highlight-color: transparent;
+      line-height: 1;
+      align-items: center;
+      justify-content: center;
+      min-width: 44px;
+      min-height: 44px;
     }
 
     @media (min-width: 1024px) {
-      .mobile-menu-btn {
-        display: none !important;
-      }
+      .mobile-menu-btn { display: none; }
+    }
+
+    /* MOBILE MENU OVERLAY */
+    .mobile-menu-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1100;
+      animation: fadeIn 0.2s;
+    }
+
+    .mobile-menu-overlay.open { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .mobile-menu {
+      position: fixed;
+      top: 0;
+      right: -100%;
+      width: 85%;
+      max-width: 360px;
+      height: 100vh;
+      background: var(--white);
+      box-shadow: var(--shadow-xl);
+      transition: right 0.3s ease;
+      z-index: 1200;
+      overflow-y: auto;
+    }
+
+    .mobile-menu.open { right: 0; }
+
+    .mobile-menu-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--gray-200);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      min-height: 70px;
+    }
+
+    .mobile-menu-close {
+      background: none;
+      border: none;
+      font-size: 32px;
+      color: var(--gray-700);
+      cursor: pointer;
+      padding: 8px;
+      line-height: 1;
+      min-width: 44px;
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .mobile-menu-items {
+      padding: 20px;
+    }
+
+    .mobile-menu-item {
+      display: block;
+      padding: 16px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: var(--gray-700);
+      text-decoration: none;
+      border-bottom: 1px solid var(--gray-100);
+      cursor: pointer;
+      background: none;
+      border-left: none;
+      border-right: none;
+      border-top: none;
+      width: 100%;
+      text-align: left;
+      font-family: inherit;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+    }
+
+    .mobile-menu-item:hover, .mobile-menu-item.active {
+      color: var(--teal-primary);
+      background: var(--teal-pale);
+    }
+
+    .mobile-currency-selector {
+      padding: 16px 0;
+      border-bottom: 1px solid var(--gray-100);
+      margin-bottom: 16px;
+    }
+
+    .mobile-currency-selector label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--gray-500);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+
+    .mobile-currency-selector select {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid var(--gray-300);
+      border-radius: 6px;
+      font-size: 14px;
+      background: var(--white);
+      cursor: pointer;
+      font-family: inherit;
     }
 
     .btn {
@@ -3352,12 +3494,6 @@
       const [toast, setToast] = useState(null);
       const [currency, setCurrency] = useState('USD');
       const [userProfile, setUserProfile] = useState(null);
-
-      // Debug mobile menu state
-      useEffect(() => {
-        console.log('Mobile menu state:', mobileMenuOpen);
-      }, [mobileMenuOpen]);
-
       useEffect(() => { const t = localStorage.getItem('token'), u = localStorage.getItem('user'); if (t && u) { const userObj = JSON.parse(u); setAuth({ user: userObj, token: t }); loadData(t, userObj); } }, []);
       const loadData = async (token, userObj) => {
         try {
@@ -3454,48 +3590,46 @@
                 )}
               </select>
               <button className="btn btn-outline btn-sm" onClick={logout}>Sign out</button>
-              <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)} style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                touchAction: 'manipulation'
-              }}>☰</button>
+              <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)}>☰</button>
             </div>
           </div>
         </nav>
         {/* MOBILE MENU */}
-        <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} style={{ display: mobileMenuOpen ? 'block' : 'none' }} />
-        <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`} style={{
-          right: mobileMenuOpen ? '0' : '-100%',
-          visibility: 'visible',
-          opacity: 1,
-          transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'right 0.3s ease, transform 0.3s ease'
-        }}>
+        <div className={`mobile-menu-overlay ${mobileMenuOpen?'open':''}`} onClick={()=>setMobileMenuOpen(false)}/>
+        <div className={`mobile-menu ${mobileMenuOpen?'open':''}`}>
           <div className="mobile-menu-header">
-            <div style={{ fontWeight: 700, fontSize: 16 }}>{auth.user.first_name} {auth.user.last_name}</div>
-            <button className="mobile-menu-close" onClick={() => setMobileMenuOpen(false)}>✕</button>
+            <div style={{fontWeight:700,fontSize:16}}>{auth.user.first_name} {auth.user.last_name}</div>
+            <button className="mobile-menu-close" onClick={()=>setMobileMenuOpen(false)}>✕</button>
           </div>
           <div className="mobile-menu-items">
-            <button className={`mobile-menu-item ${view === 'overview' ? 'active' : ''}`} onClick={() => { setView('overview'); setMobileMenuOpen(false); }}>Overview</button>
-            {auth.user.role !== 'admin' && <>
-              <button className={`mobile-menu-item ${view === 'accounts' ? 'active' : ''}`} onClick={() => { setView('accounts'); setMobileMenuOpen(false); }}>Accounts</button>
-              <button className={`mobile-menu-item ${view === 'transactions' ? 'active' : ''}`} onClick={() => { setView('transactions'); setMobileMenuOpen(false); }}>Transactions</button>
-              <button className={`mobile-menu-item ${view === 'transfer' ? 'active' : ''}`} onClick={() => { setView('transfer'); setMobileMenuOpen(false); }}>Transfer</button>
-              <button className={`mobile-menu-item ${view === 'withdraw' ? 'active' : ''}`} onClick={() => { setView('withdraw'); setMobileMenuOpen(false); }}>Withdraw</button>
-              <button className={`mobile-menu-item ${view === 'cards' ? 'active' : ''}`} onClick={() => { setView('cards'); setMobileMenuOpen(false); }}>Cards</button>
-              <button className={`mobile-menu-item ${view === 'profile' ? 'active' : ''}`} onClick={() => { setView('profile'); setMobileMenuOpen(false); }}>Profile</button>
+            {/* Currency Selector in Mobile Menu */}
+            <div className="mobile-currency-selector">
+              <label>Currency</label>
+              <select value={currency} onChange={e=>setCurrency(e.target.value)}>
+                {Object.entries(CURRENCY_RATES).map(([code,{name,symbol}])=>
+                  <option key={code} value={code}>{symbol} - {code} ({name})</option>
+                )}
+              </select>
+            </div>
+
+            <button className={`mobile-menu-item ${view==='overview'?'active':''}`} onClick={()=>{setView('overview');setMobileMenuOpen(false);}}>📊 Overview</button>
+            {auth.user.role!=='admin'&&<>
+              <button className={`mobile-menu-item ${view==='accounts'?'active':''}`} onClick={()=>{setView('accounts');setMobileMenuOpen(false);}}>💳 Accounts</button>
+              <button className={`mobile-menu-item ${view==='transactions'?'active':''}`} onClick={()=>{setView('transactions');setMobileMenuOpen(false);}}>📋 Transactions</button>
+              <button className={`mobile-menu-item ${view==='transfer'?'active':''}`} onClick={()=>{setView('transfer');setMobileMenuOpen(false);}}>💸 Transfer</button>
+              <button className={`mobile-menu-item ${view==='withdraw'?'active':''}`} onClick={()=>{setView('withdraw');setMobileMenuOpen(false);}}>🏧 Withdraw</button>
+              <button className={`mobile-menu-item ${view==='cards'?'active':''}`} onClick={()=>{setView('cards');setMobileMenuOpen(false);}}>💳 Cards</button>
+              <button className={`mobile-menu-item ${view==='profile'?'active':''}`} onClick={()=>{setView('profile');setMobileMenuOpen(false);}}>👤 Profile</button>
             </>}
-            {auth.user.role === 'admin' && <>
-              <button className={`mobile-menu-item ${view === 'customers' ? 'active' : ''}`} onClick={() => { setView('customers'); setMobileMenuOpen(false); }}>Customers</button>
-              <button className={`mobile-menu-item ${view === 'approvals' ? 'active' : ''}`} onClick={() => { setView('approvals'); setMobileMenuOpen(false); }}>Pending Approvals</button>
-              <button className={`mobile-menu-item ${view === 'deposit' ? 'active' : ''}`} onClick={() => { setView('deposit'); setMobileMenuOpen(false); }}>Process Deposit</button>
-              <button className={`mobile-menu-item ${view === 'admin-transactions' ? 'active' : ''}`} onClick={() => { setView('admin-transactions'); setMobileMenuOpen(false); }}>All Transactions</button>
-              <button className={`mobile-menu-item ${view === 'backdate' ? 'active' : ''}`} onClick={() => { setView('backdate'); setMobileMenuOpen(false); }}>Backdate Transaction</button>
+            {auth.user.role==='admin'&&<>
+              <button className={`mobile-menu-item ${view==='customers'?'active':''}`} onClick={()=>{setView('customers');setMobileMenuOpen(false);}}>👥 Customers</button>
+              <button className={`mobile-menu-item ${view==='approvals'?'active':''}`} onClick={()=>{setView('approvals');setMobileMenuOpen(false);}}>⏳ Pending Approvals</button>
+              <button className={`mobile-menu-item ${view==='deposit'?'active':''}`} onClick={()=>{setView('deposit');setMobileMenuOpen(false);}}>💰 Process Deposit</button>
+              <button className={`mobile-menu-item ${view==='admin-transactions'?'active':''}`} onClick={()=>{setView('admin-transactions');setMobileMenuOpen(false);}}>📊 All Transactions</button>
+              <button className={`mobile-menu-item ${view==='backdate'?'active':''}`} onClick={()=>{setView('backdate');setMobileMenuOpen(false);}}>⏱️ Backdate Transaction</button>
             </>}
-            <button className={`mobile-menu-item ${view === 'branches' ? 'active' : ''}`} onClick={() => { setView('branches'); setMobileMenuOpen(false); }}>Branches</button>
-            <button className="mobile-menu-item" onClick={logout}>Sign out</button>
+            <button className={`mobile-menu-item ${view==='branches'?'active':''}`} onClick={()=>{setView('branches');setMobileMenuOpen(false);}}>🏢 Branches</button>
+            <button className="mobile-menu-item" onClick={logout} style={{borderTop:'2px solid var(--red-error)',color:'var(--red-error)',marginTop:12}}>🚪 Sign out</button>
           </div>
         </div>
         {/* HERO */}
