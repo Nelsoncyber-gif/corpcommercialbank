@@ -1154,14 +1154,21 @@
 
         s.on('new-user-message',({userId,message})=>{
           console.log('📩 Admin received message from user',userId,message);
+          console.log('📩 Selected chat:', selectedChatRef.current);
           s.emit('get-active-chats');
           if(selectedChatRef.current&&selectedChatRef.current.user_id===userId){
+            console.log('📩 Adding message to current chat');
             setMessages(prev=>[...prev,message]);
+          } else {
+            console.log('📩 Chat not selected or user mismatch');
           }
         });
 
         s.on('new-message',(message)=>{
+          console.log('📩 Admin received new-message event:', message);
+          console.log('📩 Selected chat for new-message:', selectedChatRef.current);
           if(selectedChatRef.current&&message.user_id===selectedChatRef.current.user_id){
+            console.log('📩 Adding message via new-message handler');
             setMessages(prev=>[...prev,message]);
           }
         });
@@ -1548,6 +1555,10 @@
             method:'GET',
             headers:{'Authorization':`Bearer ${auth.token}`}
           });
+          if(!response.ok){
+            const error=await response.json().catch(()=>({message:'Download failed'}));
+            throw new Error(error.message||'Download failed');
+          }
           const blob=await response.blob();
           const url=window.URL.createObjectURL(blob);
           const link=document.createElement('a');
@@ -1560,7 +1571,7 @@
           showToast('Receipt downloaded successfully!');
         }catch(err){
           console.error('Download failed:',err);
-          showToast('Failed to download receipt','error');
+          showToast(err.message||'Failed to download receipt','error');
         }
       };
 

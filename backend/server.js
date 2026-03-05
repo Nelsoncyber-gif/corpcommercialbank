@@ -68,6 +68,7 @@ io.on('connection', (socket) => {
       adminSocketIds.add(socket.id);
       io.emit('admin-online', { adminCount: activeAdmins.size });
       console.log('👨‍💼 Admin joined chat. Active admins:', activeAdmins.size);
+      console.log('👨‍💼 Admin socket IDs:', Array.from(adminSocketIds));
     }
 
     // Send chat history
@@ -96,24 +97,26 @@ io.on('connection', (socket) => {
       );
 
       const newMessage = result.rows[0];
+      console.log('💾 Message saved to DB:', newMessage);
 
       // Send to user's room
       io.to(`user-${userId}`).emit('new-message', newMessage);
 
-      // If user sent message, notify all connected admins
+      // Broadcast to ALL admins (including sender if admin)
       if (senderType === 'user') {
-        console.log('📢 Broadcasting user message to', adminSocketIds.size, 'admins');
-        adminSocketIds.forEach((socketId) => {
-          io.to(socketId).emit('new-user-message', {
-            userId,
-            message: newMessage
-          });
-        });
-        // Also emit to all admins via broadcast
+        console.log('📢 Broadcasting user message to all admins');
         io.emit('new-user-message', {
           userId,
           message: newMessage
         });
+        // Also send via new-message event to all admins for the selected chat
+        io.to(`user-${userId}`).emit('new-message', newMessage);
+      } else if (senderType === 'admin') {
+        console.log('📢 Admin sent message to user', userId);
+        // Send to the specific user
+        io.to(`user-${userId}`).emit('new-message', newMessage);
+        // Also notify other admins about this admin's message
+        io.emit('new-message', newMessage);
       }
 
       console.log(`📨 Message from ${senderType}:`, message.substring(0, 50));

@@ -926,12 +926,16 @@ const AdminChatPanel = ({ token }) => {
       console.log('🔌 Admin socket connected:', newSocket.id);
       setIsAdminConnected(true);
 
+      // Emit join-chat with admin credentials
       newSocket.emit('join-chat', {
         userId: user?.id,
         userRole: 'admin'
       });
 
-      newSocket.emit('get-active-chats');
+      // Request active chats after joining
+      setTimeout(() => {
+        newSocket.emit('get-active-chats');
+      }, 500);
     });
 
     newSocket.on('active-chats', (chats) => {
@@ -939,14 +943,22 @@ const AdminChatPanel = ({ token }) => {
       setActiveChats(chats);
     });
 
+    // Listen for new messages from users
     newSocket.on('new-user-message', ({ userId, message }) => {
       console.log('📩 Admin received new-user-message from user:', userId, message);
-      newSocket.emit('get-active-chats');
+
+      // Refresh active chats list
+      setTimeout(() => {
+        newSocket.emit('get-active-chats');
+      }, 100);
+
+      // If this is the selected chat, add the message
       if (selectedChatRef.current && selectedChatRef.current.user_id === userId) {
         setMessages(prev => [...prev, message]);
       }
     });
 
+    // Also listen for general new-message events
     newSocket.on('new-message', (message) => {
       console.log('📩 Admin received new-message:', message);
       if (selectedChatRef.current && message.user_id === selectedChatRef.current.user_id) {
@@ -954,9 +966,11 @@ const AdminChatPanel = ({ token }) => {
       }
     });
 
+    // Auto-scroll to bottom
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
 
     return () => {
+      console.log('🔌 Admin socket disconnecting');
       newSocket.off('connect');
       newSocket.off('active-chats');
       newSocket.off('new-user-message');

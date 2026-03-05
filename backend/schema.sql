@@ -31,6 +31,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     sender_account VARCHAR(20),
     receiver_account VARCHAR(20),
     description TEXT,
+    original_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

@@ -68,6 +68,7 @@ async function runMigrations() {
         receiver_account_number VARCHAR(50),
         bank_name VARCHAR(100),
         description TEXT,
+        original_date TIMESTAMP,
         created_at TIMESTAMPTZ DEFAULT NOW()
       );
     `);

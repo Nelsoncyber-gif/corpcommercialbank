@@ -20,8 +20,7 @@ exports.createAccount = async (req, res) => {
     }
 
     // Generate unique account number
-    const accountNumber = 'ACC' + Date.now() + Math.floor(Math.random() * 1000);
-
+   const accountNumber = Math.floor(Math.random() * 9000000000) + 1000000000;
     // Create account
     const result = await pool.query(
       'INSERT INTO accounts (user_id, account_number, balance, status) VALUES ($1, $2, $3, $4) RETURNING *',
