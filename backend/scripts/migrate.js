@@ -102,6 +102,20 @@ async function runMigrations() {
       );
     `);
 
+    // Create account_approvals table (for admin approval workflow)
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS account_approvals (
+        id SERIAL PRIMARY KEY,
+        user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+        account_number VARCHAR(50) UNIQUE NOT NULL,
+        status VARCHAR(20) DEFAULT 'pending',
+        requested_at TIMESTAMPTZ DEFAULT NOW(),
+        reviewed_at TIMESTAMPTZ,
+        reviewed_by INTEGER REFERENCES users(id),
+        review_notes TEXT
+      );
+    `);
+
     // Create chat_messages table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS chat_messages (

@@ -11,7 +11,10 @@ const {
   unfreezeAccount,
   checkAccountStatus,
   getUserAccounts,
-  deleteUser
+  deleteUser,
+  getPendingApprovals,
+  approveAccount,
+  rejectAccount
 } = require('../controllers/adminController');
 
 
@@ -30,6 +33,32 @@ router.post('/freeze', protect, adminOnly, freezeAccount);
 router.post('/unfreeze', protect, adminOnly, unfreezeAccount);
 
 router.delete('/delete-user', protect, adminOnly, deleteUser);
+
+// ============== ACCOUNT APPROVALS =================
+
+/**
+ * Get all pending account approval requests
+ * @route GET /api/admin/pending-approvals
+ * @access Protected (Admin only)
+ */
+router.get('/pending-approvals', protect, adminOnly, getPendingApprovals);
+
+/**
+ * Approve a pending account request
+ * @route POST /api/admin/approve-account
+ * @access Protected (Admin only)
+ * @body {number} approvalId - Required
+ */
+router.post('/approve-account', protect, adminOnly, approveAccount);
+
+/**
+ * Reject a pending account request
+ * @route POST /api/admin/reject-account
+ * @access Protected (Admin only)
+ * @body {number} approvalId - Required
+ * @body {string} reason - Optional
+ */
+router.post('/reject-account', protect, adminOnly, rejectAccount);
 
 // Backdate transaction
 router.post('/backdate-transaction', protect, adminOnly, async (req, res) => {

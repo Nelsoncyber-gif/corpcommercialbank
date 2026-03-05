@@ -27,6 +27,152 @@ exports.getAllUsers = async (req, res) => {
   }
 };
 
+// ============== GET PENDING ACCOUNT APPROVALS =================
+exports.getPendingApprovals = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT aa.*, u.first_name, u.last_name, u.email, u.phone
+       FROM account_approvals aa
+       JOIN users u ON aa.user_id = u.id
+       WHERE aa.status = 'pending'
+       ORDER BY aa.requested_at DESC`
+    );
+
+    res.json({
+      success: true,
+      pendingApprovals: result.rows
+    });
+
+  } catch (err) {
+    console.error('Get pending approvals error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve pending approvals",
+      error: err.message
+    });
+  }
+};
+
+// ============== APPROVE ACCOUNT =================
+exports.approveAccount = async (req, res) => {
+  try {
+    const { approvalId } = req.body;
+    const adminId = req.user.id;
+
+    if (!approvalId) {
+      return res.status(400).json({
+        success: false,
+        message: "Approval ID is required"
+      });
+    }
+
+    const client = await pool.connect();
+
+    try {
+      await client.query("BEGIN");
+
+      // Get the pending approval request
+      const approvalResult = await client.query(
+        "SELECT * FROM account_approvals WHERE id = $1 AND status = 'pending'",
+        [parseInt(approvalId)]
+      );
+
+      if (approvalResult.rows.length === 0) {
+        await client.query("ROLLBACK");
+        return res.status(404).json({
+          success: false,
+          message: "Pending approval request not found"
+        });
+      }
+
+      const approval = approvalResult.rows[0];
+
+      // Create the actual account
+      const accountResult = await client.query(
+        `INSERT INTO accounts (user_id, account_number, balance, status, created_at)
+         VALUES ($1, $2, $3, $4, $5)
+         RETURNING *`,
+        [approval.user_id, approval.account_number, 0.00, 'active', approval.requested_at]
+      );
+
+      // Update the approval status
+      await client.query(
+        `UPDATE account_approvals
+         SET status = 'approved', reviewed_at = NOW(), reviewed_by = $1, review_notes = $2
+         WHERE id = $3`,
+        [adminId, 'Account approved', parseInt(approvalId)]
+      );
+
+      await client.query("COMMIT");
+
+      res.json({
+        success: true,
+        message: "Account approved successfully",
+        account: accountResult.rows[0]
+      });
+
+    } catch (error) {
+      await client.query("ROLLBACK");
+      throw error;
+    } finally {
+      client.release();
+    }
+
+  } catch (err) {
+    console.error('Approve account error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to approve account",
+      error: err.message
+    });
+  }
+};
+
+// ============== REJECT ACCOUNT =================
+exports.rejectAccount = async (req, res) => {
+  try {
+    const { approvalId, reason } = req.body;
+    const adminId = req.user.id;
+
+    if (!approvalId) {
+      return res.status(400).json({
+        success: false,
+        message: "Approval ID is required"
+      });
+    }
+
+    // Update the approval status to rejected
+    const result = await pool.query(
+      `UPDATE account_approvals
+       SET status = 'rejected', reviewed_at = NOW(), reviewed_by = $1, review_notes = $2
+       WHERE id = $3 AND status = 'pending'
+       RETURNING *`,
+      [adminId, reason || 'Account rejected', parseInt(approvalId)]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Pending approval request not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Account request rejected",
+      approval: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error('Reject account error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to reject account",
+      error: err.message
+    });
+  }
+};
+
 // ============== GET ALL TRANSACTIONS =================
 exports.getAllTransactions = async (req, res) => {
   try {
