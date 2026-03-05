@@ -3352,6 +3352,12 @@
       const [toast, setToast] = useState(null);
       const [currency, setCurrency] = useState('USD');
       const [userProfile, setUserProfile] = useState(null);
+
+      // Debug mobile menu state
+      useEffect(() => {
+        console.log('Mobile menu state:', mobileMenuOpen);
+      }, [mobileMenuOpen]);
+
       useEffect(() => { const t = localStorage.getItem('token'), u = localStorage.getItem('user'); if (t && u) { const userObj = JSON.parse(u); setAuth({ user: userObj, token: t }); loadData(t, userObj); } }, []);
       const loadData = async (token, userObj) => {
         try {
@@ -3448,13 +3454,25 @@
                 )}
               </select>
               <button className="btn btn-outline btn-sm" onClick={logout}>Sign out</button>
-              <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)}>☰</button>
+              <button className="mobile-menu-btn" onClick={() => setMobileMenuOpen(true)} style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                cursor: 'pointer',
+                touchAction: 'manipulation'
+              }}>☰</button>
             </div>
           </div>
         </nav>
         {/* MOBILE MENU */}
-        <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} />
-        <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`}>
+        <div className={`mobile-menu-overlay ${mobileMenuOpen ? 'open' : ''}`} onClick={() => setMobileMenuOpen(false)} style={{ display: mobileMenuOpen ? 'block' : 'none' }} />
+        <div className={`mobile-menu ${mobileMenuOpen ? 'open' : ''}`} style={{
+          right: mobileMenuOpen ? '0' : '-100%',
+          visibility: 'visible',
+          opacity: 1,
+          transform: mobileMenuOpen ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'right 0.3s ease, transform 0.3s ease'
+        }}>
           <div className="mobile-menu-header">
             <div style={{ fontWeight: 700, fontSize: 16 }}>{auth.user.first_name} {auth.user.last_name}</div>
             <button className="mobile-menu-close" onClick={() => setMobileMenuOpen(false)}>✕</button>
