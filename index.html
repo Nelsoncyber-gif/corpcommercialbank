@@ -278,6 +278,8 @@
       background: rgba(0, 0, 0, 0.5);
       z-index: 1100;
       animation: fadeIn 0.2s;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: manipulation;
     }
 
     .mobile-menu-overlay.open {
@@ -301,11 +303,13 @@
       width: 85%;
       max-width: 360px;
       height: 100vh;
+      height: 100dvh;
       background: var(--white);
       box-shadow: var(--shadow-xl);
       transition: right 0.3s ease;
       z-index: 1200;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
     }
 
     .mobile-menu.open {
@@ -1815,10 +1819,41 @@
         padding: 6px 8px;
       }
 
-      /* Mobile menu */
+      /* Mobile menu - iOS FIX */
       .mobile-menu {
         width: 90%;
         max-width: none;
+        right: -90%;
+      }
+
+      .mobile-menu.open {
+        right: 0;
+      }
+
+      .mobile-menu-items {
+        padding: 16px;
+        padding-bottom: 40px;
+      }
+
+      .mobile-menu-item {
+        padding: 16px 0;
+        font-size: 15px;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .mobile-menu-header {
+        padding: 16px;
+        position: sticky;
+        top: 0;
+        background: var(--white);
+        z-index: 10;
+      }
+
+      .mobile-menu-close {
+        font-size: 32px;
+        padding: 8px;
+        touch-action: manipulation;
       }
 
       /* Dashboard nav links in mobile */
@@ -1929,6 +1964,35 @@
         width: 98%;
         right: 1%;
         height: 70vh;
+      }
+
+      /* Mobile menu - extra small screens */
+      .mobile-menu {
+        width: 95%;
+        right: -95%;
+      }
+
+      .mobile-menu.open {
+        right: 0;
+      }
+
+      .mobile-menu-items {
+        padding: 12px;
+        padding-bottom: 30px;
+      }
+
+      .mobile-menu-item {
+        padding: 14px 0;
+        font-size: 14px;
+      }
+
+      .mobile-menu-header {
+        padding: 12px;
+      }
+
+      .mobile-menu-close {
+        font-size: 28px;
+        padding: 4px;
       }
     }
 
@@ -2463,25 +2527,6 @@
         max-width: 280px;
       }
     }
-
-    /* Admin Chat Panel Responsive */
-    @media (max-width: 768px) {
-      .admin-chat-panel {
-        width: 95% !important;
-        left: 2.5% !important;
-        bottom: 80px !important;
-        height: 70vh !important;
-      }
-    }
-
-    @media (max-width: 414px) {
-      .admin-chat-panel {
-        width: 98% !important;
-        left: 1% !important;
-        bottom: 72px !important;
-        height: 65vh !important;
-      }
-    }
   </style>
 </head>
 
@@ -2927,209 +2972,6 @@
           </form>
         </div>}
       </>;
-    };
-    // ADMIN CHAT PANEL COMPONENT
-    const AdminChatPanel = ({ auth }) => {
-      const [activeChats, setActiveChats] = useState([]);
-      const [selectedChat, setSelectedChat] = useState(null);
-      const [chatHistory, setChatHistory] = useState([]);
-      const [input, setInput] = useState('');
-      const [socket, setSocket] = useState(null);
-      const [connected, setConnected] = useState(false);
-      const bottomRef = useRef(null);
-
-      useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [chatHistory]);
-
-      useEffect(() => {
-        const s = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
-          reconnection: true,
-          reconnectionAttempts: 5,
-          reconnectionDelay: 1000
-        });
-
-        s.on('connect', () => {
-          console.log('🔌 Admin chat connected:', s.id);
-          setConnected(true);
-          s.emit('join-chat', { userId: auth.user.id, userRole: 'admin' });
-          s.emit('get-active-chats');
-        });
-
-        s.on('disconnect', () => { setConnected(false); console.log('Admin chat disconnected'); });
-
-        s.on('active-chats', (chats) => {
-          console.log('📋 Active chats:', chats.length);
-          setActiveChats(chats);
-        });
-
-        s.on('new-user-message', ({ userId, message }) => {
-          console.log('🔔 New user message from:', userId);
-          // Refresh active chats
-          s.emit('get-active-chats');
-          // If this is the selected chat, add the message
-          if (selectedChat && selectedChat.user_id === userId) {
-            setChatHistory(prev => [...prev, message]);
-          }
-        });
-
-        s.on('new-message', (msg) => {
-          console.log('New message received:', msg);
-          if (selectedChat && msg.user_id === selectedChat.user_id) {
-            setChatHistory(prev => [...prev, msg]);
-          }
-        });
-
-        setSocket(s);
-        return () => { s.disconnect(); };
-      }, [auth.user.id]);
-
-      useEffect(() => {
-        if (selectedChat && socket) {
-          loadChatHistory(selectedChat.user_id);
-        }
-      }, [selectedChat]);
-
-      const loadChatHistory = async (userId) => {
-        try {
-          const r = await fetch(`${API}/admin/chat-history/${userId}`, {
-            headers: { Authorization: `Bearer ${auth.token}` }
-          });
-          const d = await r.json();
-          if (d.success) {
-            setChatHistory(d.messages || []);
-          }
-        } catch (err) {
-          console.error('Error fetching chat history:', err);
-        }
-      };
-
-      const sendMessage = (e) => {
-        e.preventDefault();
-        if (!input.trim() || !selectedChat || !socket) return;
-        socket.emit('send-message', {
-          userId: selectedChat.user_id,
-          message: input.trim(),
-          senderType: 'admin'
-        });
-        setInput('');
-      };
-
-      const selectChat = async (chat) => {
-        setSelectedChat(chat);
-        loadChatHistory(chat.user_id);
-      };
-
-      return (
-        <div className="admin-chat-panel" style={{ position: 'fixed', bottom: 24, left: 24, width: 380, height: 550, background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', zIndex: 950 }}>
-          <div className="chat-header" style={{ background: 'var(--teal-primary)', color: 'var(--white)', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 15 }}>💬 Admin Support Panel</div>
-              <div style={{ fontSize: 12, opacity: 0.9 }}>{connected ? `${activeChats.length} active chats` : 'Connecting...'}</div>
-            </div>
-          </div>
-          <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-            {/* Chat List */}
-            <div style={{ width: '40%', borderRight: '1px solid var(--gray-200)', overflowY: 'auto' }}>
-              {activeChats.length === 0 ? (
-                <div style={{ padding: 20, textAlign: 'center', color: 'var(--gray-500)', fontSize: 13 }}>
-                  <div style={{ fontSize: 32, marginBottom: 8 }}>💬</div>
-                  No active chats
-                </div>
-              ) : (
-                activeChats.map((chat) => (
-                  <div
-                    key={chat.user_id}
-                    onClick={() => selectChat(chat)}
-                    style={{
-                      padding: '12px 16px',
-                      borderBottom: '1px solid var(--gray-100)',
-                      cursor: 'pointer',
-                      background: selectedChat?.user_id === chat.user_id ? 'var(--teal-pale)' : 'var(--white)',
-                      transition: 'background 0.2s'
-                    }}
-                  >
-                    <div style={{ fontWeight: 600, fontSize: 13, marginBottom: 4 }}>
-                      {chat.first_name} {chat.last_name}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--gray-500)', marginBottom: 4 }}>{chat.email}</div>
-                    {chat.last_message && (
-                      <div style={{ fontSize: 11, color: 'var(--gray-600)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                        {chat.last_message}
-                      </div>
-                    )}
-                  </div>
-                ))
-              )}
-            </div>
-            {/* Chat Area */}
-            <div style={{ width: '60%', display: 'flex', flexDirection: 'column' }}>
-              {selectedChat ? (
-                <>
-                  <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--gray-200)', background: 'var(--gray-50)' }}>
-                    <div style={{ fontWeight: 600, fontSize: 13 }}>
-                      {selectedChat.first_name} {selectedChat.last_name}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--gray-500)' }}>{selectedChat.email}</div>
-                  </div>
-                  <div style={{ flex: 1, overflowY: 'auto', padding: '16px', background: 'var(--gray-50)' }}>
-                    {chatHistory.map((m, i) => (
-                      <div
-                        key={i}
-                        style={{
-                          display: 'flex',
-                          flexDirection: m.sender_type === 'admin' ? 'row-reverse' : 'row',
-                          marginBottom: 12,
-                          alignItems: 'flex-end'
-                        }}
-                      >
-                        <div
-                          style={{
-                            padding: '10px 14px',
-                            borderRadius: 12,
-                            maxWidth: '85%',
-                            wordWrap: 'break-word',
-                            background: m.sender_type === 'admin' ? 'var(--teal-primary)' : 'var(--white)',
-                            color: m.sender_type === 'admin' ? 'var(--white)' : 'var(--gray-900)',
-                            border: m.sender_type === 'user' ? '1px solid var(--gray-200)' : 'none'
-                          }}
-                        >
-                          <div style={{ fontSize: 13 }}>{m.message}</div>
-                          <div style={{ fontSize: 10, opacity: 0.7, marginTop: 4 }}>{fmtTime(m.created_at)}</div>
-                        </div>
-                      </div>
-                    ))}
-                    <div ref={bottomRef} />
-                  </div>
-                  <form onSubmit={sendMessage} style={{ padding: '12px', borderTop: '1px solid var(--gray-200)', display: 'flex', gap: 8 }}>
-                    <input
-                      className="chat-input"
-                      placeholder="Type a message..."
-                      value={input}
-                      onChange={e => setInput(e.target.value)}
-                      style={{ flex: 1, padding: '10px 14px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 13 }}
-                    />
-                    <button
-                      type="submit"
-                      className="btn btn-primary btn-sm"
-                      disabled={!connected || !input.trim()}
-                      style={{ padding: '8px 16px' }}
-                    >
-                      Send
-                    </button>
-                  </form>
-                </>
-              ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--gray-500)', padding: 20, textAlign: 'center' }}>
-                  <div>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>💬</div>
-                    <div style={{ fontSize: 14, fontWeight: 600 }}>Select a chat to start messaging</div>
-                    <div style={{ fontSize: 12, marginTop: 8 }}>Choose a customer from the list</div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      );
     };
     // QUICK ACTIONS FLOATING MENU (FOR NON-LOGGED IN USERS)
     const QuickActionsMenu = () => {
@@ -4638,7 +4480,6 @@
                 </div>
               </div>
             </div>}
-            {auth.user.role === 'admin' && <AdminChatPanel auth={auth} />}
             <LiveChat user={auth.user} />
           </div>
         </div>}
