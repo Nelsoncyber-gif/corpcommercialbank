@@ -195,6 +195,120 @@ exports.getAllTransactions = async (req, res) => {
   }
 };
 
+// ============== TOGGLE ACCOUNT STATUS (FREEZE/UNFREEZE) =================
+exports.toggleAccountStatus = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const adminId = req.user.id;
+
+    if (!userId) {
+      return res.status(400).json({
+        success: false,
+        message: "User ID is required"
+      });
+    }
+
+    // Get user's account
+    const accountResult = await pool.query(
+      "SELECT id, status FROM accounts WHERE user_id = $1",
+      [parseInt(userId)]
+    );
+
+    if (accountResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User has no account"
+      });
+    }
+
+    const account = accountResult.rows[0];
+    const newStatus = account.status === 'frozen' ? 'active' : 'frozen';
+
+    // Toggle the status
+    const updateResult = await pool.query(
+      "UPDATE accounts SET status = $1 WHERE id = $2 RETURNING *",
+      [newStatus, account.id]
+    );
+
+    res.json({
+      success: true,
+      message: `Account ${newStatus === 'frozen' ? 'frozen' : 'unfrozen'} successfully`,
+      account: updateResult.rows[0]
+    });
+
+  } catch (err) {
+    console.error('Toggle account status error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to toggle account status",
+      error: err.message
+    });
+  }
+};
+
+// ============== GET USER DETAILS WITH ACCOUNT =================
+exports.getUserDetails = async (req, res) => {
+  try {
+    const { userId } = req.params;
+
+    // Get user details
+    const userResult = await pool.query(
+      `SELECT id, first_name, last_name, email, phone, role,
+              address, city, state, zip_code, country,
+              date_of_birth, occupation, tax_id,
+              next_of_kin_name, next_of_kin_phone, next_of_kin_relationship,
+              profile_picture, created_at
+       FROM users
+       WHERE id = $1`,
+      [parseInt(userId)]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found"
+      });
+    }
+
+    // Get user's account
+    const accountResult = await pool.query(
+      "SELECT id, account_number, balance, status, created_at FROM accounts WHERE user_id = $1",
+      [parseInt(userId)]
+    );
+
+    // Get user's transactions
+    const transactionsResult = await pool.query(
+      `SELECT t.* FROM transactions t
+       INNER JOIN accounts a ON t.account_id = a.id
+       WHERE a.user_id = $1
+       ORDER BY t.created_at DESC
+       LIMIT 50`,
+      [parseInt(userId)]
+    );
+
+    const user = userResult.rows[0];
+    const accounts = accountResult.rows;
+    const transactions = transactionsResult.rows;
+
+    res.json({
+      success: true,
+      user: user,
+      accounts: accounts,
+      transactions: transactions,
+      accountCount: accounts.length,
+      transactionCount: transactions.length
+    });
+
+  } catch (err) {
+    console.error('Get user details error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get user details",
+      error: err.message
+    });
+  }
+};
+
 // ============== GET USER ACCOUNTS (ADMIN ONLY) =================
 exports.getUserAccounts = async (req, res) => {
   try {

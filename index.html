@@ -3223,9 +3223,23 @@
         }
       };
 
-      const openModal = (user, action) => {
+      const openModal = async (user, action) => {
         setSelectedUser(user);
         setActionType(action);
+
+        // Load full user details
+        try {
+          const r = await fetch(`${API}/admin/user-details/${user.id}`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+          });
+          const d = await r.json();
+          if (d.success) {
+            setSelectedUser({ ...user, ...d.user, accounts: d.accounts, transactions: d.transactions });
+          }
+        } catch (err) {
+          console.error('Error loading user details:', err);
+        }
+
         setShowModal(true);
       };
 
@@ -3304,41 +3318,123 @@
         {/* VIEW USER MODAL */}
         {showModal && selectedUser && (
           <div className="modal-overlay" onClick={() => setShowModal(false)}>
-            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 500 }}>
+            <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 700 }}>
               <div className="modal-header">
                 <h3>Customer Details</h3>
                 <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
               </div>
-              <div className="modal-body">
-                <div style={{ display: 'grid', gap: 16 }}>
+              <div className="modal-body" style={{ maxHeight: '70vh', overflowY: 'auto' }}>
+                <div style={{ display: 'grid', gap: 20 }}>
+                  {/* Personal Information */}
                   <div>
-                    <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Full Name</div>
-                    <div style={{ fontSize: 16, fontWeight: 600 }}>{selectedUser.first_name} {selectedUser.last_name}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Email</div>
-                    <div style={{ fontSize: 14 }}>{selectedUser.email}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Phone</div>
-                    <div style={{ fontSize: 14 }}>{selectedUser.phone || 'Not provided'}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Role</div>
-                    <div style={{ fontSize: 14, textTransform: 'capitalize' }}><span className="badge badge-info">{selectedUser.role}</span></div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Status</div>
-                    <div style={{ fontSize: 14 }}>
-                      <span className={`badge ${selectedUser.status === 'frozen' ? 'badge-error' : 'badge-success'}`}>
-                        {selectedUser.status === 'frozen' ? '🔒 Frozen' : '✅ Active'}
-                      </span>
+                    <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--teal-primary)', marginBottom: 12, textTransform: 'uppercase' }}>Personal Information</h4>
+                    <div style={{ display: 'grid', gap: 12 }}>
+                      <div>
+                        <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Full Name</div>
+                        <div style={{ fontSize: 15, fontWeight: 600 }}>{selectedUser.first_name} {selectedUser.last_name}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Email</div>
+                          <div style={{ fontSize: 14 }}>{selectedUser.email}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Phone</div>
+                          <div style={{ fontSize: 14 }}>{selectedUser.phone || 'Not provided'}</div>
+                        </div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Address</div>
+                        <div style={{ fontSize: 14 }}>{selectedUser.address || 'Not provided'}</div>
+                        <div style={{ fontSize: 14 }}>{selectedUser.city}{selectedUser.city && selectedUser.state ? ', ' : ''}{selectedUser.state} {selectedUser.zip_code || ''}</div>
+                        <div style={{ fontSize: 14 }}>{selectedUser.country || ''}</div>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Date of Birth</div>
+                          <div style={{ fontSize: 14 }}>{selectedUser.date_of_birth ? fmtDate(selectedUser.date_of_birth) : 'Not provided'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Occupation</div>
+                          <div style={{ fontSize: 14 }}>{selectedUser.occupation || 'Not provided'}</div>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Created At</div>
-                    <div style={{ fontSize: 14 }}>{selectedUser.created_at ? fmtDate(selectedUser.created_at) : 'N/A'}</div>
-                  </div>
+
+                  {/* Account Information */}
+                  {selectedUser.accounts && selectedUser.accounts.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--teal-primary)', marginBottom: 12, textTransform: 'uppercase' }}>Account Information</h4>
+                      <div style={{ display: 'grid', gap: 12 }}>
+                        {selectedUser.accounts.map(acc => (
+                          <div key={acc.id} style={{ padding: 12, background: 'var(--gray-50)', borderRadius: 8, border: '1px solid var(--gray-200)' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                              <span style={{ fontSize: 13, fontWeight: 600, color: 'var(--gray-700)' }}>Account #{acc.account_number}</span>
+                              <span className={`badge ${acc.status === 'frozen' ? 'badge-error' : 'badge-success'}`}>
+                                {acc.status === 'frozen' ? '🔒 Frozen' : '✅ Active'}
+                              </span>
+                            </div>
+                            <div style={{ fontSize: 20, fontWeight: 700, color: 'var(--teal-primary)' }}>{fmt(acc.balance, currency)}</div>
+                            <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4 }}>Opened: {fmtDate(acc.created_at)}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Next of Kin */}
+                  {selectedUser.next_of_kin_name && (
+                    <div>
+                      <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--teal-primary)', marginBottom: 12, textTransform: 'uppercase' }}>Next of Kin</h4>
+                      <div style={{ display: 'grid', gap: 12, gridTemplateColumns: '1fr 1fr' }}>
+                        <div>
+                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Name</div>
+                          <div style={{ fontSize: 14 }}>{selectedUser.next_of_kin_name}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Phone</div>
+                          <div style={{ fontSize: 14 }}>{selectedUser.next_of_kin_phone || 'Not provided'}</div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Relationship</div>
+                          <div style={{ fontSize: 14 }}>{selectedUser.next_of_kin_relationship || 'Not provided'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Recent Transactions */}
+                  {selectedUser.transactions && selectedUser.transactions.length > 0 && (
+                    <div>
+                      <h4 style={{ fontSize: 14, fontWeight: 600, color: 'var(--teal-primary)', marginBottom: 12, textTransform: 'uppercase' }}>Recent Transactions</h4>
+                      <div className="table-container">
+                        <table className="table">
+                          <thead>
+                            <tr>
+                              <th>Date</th>
+                              <th>Type</th>
+                              <th>Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {selectedUser.transactions.slice(0, 5).map(tx => {
+                              const isCredit = tx.type === 'deposit' || tx.type === 'transfer_in';
+                              return (
+                                <tr key={tx.id}>
+                                  <td style={{ fontSize: 12, color: 'var(--gray-600)' }}>{fmtDate(tx.created_at)}</td>
+                                  <td style={{ textTransform: 'capitalize', fontSize: 13 }}>{tx.type.replace('_', ' ')}</td>
+                                  <td style={{ color: isCredit ? 'var(--green-success)' : 'var(--red-error)', fontWeight: 600, fontSize: 13 }}>
+                                    {isCredit ? '+' : '-'}{fmt(tx.amount, currency)}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
               <div className="modal-footer">

@@ -14,7 +14,9 @@ const {
   deleteUser,
   getPendingApprovals,
   approveAccount,
-  rejectAccount
+  rejectAccount,
+  toggleAccountStatus,
+  getUserDetails
 } = require('../controllers/adminController');
 
 
@@ -33,6 +35,22 @@ router.post('/freeze', protect, adminOnly, freezeAccount);
 router.post('/unfreeze', protect, adminOnly, unfreezeAccount);
 
 router.delete('/delete-user', protect, adminOnly, deleteUser);
+
+// ============== TOGGLE ACCOUNT STATUS =================
+/**
+ * Toggle account status (freeze/unfreeze) by user ID
+ * @route POST /api/admin/toggle-account-status/:userId
+ * @access Protected (Admin only)
+ */
+router.post('/toggle-account-status/:userId', protect, adminOnly, toggleAccountStatus);
+
+// ============== GET USER DETAILS =================
+/**
+ * Get user details with account and transaction info
+ * @route GET /api/admin/user-details/:userId
+ * @access Protected (Admin only)
+ */
+router.get('/user-details/:userId', protect, adminOnly, getUserDetails);
 
 // ============== ACCOUNT APPROVALS =================
 
