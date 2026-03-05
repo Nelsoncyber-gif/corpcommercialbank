@@ -28,8 +28,11 @@ CREATE TABLE IF NOT EXISTS transactions (
     account_id INTEGER REFERENCES accounts(id) ON DELETE CASCADE,
     type VARCHAR(20) NOT NULL, -- deposit, withdraw, transfer
     amount DECIMAL(15, 2) NOT NULL,
-    sender_account VARCHAR(20),
-    receiver_account VARCHAR(20),
+    sender_account VARCHAR(50),
+    receiver_account VARCHAR(50),
+    receiver_name VARCHAR(100),
+    receiver_account_number VARCHAR(50),
+    bank_name VARCHAR(100),
     description TEXT,
     original_date TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP

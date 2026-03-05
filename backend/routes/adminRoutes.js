@@ -52,6 +52,15 @@ router.post('/backdate-transaction', protect, adminOnly, async (req, res) => {
       });
     }
 
+    // Validate date format
+    const dateObj = new Date(newDate);
+    if (isNaN(dateObj.getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid date format'
+      });
+    }
+
     const original = await pool.query(
       'SELECT id, created_at FROM transactions WHERE id = $1',
       [parseInt(transactionId)]

@@ -4,10 +4,7 @@ require('dotenv').config();
 const { Pool } = require('pg');
 
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  connectionString: process.env.DATABASE_URL
 });
 
 async function addOriginalDateColumn() {
@@ -16,8 +13,8 @@ async function addOriginalDateColumn() {
 
     // Check if column already exists
     const columnCheck = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
+      SELECT column_name
+      FROM information_schema.columns
       WHERE table_name = 'transactions' AND column_name = 'original_date'
     `);
 
@@ -26,17 +23,18 @@ async function addOriginalDateColumn() {
     } else {
       console.log('➕ Adding original_date column to transactions table...');
       await pool.query(`
-        ALTER TABLE transactions 
+        ALTER TABLE transactions
         ADD COLUMN original_date TIMESTAMP
       `);
       console.log('✅ original_date column added successfully');
     }
 
-    await pool.end();
     process.exit(0);
   } catch (err) {
     console.error('❌ Migration failed:', err.message);
     process.exit(1);
+  } finally {
+    await pool.end();
   }
 }
 
