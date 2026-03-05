@@ -4,12 +4,19 @@ const pool = require('../config/db');
 exports.getAllUsers = async (req, res) => {
   try {
     const users = await pool.query(
-      `SELECT id, first_name, last_name, email, phone, role,
-              address, city, state, zip_code, country,
-              date_of_birth, occupation, tax_id,
-              next_of_kin_name, next_of_kin_phone, next_of_kin_relationship,
-              profile_picture, created_at
-       FROM users`
+      `SELECT u.id, u.first_name, u.last_name, u.email, u.phone, u.role,
+              u.address, u.city, u.state, u.zip_code, u.country,
+              u.date_of_birth, u.occupation, u.tax_id,
+              u.next_of_kin_name, u.next_of_kin_phone, u.next_of_kin_relationship,
+              u.profile_picture, u.created_at,
+              COALESCE(a.status, 'no_account') as status,
+              a.id as account_id,
+              a.account_number,
+              a.balance
+       FROM users u
+       LEFT JOIN accounts a ON u.id = a.user_id
+       WHERE u.role != 'admin'
+       ORDER BY u.created_at DESC`
     );
 
     res.json({
