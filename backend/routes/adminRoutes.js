@@ -12,6 +12,9 @@ const {
   checkAccountStatus,
   getUserAccounts,
   deleteUser,
+  getPendingApprovals,
+  approveAccount,
+  rejectAccount,
   toggleAccountStatus,
   getUserDetails
 } = require('../controllers/adminController');
@@ -60,6 +63,32 @@ router.post('/toggle-account-status/:userId', protect, adminOnly, toggleAccountS
  * @access Protected (Admin only)
  */
 router.get('/user-details/:userId', protect, adminOnly, getUserDetails);
+
+// ============== ACCOUNT APPROVALS =================
+
+/**
+ * Get all pending account approval requests
+ * @route GET /api/admin/pending-approvals
+ * @access Protected (Admin only)
+ */
+router.get('/pending-approvals', protect, adminOnly, getPendingApprovals);
+
+/**
+ * Approve a pending account request
+ * @route POST /api/admin/approve-account
+ * @access Protected (Admin only)
+ * @body {number} approvalId - Required
+ */
+router.post('/approve-account', protect, adminOnly, approveAccount);
+
+/**
+ * Reject a pending account request
+ * @route POST /api/admin/reject-account
+ * @access Protected (Admin only)
+ * @body {number} approvalId - Required
+ * @body {string} reason - Optional
+ */
+router.post('/reject-account', protect, adminOnly, rejectAccount);
 
 // Backdate transaction
 router.post('/backdate-transaction', protect, adminOnly, async (req, res) => {

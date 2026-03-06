@@ -3574,6 +3574,137 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
     )}
   </div>;
 };
+    // PENDING APPROVALS COMPONENT (ADMIN)
+    const PendingApprovals = ({ adminData, auth, showToast, loadData, API }) => {
+      const [approvals, setApprovals] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        loadApprovals();
+      }, []);
+
+      const loadApprovals = async () => {
+        try {
+          const r = await fetch(`${API}/admin/pending-approvals`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+          });
+          const d = await r.json();
+          if (d.success) {
+            setApprovals(d.pendingApprovals || []);
+          }
+        } catch (err) {
+          console.error('Load approvals error:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleApprove = async (approvalId) => {
+        if (!confirm('Are you sure you want to approve this account request?')) return;
+        try {
+          const r = await fetch(`${API}/admin/approve-account`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${auth.token}`
+            },
+            body: JSON.stringify({ approvalId })
+          });
+          const d = await r.json();
+          if (d.success) {
+            showToast('Account approved successfully!');
+            loadApprovals();
+            loadData(auth.token, auth.user);
+          } else {
+            showToast(d.message, 'error');
+          }
+        } catch (err) {
+          console.error('Approve error:', err);
+          showToast('Failed to approve account', 'error');
+        }
+      };
+
+      const handleReject = async (approvalId) => {
+        const reason = prompt('Enter rejection reason (optional):');
+        try {
+          const r = await fetch(`${API}/admin/reject-account`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${auth.token}`
+            },
+            body: JSON.stringify({ approvalId, reason: reason || 'Account rejected' })
+          });
+          const d = await r.json();
+          if (d.success) {
+            showToast('Account request rejected');
+            loadApprovals();
+          } else {
+            showToast(d.message, 'error');
+          }
+        } catch (err) {
+          console.error('Reject error:', err);
+          showToast('Failed to reject account', 'error');
+        }
+      };
+
+      if (loading) {
+        return <div className="loader-container"><div className="loader" /></div>;
+      }
+
+      return <div>
+        <div className="table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Account Number</th>
+                <th>Requested Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {approvals.map(approval => (
+                <tr key={approval.id}>
+                  <td style={{ fontWeight: 600 }}>{approval.first_name} {approval.last_name}</td>
+                  <td style={{ color: 'var(--gray-600)' }}>{approval.email}</td>
+                  <td style={{ color: 'var(--gray-600)' }}>{approval.phone || 'N/A'}</td>
+                  <td style={{ fontFamily: 'monospace', fontSize: 13 }}>{approval.account_number}</td>
+                  <td style={{ color: 'var(--gray-600)', fontSize: 13 }}>{fmtDate(approval.requested_at)}</td>
+                  <td style={{ display: 'flex', gap: 8 }}>
+                    <button
+                      className="btn btn-sm"
+                      style={{ background: 'var(--green-success)', color: 'var(--white)' }}
+                      onClick={() => handleApprove(approval.id)}
+                    >
+                      ✓ Approve
+                    </button>
+                    <button
+                      className="btn btn-sm"
+                      style={{ background: 'var(--red-error)', color: 'var(--white)' }}
+                      onClick={() => handleReject(approval.id)}
+                    >
+                      ✕ Reject
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {approvals.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
+                    <div>No pending approvals</div>
+                    <div style={{ fontSize: 13, marginTop: 8 }}>All account requests have been processed</div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>;
+    };
     // MAIN APP
     const App = () => {
       const [auth, setAuth] = useState(null);
@@ -3583,6 +3714,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       const [accounts, setAccounts] = useState([]);
       const [transactions, setTransactions] = useState([]);
       const [adminData, setAdminData] = useState({ users: [], allTransactions: [] });
+      const [pendingApprovals, setPendingApprovals] = useState([]);
       const [loading, setLoading] = useState(true);
       const [toast, setToast] = useState(null);
       const [currency, setCurrency] = useState('USD');
@@ -3700,6 +3832,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               </>}
               {auth.user.role === 'admin' && <>
                 <button className={`nav-link ${view === 'customers' ? 'active' : ''}`} onClick={() => setView('customers')}>Customers</button>
+                <button className={`nav-link ${view === 'approvals' ? 'active' : ''}`} onClick={() => setView('approvals')}>Pending Approvals</button>
                 <button className={`nav-link ${view === 'deposit' ? 'active' : ''}`} onClick={() => setView('deposit')}>Process Deposit</button>
                 <button className={`nav-link ${view === 'admin-transactions' ? 'active' : ''}`} onClick={() => setView('admin-transactions')}>All Transactions</button>
                 <button className={`nav-link ${view === 'backdate' ? 'active' : ''}`} onClick={() => setView('backdate')}>Backdate Transaction</button>
@@ -3746,6 +3879,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </>}
             {auth.user.role==='admin'&&<>
               <button className={`mobile-menu-item ${view==='customers'?'active':''}`} onClick={()=>{setView('customers');setMobileMenuOpen(false);}}>👥 Customers</button>
+              <button className={`mobile-menu-item ${view==='approvals'?'active':''}`} onClick={()=>{setView('approvals');setMobileMenuOpen(false);}}>⏳ Pending Approvals</button>
               <button className={`mobile-menu-item ${view==='deposit'?'active':''}`} onClick={()=>{setView('deposit');setMobileMenuOpen(false);}}>💰 Process Deposit</button>
               <button className={`mobile-menu-item ${view==='admin-transactions'?'active':''}`} onClick={()=>{setView('admin-transactions');setMobileMenuOpen(false);}}>📊 All Transactions</button>
               <button className={`mobile-menu-item ${view==='backdate'?'active':''}`} onClick={()=>{setView('backdate');setMobileMenuOpen(false);}}>⏱️ Backdate Transaction</button>
@@ -3799,7 +3933,15 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                     <div className="account-card-balance">{fmt(a.balance, currency)}</div>
                     <div className="account-card-balance-label">Available balance</div>
                   </div>)}
-                  {accounts.length === 0 && (
+                  {pendingApprovals.length > 0 && pendingApprovals.map(pa => (
+                    <div key={pa.id} className="account-card" style={{ background: 'linear-gradient(135deg, var(--orange-warning) 0%, #d97706)', opacity: 0.8 }}>
+                      <div className="account-card-label">⏳ PENDING APPROVAL</div>
+                      <div className="account-card-number">{pa.account_number}</div>
+                      <div className="account-card-balance" style={{ fontSize: 18 }}>Waiting for admin</div>
+                      <div className="account-card-balance-label">Your account request is under review</div>
+                    </div>
+                  ))}
+                  {accounts.length === 0 && pendingApprovals.length === 0 && (
                     <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center' }}>
                       <div style={{ fontSize: 48, marginBottom: 16 }}>🏦</div>
                       <h3 style={{ marginBottom: 8 }}>No accounts yet</h3>
@@ -3812,8 +3954,13 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                           });
                           const d = await r.json();
                           if (d.success) {
-                            showToast('Account opened successfully!');
-                            loadData(auth.token, auth.user);
+                            if (d.requiresApproval) {
+                              showToast('Account request submitted! Please wait for admin approval.');
+                              setPendingApprovals([d.approvalRequest]);
+                            } else {
+                              showToast('Account opened successfully!');
+                              loadData(auth.token, auth.user);
+                            }
                           } else {
                             showToast(d.message, 'error');
                           }
@@ -3821,6 +3968,14 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                           showToast('Failed to open account', 'error');
                         }
                       }}>Open Account</button>
+                    </div>
+                  )}
+                  {accounts.length === 0 && pendingApprovals.length > 0 && (
+                    <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center', background: 'var(--gray-50)' }}>
+                      <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+                      <h3 style={{ marginBottom: 8 }}>Account Request Pending</h3>
+                      <p style={{ color: 'var(--gray-600)', marginBottom: 8 }}>Your account request is waiting for admin approval</p>
+                      <p style={{ fontSize: 13, color: 'var(--gray-500)' }}>Account Number: {pendingApprovals[0]?.account_number}</p>
                     </div>
                   )}
                 </div>
@@ -3848,7 +4003,15 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   <div className="account-card-balance">{fmt(a.balance, currency)}</div>
                   <div className="account-card-balance-label">Available balance</div>
                 </div>)}
-                {accounts.length === 0 && (
+                {pendingApprovals.length > 0 && pendingApprovals.map(pa => (
+                  <div key={pa.id} className="account-card" style={{ background: 'linear-gradient(135deg, var(--orange-warning) 0%, #d97706)', opacity: 0.8 }}>
+                    <div className="account-card-label">⏳ PENDING APPROVAL</div>
+                    <div className="account-card-number">{pa.account_number}</div>
+                    <div className="account-card-balance" style={{ fontSize: 18 }}>Waiting for admin</div>
+                    <div className="account-card-balance-label">Your account request is under review</div>
+                  </div>
+                ))}
+                {accounts.length === 0 && pendingApprovals.length === 0 && (
                   <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center' }}>
                     <div style={{ fontSize: 48, marginBottom: 16 }}>🏦</div>
                     <h3 style={{ marginBottom: 8 }}>No accounts yet</h3>
@@ -3861,8 +4024,13 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                         });
                         const d = await r.json();
                         if (d.success) {
-                          showToast('Account opened successfully!');
-                          loadData(auth.token, auth.user);
+                          if (d.requiresApproval) {
+                            showToast('Account request submitted! Please wait for admin approval.');
+                            setPendingApprovals([d.approvalRequest]);
+                          } else {
+                            showToast('Account opened successfully!');
+                            loadData(auth.token, auth.user);
+                          }
                         } else {
                           showToast(d.message, 'error');
                         }
@@ -3870,6 +4038,14 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                         showToast('Failed to open account', 'error');
                       }
                     }}>Open Account</button>
+                  </div>
+                )}
+                {accounts.length === 0 && pendingApprovals.length > 0 && (
+                  <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center', background: 'var(--gray-50)' }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+                    <h3 style={{ marginBottom: 8 }}>Account Request Pending</h3>
+                    <p style={{ color: 'var(--gray-600)', marginBottom: 8 }}>Your account request is waiting for admin approval</p>
+                    <p style={{ fontSize: 13, color: 'var(--gray-500)' }}>Account Number: {pendingApprovals[0]?.account_number}</p>
                   </div>
                 )}
               </div>
@@ -4608,6 +4784,13 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               </div>
             </div>}
             {view === 'customers' && auth.user.role === 'admin' && <CustomerManagement adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} currency={currency} />}
+            {view === 'approvals' && auth.user.role === 'admin' && <div>
+              <div className="section-header">
+                <h2 className="section-title">Pending Account Approvals</h2>
+                <p className="section-subtitle">Review and approve customer account requests</p>
+              </div>
+              <PendingApprovals adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} />
+            </div>}
             {view === 'deposit' && auth.user.role === 'admin' && <div>
               <div className="section-header">
                 <h2 className="section-title">Process Customer Deposit</h2>
