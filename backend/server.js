@@ -51,7 +51,7 @@ const cardRoutes = require('./routes/cardRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/admin', chatRoutes);
+app.use('/api/chat', chatRoutes);  // ✅ Now chat has its own route
 app.use('/api/profile', profileRoutes);
 app.use('/api/cards', cardRoutes);
 
