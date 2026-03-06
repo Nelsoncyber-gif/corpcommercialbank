@@ -3,7 +3,6 @@ const pool = require('../config/db');
 // ============== GET ALL USERS =================
 exports.getAllUsers = async (req, res) => {
   try {
-    // Get all users including admins
     const users = await pool.query(
       `SELECT id, first_name, last_name, email, phone, role,
               address, city, state, zip_code, country,
@@ -11,15 +10,9 @@ exports.getAllUsers = async (req, res) => {
               next_of_kin_name, next_of_kin_phone, next_of_kin_relationship,
               profile_picture, created_at
        FROM users
-       ORDER BY created_at DESC`  // ✅ Removed the WHERE clause
+       WHERE role != 'admin'
+       ORDER BY created_at DESC`
     );
-
-    console.log(`📊 Found ${users.rows.length} total users`);
-    
-    // Optional: Log breakdown by role for debugging
-    const adminCount = users.rows.filter(u => u.role === 'admin').length;
-    const regularCount = users.rows.length - adminCount;
-    console.log(`   - ${regularCount} regular users, ${adminCount} admins`);
 
     res.json({
       success: true,

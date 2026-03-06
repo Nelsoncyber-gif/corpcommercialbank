@@ -2,8 +2,7 @@ const pool = require('../config/db');
 const crypto = require('crypto');
 
 // Encryption key (in production, use environment variable)
-// Must be exactly 32 characters for aes-256-cbc
-const ENCRYPTION_KEY = process.env.CARD_ENCRYPTION_KEY || 'your-32-char-secret-key-here1234';
+const ENCRYPTION_KEY = process.env.CARD_ENCRYPTION_KEY || 'your-32-char-secret-key-here!!';
 const ALGORITHM = 'aes-256-cbc';
 
 // Encrypt card data

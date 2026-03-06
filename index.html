@@ -2714,8 +2714,7 @@
     };
     // AUTH PAGES
     const AuthPage = ({ isLogin, onAuth, onSwitch }) => {
-      const [showLogin, setShowLogin] = useState(isLogin);
-      const [form, setForm] = useState(showLogin ? { email: '', password: '' } : {
+      const [form, setForm] = useState(isLogin ? { email: '', password: '' } : {
         first_name: '',
         last_name: '',
         email: '',
@@ -2737,81 +2736,57 @@
       });
       const [loading, setLoading] = useState(false);
       const [toast, setToast] = useState(null);
+      const [showLogin, setShowLogin] = useState(isLogin);
       const [activeTestimonial, setActiveTestimonial] = useState(0);
-
-      // Reset form when switching between login/register
-      useEffect(() => {
-        setForm(showLogin ? { email: '', password: '' } : {
-          first_name: '',
-          last_name: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          phone: '',
-          address: '',
-          city: '',
-          state: '',
-          zip: '',
-          country: '',
-          dob: '',
-          occupation: '',
-          taxId: '',
-          nextOfKinName: '',
-          nextOfKinPhone: '',
-          nextOfKinRelation: '',
-          profilePicture: ''
-        });
-      }, [showLogin]);
       const submit = async e => {
-  e.preventDefault();
+        e.preventDefault();
 
-  // Validation
-  if (!showLogin && form.password !== form.confirmPassword) {  // ✅ Use showLogin
-    setToast({ message: 'Passwords do not match', type: 'error' });
-    return;
-  }
+        // Validation
+        if (!isLogin && form.password !== form.confirmPassword) {
+          setToast({ message: 'Passwords do not match', type: 'error' });
+          return;
+        }
 
-  setLoading(true);
+        setLoading(true);
 
-  try {
-    console.log('Attempting login/register:', {
-      email: form.email,
-      isRegistering: !showLogin,  // ✅ Log what we're actually doing
-      endpoint: `${API}/auth/${showLogin ? 'login' : 'register'}`  // ✅ Use showLogin
-    });
+        try {
+          console.log('Attempting login/register:', {
+            email: form.email,
+            isLogin,
+            endpoint: `${API}/auth/${isLogin ? 'login' : 'register'}`
+          });
 
-    const response = await fetch(`${API}/auth/${showLogin ? 'login' : 'register'}`, {  // ✅ Use showLogin
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form)
-    });
+          const response = await fetch(`${API}/auth/${isLogin ? 'login' : 'register'}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(form)
+          });
 
-    console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
+          console.log('Response status:', response.status);
 
-    const data = await response.json();
-    console.log('Response data:', data);
+          const data = await response.json();
+          console.log('Response data:', data);
 
-    if (data.success) {
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      onAuth(data.user, data.token);
-    } else {
-      setToast({
-        message: data.message || `${showLogin ? 'Login' : 'Registration'} failed`,  // ✅ Use showLogin
-        type: 'error'
-      });
-    }
-  } catch (error) {
-    console.error('Login/Register error:', error);
-    setToast({
-      message: 'Connection error: ' + error.message,
-      type: 'error'
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+          if (data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            onAuth(data.user, data.token);
+          } else {
+            setToast({
+              message: data.message || `${isLogin ? 'Login' : 'Registration'} failed`,
+              type: 'error'
+            });
+          }
+        } catch (error) {
+          console.error('Login/Register error:', error);
+          setToast({
+            message: 'Connection error: ' + error.message,
+            type: 'error'
+          });
+        } finally {
+          setLoading(false);
+        }
+      };
       // Auto-rotate testimonials
       useEffect(() => {
         const interval = setInterval(() => {
@@ -4028,15 +4003,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   <div className="account-card-balance">{fmt(a.balance, currency)}</div>
                   <div className="account-card-balance-label">Available balance</div>
                 </div>)}
-                {pendingApprovals.length > 0 && pendingApprovals.map(pa => (
-                  <div key={pa.id} className="account-card" style={{ background: 'linear-gradient(135deg, var(--orange-warning) 0%, #d97706)', opacity: 0.8 }}>
-                    <div className="account-card-label">⏳ PENDING APPROVAL</div>
-                    <div className="account-card-number">{pa.account_number}</div>
-                    <div className="account-card-balance" style={{ fontSize: 18 }}>Waiting for admin</div>
-                    <div className="account-card-balance-label">Your account request is under review</div>
-                  </div>
-                ))}
-                {accounts.length === 0 && pendingApprovals.length === 0 && (
+                {accounts.length === 0 && (
                   <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center' }}>
                     <div style={{ fontSize: 48, marginBottom: 16 }}>🏦</div>
                     <h3 style={{ marginBottom: 8 }}>No accounts yet</h3>
@@ -4049,13 +4016,8 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                         });
                         const d = await r.json();
                         if (d.success) {
-                          if (d.requiresApproval) {
-                            showToast('Account request submitted! Please wait for admin approval.');
-                            setPendingApprovals([d.approvalRequest]);
-                          } else {
-                            showToast('Account opened successfully!');
-                            loadData(auth.token, auth.user);
-                          }
+                          showToast('Account opened successfully!');
+                          loadData(auth.token, auth.user);
                         } else {
                           showToast(d.message, 'error');
                         }
@@ -4063,14 +4025,6 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                         showToast('Failed to open account', 'error');
                       }
                     }}>Open Account</button>
-                  </div>
-                )}
-                {accounts.length === 0 && pendingApprovals.length > 0 && (
-                  <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center', background: 'var(--gray-50)' }}>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-                    <h3 style={{ marginBottom: 8 }}>Account Request Pending</h3>
-                    <p style={{ color: 'var(--gray-600)', marginBottom: 8 }}>Your account request is waiting for admin approval</p>
-                    <p style={{ fontSize: 13, color: 'var(--gray-500)' }}>Account Number: {pendingApprovals[0]?.account_number}</p>
                   </div>
                 )}
               </div>
@@ -4286,14 +4240,6 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 <p className="section-subtitle">Manage your account settings and preferences</p>
               </div>
               <div style={{ maxWidth: 900, margin: '0 auto' }}>
-                {/* Info box for users without accounts */}
-                {accounts.length === 0 && pendingApprovals.length === 0 && (
-                  <div className="alert alert-info" style={{ marginBottom: 24, background: 'var(--teal-pale)', border: '1px solid var(--teal-light)', borderRadius: 8, padding: 16 }}>
-                    <strong>💡 Quick Tip:</strong> You can complete your profile information before creating a bank account.
-                    To start using banking features (transfers, deposits, etc.), you'll need to
-                    <button className="btn btn-sm btn-outline" style={{ marginLeft: 8 }} onClick={() => setView('accounts')}>open an account</button>.
-                  </div>
-                )}
                 <button className="btn btn-ghost btn-sm" onClick={() => { loadUserProfile(); }} style={{ marginBottom: 16 }}>🔄 Refresh Profile</button>
                 {/* Profile Picture Section - NEW AND IMPROVED */}
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32, marginBottom: 24, textAlign: 'center' }}>
@@ -4817,13 +4763,6 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               </div>
             </div>}
             {view === 'customers' && auth.user.role === 'admin' && <CustomerManagement adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} currency={currency} />}
-            {view === 'approvals' && auth.user.role === 'admin' && <div>
-              <div className="section-header">
-                <h2 className="section-title">Pending Account Approvals</h2>
-                <p className="section-subtitle">Review and approve customer account requests</p>
-              </div>
-              <PendingApprovals adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} />
-            </div>}
             {view === 'deposit' && auth.user.role === 'admin' && <div>
               <div className="section-header">
                 <h2 className="section-title">Process Customer Deposit</h2>

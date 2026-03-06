@@ -25,9 +25,8 @@ exports.getProfile = async (req, res) => {
   }
 };
 
-// ============== FIXED: Renamed to adminUpdateProfile =================
-// Update user profile (Admin only) - RENAMED to avoid conflict
-exports.adminUpdateProfile = async (req, res) => {
+// Update user profile (Admin only)
+exports.updateProfile = async (req, res) => {
   try {
     const { userId } = req.params;
     const {
@@ -72,7 +71,7 @@ exports.adminUpdateProfile = async (req, res) => {
 
     res.json({ success: true, message: 'Profile updated successfully', user: result.rows[0] });
   } catch (error) {
-    console.error('Admin update profile error:', error);
+    console.error('Update profile error:', error);
     res.status(500).json({ success: false, message: 'Failed to update profile' });
   }
 };

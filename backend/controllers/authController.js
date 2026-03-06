@@ -3,6 +3,7 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // ==================== AUTH CONTROLLERS ====================
+
 exports.register = async (req, res) => {
   console.log('🔵 Register endpoint called');
   console.log('Request body:', req.body);
@@ -16,14 +17,14 @@ exports.register = async (req, res) => {
     address,
     city,
     state,
-    zip,                    // Frontend sends 'zip'
+    zip,
     country,
-    dob,                     // Frontend sends 'dob'
+    dob,
     occupation,
-    taxId,                   // Frontend sends 'taxId'
-    nextOfKinName,           // Frontend sends 'nextOfKinName'
-    nextOfKinPhone,          // Frontend sends 'nextOfKinPhone'
-    nextOfKinRelation,       // Frontend sends 'nextOfKinRelation'
+    taxId,
+    nextOfKinName,
+    nextOfKinPhone,
+    nextOfKinRelation,
     profilePicture
   } = req.body;
 
@@ -58,7 +59,7 @@ exports.register = async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     console.log('💾 Creating user in database...');
-    // Create user with all fields - FIXED: Using correct database column names
+    // Create user with all fields
     const result = await pool.query(
       `INSERT INTO users(
         first_name, last_name, email, password, phone,
@@ -70,9 +71,9 @@ exports.register = async (req, res) => {
        RETURNING id, first_name, last_name, email, phone, address, city, state, zip_code, country, date_of_birth, occupation, tax_id, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship, profile_picture, role, created_at`,
       [
         first_name, last_name, email, hashed, phone,
-        address, city, state, zip, country,           // zip maps to zip_code
-        dob, occupation, taxId,                        // dob maps to date_of_birth, taxId maps to tax_id
-        nextOfKinName, nextOfKinPhone, nextOfKinRelation, // maps to next_of_kin_name, next_of_kin_phone, next_of_kin_relationship
+        address, city, state, zip, country,
+        dob, occupation, taxId,
+        nextOfKinName, nextOfKinPhone, nextOfKinRelation,
         profilePicture
       ]
     );
