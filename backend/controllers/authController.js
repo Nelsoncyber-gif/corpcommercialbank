@@ -119,6 +119,9 @@ exports.login = async (req, res) => {
 
   const { email, password } = req.body;
 
+  // Debug log
+  console.log('Login attempt:', { email, password: '***' });
+
   if (!email || !password) {
     return res.status(400).json({
       success: false,
@@ -129,59 +132,57 @@ exports.login = async (req, res) => {
   try {
     console.log('📊 Finding user:', email);
 
-    const user = await pool.query(
-      'SELECT * FROM users WHERE email=$1',
-      [email]
+    const result = await pool.query(
+      'SELECT * FROM users WHERE email = $1',
+      [email.toLowerCase()]
     );
 
-    if (user.rows.length === 0) {
+    if (result.rows.length === 0) {
       console.log('❌ User not found:', email);
       return res.status(400).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid email or password'
       });
     }
 
-    const dbUser = user.rows[0];
+    const user = result.rows[0];
     console.log('🔐 Comparing password...');
 
-    const valid = await bcrypt.compare(password, dbUser.password);
+    const validPassword = await bcrypt.compare(password, user.password);
 
-    if (!valid) {
+    if (!validPassword) {
       console.log('❌ Invalid password for:', email);
       return res.status(400).json({
         success: false,
-        message: 'Invalid credentials'
+        message: 'Invalid email or password'
       });
     }
 
     // Create JWT token
     const token = jwt.sign(
-      { id: dbUser.id, role: dbUser.role },
-      process.env.JWT_SECRET,
-      { expiresIn: "24h" }
+      { id: user.id, email: user.email, role: user.role },
+      process.env.JWT_SECRET || 'your-secret-key-change-in-production',
+      { expiresIn: '7d' }
     );
 
     console.log('✅ Login successful for:', email);
 
+    // Remove password from user object
+    const userWithoutPassword = { ...user };
+    delete userWithoutPassword.password;
+
     res.json({
       success: true,
-      message: "Login successful",
       token,
-      user: {
-        id: dbUser.id,
-        email: dbUser.email,
-        first_name: dbUser.first_name,
-        last_name: dbUser.last_name,
-        role: dbUser.role
-      }
+      user: userWithoutPassword
     });
 
   } catch (err) {
     console.error('❌ Login error:', err);
     res.status(500).json({
       success: false,
-      error: err.message
+      error: err.message,
+      message: 'Server error during login'
     });
   }
 };

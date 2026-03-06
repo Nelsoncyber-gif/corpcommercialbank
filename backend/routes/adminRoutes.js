@@ -34,9 +34,21 @@ router.post('/freeze', protect, adminOnly, freezeAccount);
 
 router.post('/unfreeze', protect, adminOnly, unfreezeAccount);
 
+// Legacy route for delete-user (POST with userId in body)
 router.delete('/delete-user', protect, adminOnly, deleteUser);
+// New route for frontend compatibility (DELETE with userId in path)
+router.delete('/delete-user/:userId', protect, adminOnly, async (req, res) => {
+  req.body = { userId: req.params.userId };
+  await deleteUser(req, res);
+});
 
 // ============== TOGGLE ACCOUNT STATUS =================
+// Legacy route for toggle-account-status
+router.post('/toggle-account-status/:userId', protect, adminOnly, toggleAccountStatus);
+// New route for frontend compatibility (toggle-freeze)
+router.post('/toggle-freeze/:userId', protect, adminOnly, async (req, res) => {
+  await toggleAccountStatus(req, res);
+});
 /**
  * Toggle account status (freeze/unfreeze) by user ID
  * @route POST /api/admin/toggle-account-status/:userId

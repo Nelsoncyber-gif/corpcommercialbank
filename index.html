@@ -2740,14 +2740,52 @@
       const [activeTestimonial, setActiveTestimonial] = useState(0);
       const submit = async e => {
         e.preventDefault();
-        if (!isLogin && form.password !== form.confirmPassword) { setToast({ message: 'Passwords do not match', type: 'error' }); return; }
+
+        // Validation
+        if (!isLogin && form.password !== form.confirmPassword) {
+          setToast({ message: 'Passwords do not match', type: 'error' });
+          return;
+        }
+
         setLoading(true);
+
         try {
-          const r = await fetch(`${API}/auth/${isLogin ? 'login' : 'register'}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) });
-          const d = await r.json();
-          if (d.success) { localStorage.setItem('token', d.token); localStorage.setItem('user', JSON.stringify(d.user)); onAuth(d.user, d.token); }
-          else setToast({ message: d.message || `${isLogin ? 'Login' : 'Registration'} failed`, type: 'error' });
-        } catch { setToast({ message: 'Connection error', type: 'error' }); } finally { setLoading(false); }
+          console.log('Attempting login/register:', {
+            email: form.email,
+            isLogin,
+            endpoint: `${API}/auth/${isLogin ? 'login' : 'register'}`
+          });
+
+          const response = await fetch(`${API}/auth/${isLogin ? 'login' : 'register'}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(form)
+          });
+
+          console.log('Response status:', response.status);
+
+          const data = await response.json();
+          console.log('Response data:', data);
+
+          if (data.success) {
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('user', JSON.stringify(data.user));
+            onAuth(data.user, data.token);
+          } else {
+            setToast({
+              message: data.message || `${isLogin ? 'Login' : 'Registration'} failed`,
+              type: 'error'
+            });
+          }
+        } catch (error) {
+          console.error('Login/Register error:', error);
+          setToast({
+            message: 'Connection error: ' + error.message,
+            type: 'error'
+          });
+        } finally {
+          setLoading(false);
+        }
       };
       // Auto-rotate testimonials
       useEffect(() => {
