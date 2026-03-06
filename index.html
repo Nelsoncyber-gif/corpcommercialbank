@@ -3254,10 +3254,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
     setShowModal(true);
   };
 
-  const handleFreeze = async (userId) => {
+  const handleFreeze = async (accountId) => {
     if (!confirm('Are you sure you want to freeze/unfreeze this account?')) return;
     try {
-      const r = await fetch(`${API}/admin/toggle-freeze/${userId}`, {
+      const r = await fetch(`${API}/admin/toggle-freeze/${accountId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3377,23 +3377,16 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                     onClick={() => viewUserDetails(user)}
                     style={{ padding: '6px 12px', fontSize: 13 }}
                   >
-                    👁️ View
-                  </button>
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={() => handleFreeze(user.id)}
-                    style={{ padding: '6px 12px', fontSize: 13 }}
-                  >
-                    {user.status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                    👁️ View & Manage
                   </button>
                   <button
                     className="btn btn-sm"
                     onClick={() => handleDelete(user.id, `${user.first_name} ${user.last_name}`)}
-                    style={{ 
-                      padding: '6px 12px', 
-                      fontSize: 13, 
-                      background: 'var(--red-error)', 
-                      color: 'var(--white)' 
+                    style={{
+                      padding: '6px 12px',
+                      fontSize: 13,
+                      background: 'var(--red-error)',
+                      color: 'var(--white)'
                     }}
                   >
                     🗑️ Delete
@@ -3505,16 +3498,16 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </h4>
                 <div style={{ display: 'grid', gap: 12 }}>
                   {userAccounts.map(acc => (
-                    <div 
-                      key={acc.id} 
-                      style={{ 
-                        padding: 16, 
-                        background: 'var(--gray-50)', 
+                    <div
+                      key={acc.id}
+                      style={{
+                        padding: 16,
+                        background: 'var(--gray-50)',
                         borderRadius: 8,
                         border: '1px solid var(--gray-200)'
                       }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
                         <div>
                           <div style={{ fontFamily: 'monospace', fontSize: 14, fontWeight: 600 }}>
                             {acc.account_number}
@@ -3529,6 +3522,15 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--gray-500)' }}>Balance</div>
                         </div>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8 }}>
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleFreeze(acc.id)}
+                          style={{ padding: '6px 12px', fontSize: 13 }}
+                        >
+                          {acc.status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                        </button>
                       </div>
                     </div>
                   ))}

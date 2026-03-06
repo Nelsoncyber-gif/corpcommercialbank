@@ -116,6 +116,11 @@ async function runMigrations() {
       );
     `);
 
+    // Create indexes for account_approvals table
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_account_approvals_user_id ON account_approvals(user_id)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_account_approvals_status ON account_approvals(status)`);
+    await pool.query(`CREATE INDEX IF NOT EXISTS idx_account_approvals_account_number ON account_approvals(account_number)`);
+
     // Create chat_messages table
     await pool.query(`
       CREATE TABLE IF NOT EXISTS chat_messages (

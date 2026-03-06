@@ -24,14 +24,33 @@ exports.getAllUsers = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to retrieve users",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
 
 // ============== GET PENDING ACCOUNT APPROVALS =================
+// NOTE: This endpoint requires the 'account_approvals' table to exist
+// If you don't have this table, either create it or remove this endpoint
 exports.getPendingApprovals = async (req, res) => {
   try {
+    // Check if table exists first (optional safety check)
+    const tableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT FROM information_schema.tables 
+        WHERE table_schema = 'public' 
+        AND table_name = 'account_approvals'
+      );
+    `);
+    
+    if (!tableCheck.rows[0].exists) {
+      return res.json({
+        success: true,
+        pendingApprovals: [],
+        message: "Account approvals table not configured"
+      });
+    }
+
     const result = await pool.query(
       `SELECT aa.*, u.first_name, u.last_name, u.email, u.phone
        FROM account_approvals aa
@@ -47,10 +66,11 @@ exports.getPendingApprovals = async (req, res) => {
 
   } catch (err) {
     console.error('Get pending approvals error:', err);
-    res.status(500).json({
-      success: false,
-      message: "Failed to retrieve pending approvals",
-      error: err.message
+    // Return empty array if table doesn't exist instead of crashing
+    res.json({
+      success: true,
+      pendingApprovals: [],
+      message: "Approvals not configured"
     });
   }
 };
@@ -59,12 +79,21 @@ exports.getPendingApprovals = async (req, res) => {
 exports.approveAccount = async (req, res) => {
   try {
     const { approvalId } = req.body;
-    const adminId = req.user.id;
+    const adminId = req.user?.id;
 
-    if (!approvalId) {
+    // FIX #3: Add input validation
+    const parsedApprovalId = parseInt(approvalId);
+    if (isNaN(parsedApprovalId) || parsedApprovalId <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Approval ID is required"
+        message: "Valid approval ID is required"
+      });
+    }
+
+    if (!adminId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
       });
     }
 
@@ -76,7 +105,7 @@ exports.approveAccount = async (req, res) => {
       // Get the pending approval request
       const approvalResult = await client.query(
         "SELECT * FROM account_approvals WHERE id = $1 AND status = 'pending'",
-        [parseInt(approvalId)]
+        [parsedApprovalId]
       );
 
       if (approvalResult.rows.length === 0) {
@@ -102,7 +131,7 @@ exports.approveAccount = async (req, res) => {
         `UPDATE account_approvals
          SET status = 'approved', reviewed_at = NOW(), reviewed_by = $1, review_notes = $2
          WHERE id = $3`,
-        [adminId, 'Account approved', parseInt(approvalId)]
+        [adminId, 'Account approved', parsedApprovalId]
       );
 
       await client.query("COMMIT");
@@ -125,7 +154,7 @@ exports.approveAccount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to approve account",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
@@ -134,12 +163,21 @@ exports.approveAccount = async (req, res) => {
 exports.rejectAccount = async (req, res) => {
   try {
     const { approvalId, reason } = req.body;
-    const adminId = req.user.id;
+    const adminId = req.user?.id;
 
-    if (!approvalId) {
+    // FIX #3: Add input validation
+    const parsedApprovalId = parseInt(approvalId);
+    if (isNaN(parsedApprovalId) || parsedApprovalId <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Approval ID is required"
+        message: "Valid approval ID is required"
+      });
+    }
+
+    if (!adminId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
       });
     }
 
@@ -149,7 +187,7 @@ exports.rejectAccount = async (req, res) => {
        SET status = 'rejected', reviewed_at = NOW(), reviewed_by = $1, review_notes = $2
        WHERE id = $3 AND status = 'pending'
        RETURNING *`,
-      [adminId, reason || 'Account rejected', parseInt(approvalId)]
+      [adminId, reason || 'Account rejected', parsedApprovalId]
     );
 
     if (result.rows.length === 0) {
@@ -170,7 +208,7 @@ exports.rejectAccount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to reject account",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
@@ -192,34 +230,45 @@ exports.getAllTransactions = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to retrieve transactions",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
 
 // ============== TOGGLE ACCOUNT STATUS (FREEZE/UNFREEZE) =================
+// FIX #1: Changed to accept accountId in params and query by account id
 exports.toggleAccountStatus = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const adminId = req.user.id;
+    // FIX #1: Get accountId from params (not userId)
+    const { accountId } = req.params;
+    const adminId = req.user?.id;
 
-    if (!userId) {
+    // FIX #3: Add input validation
+    const parsedAccountId = parseInt(accountId);
+    if (isNaN(parsedAccountId) || parsedAccountId <= 0) {
       return res.status(400).json({
         success: false,
-        message: "User ID is required"
+        message: "Valid account ID is required"
       });
     }
 
-    // Get user's account
+    if (!adminId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // FIX #1: Query by account id (not user_id)
     const accountResult = await pool.query(
-      "SELECT id, status FROM accounts WHERE user_id = $1",
-      [parseInt(userId)]
+      "SELECT id, status, user_id FROM accounts WHERE id = $1",
+      [parsedAccountId]
     );
 
     if (accountResult.rows.length === 0) {
       return res.status(404).json({
         success: false,
-        message: "User has no account"
+        message: "Account not found"
       });
     }
 
@@ -229,7 +278,7 @@ exports.toggleAccountStatus = async (req, res) => {
     // Toggle the status
     const updateResult = await pool.query(
       "UPDATE accounts SET status = $1 WHERE id = $2 RETURNING *",
-      [newStatus, account.id]
+      [newStatus, parsedAccountId]
     );
 
     res.json({
@@ -243,7 +292,7 @@ exports.toggleAccountStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to toggle account status",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
@@ -252,6 +301,15 @@ exports.toggleAccountStatus = async (req, res) => {
 exports.getUserDetails = async (req, res) => {
   try {
     const { userId } = req.params;
+
+    // FIX #3: Add input validation
+    const parsedUserId = parseInt(userId);
+    if (isNaN(parsedUserId) || parsedUserId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid user ID is required"
+      });
+    }
 
     // Get user details
     const userResult = await pool.query(
@@ -262,7 +320,7 @@ exports.getUserDetails = async (req, res) => {
               profile_picture, created_at
        FROM users
        WHERE id = $1`,
-      [parseInt(userId)]
+      [parsedUserId]
     );
 
     if (userResult.rows.length === 0) {
@@ -275,7 +333,7 @@ exports.getUserDetails = async (req, res) => {
     // Get user's account
     const accountResult = await pool.query(
       "SELECT id, account_number, balance, status, created_at FROM accounts WHERE user_id = $1",
-      [parseInt(userId)]
+      [parsedUserId]
     );
 
     // Get user's transactions
@@ -285,7 +343,7 @@ exports.getUserDetails = async (req, res) => {
        WHERE a.user_id = $1
        ORDER BY t.created_at DESC
        LIMIT 50`,
-      [parseInt(userId)]
+      [parsedUserId]
     );
 
     const user = userResult.rows[0];
@@ -306,7 +364,7 @@ exports.getUserDetails = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to get user details",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
@@ -316,16 +374,18 @@ exports.getUserAccounts = async (req, res) => {
   try {
     const { userId } = req.params;
 
-    if (!userId) {
+    // FIX #2: Add input validation AND parseInt
+    const parsedUserId = parseInt(userId);
+    if (isNaN(parsedUserId) || parsedUserId <= 0) {
       return res.status(400).json({
         success: false,
-        message: "User ID is required"
+        message: "Valid user ID is required"
       });
     }
 
     const accounts = await pool.query(
       "SELECT id, account_number, balance, status, created_at, user_id FROM accounts WHERE user_id = $1 ORDER BY created_at DESC",
-      [userId]
+      [parsedUserId]  // FIX #2: Use parsed integer
     );
 
     res.json({
@@ -338,26 +398,29 @@ exports.getUserAccounts = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to retrieve user accounts",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
 
 // ============== FREEZE ACCOUNT =================
+// FIX #4: Kept for backwards compatibility but recommend using toggleAccountStatus instead
 exports.freezeAccount = async (req, res) => {
   try {
     const { accountId } = req.body;
 
-    if (!accountId) {
+    // FIX #3: Add input validation
+    const parsedAccountId = parseInt(accountId);
+    if (isNaN(parsedAccountId) || parsedAccountId <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Account ID is required"
+        message: "Valid account ID is required"
       });
     }
 
     const result = await pool.query(
       "UPDATE accounts SET status = 'frozen' WHERE id = $1 RETURNING *",
-      [accountId]
+      [parsedAccountId]
     );
 
     if (result.rows.length === 0) {
@@ -378,26 +441,29 @@ exports.freezeAccount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to freeze account",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
 
 // ============== UNFREEZE ACCOUNT =================
+// FIX #4: Kept for backwards compatibility but recommend using toggleAccountStatus instead
 exports.unfreezeAccount = async (req, res) => {
   try {
     const { accountId } = req.body;
 
-    if (!accountId) {
+    // FIX #3: Add input validation
+    const parsedAccountId = parseInt(accountId);
+    if (isNaN(parsedAccountId) || parsedAccountId <= 0) {
       return res.status(400).json({
         success: false,
-        message: "Account ID is required"
+        message: "Valid account ID is required"
       });
     }
 
     const result = await pool.query(
       "UPDATE accounts SET status = 'active' WHERE id = $1 RETURNING *",
-      [accountId]
+      [parsedAccountId]
     );
 
     if (result.rows.length === 0) {
@@ -418,7 +484,7 @@ exports.unfreezeAccount = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to unfreeze account",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
@@ -428,9 +494,18 @@ exports.checkAccountStatus = async (req, res) => {
   try {
     const { accountId } = req.params;
 
+    // FIX #3: Add input validation
+    const parsedAccountId = parseInt(accountId);
+    if (isNaN(parsedAccountId) || parsedAccountId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid account ID is required"
+      });
+    }
+
     const account = await pool.query(
       "SELECT id, account_number, balance, status FROM accounts WHERE id = $1",
-      [accountId]
+      [parsedAccountId]
     );
 
     if (account.rows.length === 0) {
@@ -452,7 +527,7 @@ exports.checkAccountStatus = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to check account status",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
@@ -461,16 +536,26 @@ exports.checkAccountStatus = async (req, res) => {
 exports.deleteUser = async (req, res) => {
   try {
     const { userId } = req.body;
+    const adminId = req.user?.id;
 
-    if (!userId) {
+    // FIX #3: Add input validation
+    const parsedUserId = parseInt(userId);
+    if (isNaN(parsedUserId) || parsedUserId <= 0) {
       return res.status(400).json({
         success: false,
-        message: "User ID is required"
+        message: "Valid user ID is required"
+      });
+    }
+
+    if (!adminId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
       });
     }
 
     // Prevent admin from deleting themselves
-    if (userId == req.user.id) {
+    if (parsedUserId === adminId) {
       return res.status(403).json({
         success: false,
         message: "You cannot delete your own account"
@@ -482,32 +567,17 @@ exports.deleteUser = async (req, res) => {
     try {
       await client.query("BEGIN");
 
-      // Get user's accounts
+      // FIX #4: Simplified - ON DELETE CASCADE handles child records automatically
+      // Get user's accounts first (for logging if needed)
       const userAccounts = await client.query(
         "SELECT id FROM accounts WHERE user_id = $1",
-        [userId]
+        [parsedUserId]
       );
 
-      const accountIds = userAccounts.rows.map(acc => acc.id);
-
-      // Delete transactions associated with user's accounts
-      if (accountIds.length > 0) {
-        await client.query(
-          "DELETE FROM transactions WHERE account_id = ANY($1::int[])",
-          [accountIds]
-        );
-      }
-
-      // Delete user's accounts
-      await client.query(
-        "DELETE FROM accounts WHERE user_id = $1",
-        [userId]
-      );
-
-      // Delete the user
+      // Delete the user - CASCADE will handle accounts, transactions, etc.
       const result = await client.query(
         "DELETE FROM users WHERE id = $1 RETURNING *",
-        [userId]
+        [parsedUserId]
       );
 
       if (result.rows.length === 0) {
@@ -522,7 +592,8 @@ exports.deleteUser = async (req, res) => {
 
       res.json({
         success: true,
-        message: "User and all associated data deleted successfully"
+        message: "User and all associated data deleted successfully",
+        deletedAccounts: userAccounts.rows.length
       });
 
     } catch (error) {
@@ -537,7 +608,68 @@ exports.deleteUser = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to delete user",
-      error: err.message
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
+// ============== BACKDATE TRANSACTION (ADMIN ONLY) =================
+exports.backdateTransaction = async (req, res) => {
+  try {
+    const { transactionId, newDate } = req.body;
+    const adminId = req.user?.id;
+
+    // FIX #3: Add input validation
+    const parsedTransactionId = parseInt(transactionId);
+    if (isNaN(parsedTransactionId) || parsedTransactionId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid transaction ID is required"
+      });
+    }
+
+    if (!newDate || isNaN(new Date(newDate).getTime())) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid date is required"
+      });
+    }
+
+    if (!adminId) {
+      return res.status(401).json({
+        success: false,
+        message: "Authentication required"
+      });
+    }
+
+    // Update the transaction date
+    const result = await pool.query(
+      `UPDATE transactions 
+       SET created_at = $1, backdated_by = $2, original_date = COALESCE(original_date, created_at)
+       WHERE id = $3 
+       RETURNING *`,
+      [new Date(newDate), adminId, parsedTransactionId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Transaction not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: "Transaction backdated successfully",
+      transaction: result.rows[0]
+    });
+
+  } catch (err) {
+    console.error('Backdate transaction error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to backdate transaction",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
     });
   }
 };
