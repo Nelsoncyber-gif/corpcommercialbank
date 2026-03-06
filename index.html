@@ -3178,10 +3178,19 @@
       const [showModal, setShowModal] = useState(false);
       const [actionType, setActionType] = useState('');
       const [userAccounts, setUserAccounts] = useState({});
+      const [loadingAccounts, setLoadingAccounts] = useState(false);
 
       // Load account status for all users
       useEffect(() => {
         const loadAccountStatus = async () => {
+          if (!adminData.users || adminData.users.length === 0) {
+            console.log('No users to load accounts for');
+            return;
+          }
+
+          setLoadingAccounts(true);
+          console.log('Loading accounts for', adminData.users.length, 'users');
+
           const accountsMap = {};
           for (const user of adminData.users) {
             try {
@@ -3189,18 +3198,20 @@
                 headers: { Authorization: `Bearer ${auth.token}` }
               });
               const d = await r.json();
-              if (d.success && d.accounts.length > 0) {
+              console.log('Account for user', user.id, ':', d);
+              if (d.success && d.accounts && d.accounts.length > 0) {
                 accountsMap[user.id] = d.accounts[0];
               }
             } catch (err) {
               console.error('Error loading account for user', user.id, err);
             }
           }
+          console.log('Loaded accounts:', accountsMap);
           setUserAccounts(accountsMap);
+          setLoadingAccounts(false);
         };
-        if (adminData.users && adminData.users.length > 0) {
-          loadAccountStatus();
-        }
+
+        loadAccountStatus();
       }, [adminData.users, auth.token]);
 
       const filteredUsers = adminData.users.filter(u => u.role !== 'admin').filter(u =>
@@ -3316,48 +3327,59 @@
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map(user => {
-                const account = userAccounts[user.id];
-                const status = account ? account.status : 'no_account';
-                return (
-                  <tr key={user.id}>
-                    <td style={{ fontWeight: 600 }}>{user.first_name} {user.last_name}</td>
-                    <td style={{ color: 'var(--gray-600)' }}>{user.email}</td>
-                    <td style={{ color: 'var(--gray-600)' }}>{user.phone || 'N/A'}</td>
-                    <td style={{ textTransform: 'capitalize' }}><span className="badge badge-info">{user.role}</span></td>
-                    <td>
-                      <span className={`badge ${status === 'frozen' ? 'badge-error' : status === 'no_account' ? 'badge-warning' : 'badge-success'}`}>
-                        {status === 'frozen' ? '🔒 Frozen' : status === 'no_account' ? '📭 No Account' : '✅ Active'}
-                      </span>
-                    </td>
-                    <td style={{ display: 'flex', gap: 8 }}>
-                      {account && (
+              {loadingAccounts ? (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', padding: 40 }}>
+                    <div className="loader-container" style={{ minHeight: '100px' }}>
+                      <div className="loader"></div>
+                      <div style={{ marginTop: 16, color: 'var(--gray-500)' }}>Loading account status...</div>
+                    </div>
+                  </td>
+                </tr>
+              ) : (
+                filteredUsers.map(user => {
+                  const account = userAccounts[user.id];
+                  const status = account ? account.status : 'no_account';
+                  return (
+                    <tr key={user.id}>
+                      <td style={{ fontWeight: 600 }}>{user.first_name} {user.last_name}</td>
+                      <td style={{ color: 'var(--gray-600)' }}>{user.email}</td>
+                      <td style={{ color: 'var(--gray-600)' }}>{user.phone || 'N/A'}</td>
+                      <td style={{ textTransform: 'capitalize' }}><span className="badge badge-info">{user.role}</span></td>
+                      <td>
+                        <span className={`badge ${status === 'frozen' ? 'badge-error' : status === 'no_account' ? 'badge-warning' : 'badge-success'}`}>
+                          {status === 'frozen' ? '🔒 Frozen' : status === 'no_account' ? '📭 No Account' : '✅ Active'}
+                        </span>
+                      </td>
+                      <td style={{ display: 'flex', gap: 8 }}>
+                        {account && (
+                          <button
+                            className="btn btn-sm btn-outline"
+                            onClick={() => handleFreeze(user.id, status)}
+                            style={{ padding: '6px 12px', fontSize: 13 }}
+                          >
+                            {status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                          </button>
+                        )}
                         <button
                           className="btn btn-sm btn-outline"
-                          onClick={() => handleFreeze(user.id, status)}
+                          onClick={() => openModal(user, 'view')}
                           style={{ padding: '6px 12px', fontSize: 13 }}
                         >
-                          {status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                          👁️ View
                         </button>
-                      )}
-                      <button
-                        className="btn btn-sm btn-outline"
-                        onClick={() => openModal(user, 'view')}
-                        style={{ padding: '6px 12px', fontSize: 13 }}
-                      >
-                        👁️ View
-                      </button>
-                      <button
-                        className="btn btn-sm btn-error"
-                        onClick={() => handleDelete(user.id)}
-                        style={{ padding: '6px 12px', fontSize: 13 }}
-                      >
-                        🗑️ Delete
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                        <button
+                          className="btn btn-sm btn-error"
+                          onClick={() => handleDelete(user.id)}
+                          style={{ padding: '6px 12px', fontSize: 13 }}
+                        >
+                          🗑️ Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
               {filteredUsers.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>
                 {searchTerm ? 'No customers match your search' : 'No customers found'}
               </td></tr>}
