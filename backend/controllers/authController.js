@@ -3,7 +3,6 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 
 // ==================== AUTH CONTROLLERS ====================
-
 exports.register = async (req, res) => {
   console.log('🔵 Register endpoint called');
   console.log('Request body:', req.body);
@@ -17,14 +16,14 @@ exports.register = async (req, res) => {
     address,
     city,
     state,
-    zip,
+    zip,                    // Frontend sends 'zip'
     country,
-    dob,
+    dob,                     // Frontend sends 'dob'
     occupation,
-    taxId,
-    nextOfKinName,
-    nextOfKinPhone,
-    nextOfKinRelation,
+    taxId,                   // Frontend sends 'taxId'
+    nextOfKinName,           // Frontend sends 'nextOfKinName'
+    nextOfKinPhone,          // Frontend sends 'nextOfKinPhone'
+    nextOfKinRelation,       // Frontend sends 'nextOfKinRelation'
     profilePicture
   } = req.body;
 
@@ -59,7 +58,7 @@ exports.register = async (req, res) => {
     const hashed = await bcrypt.hash(password, 10);
 
     console.log('💾 Creating user in database...');
-    // Create user with all fields
+    // Create user with all fields - FIXED: Using correct database column names
     const result = await pool.query(
       `INSERT INTO users(
         first_name, last_name, email, password, phone,
@@ -71,9 +70,9 @@ exports.register = async (req, res) => {
        RETURNING id, first_name, last_name, email, phone, address, city, state, zip_code, country, date_of_birth, occupation, tax_id, next_of_kin_name, next_of_kin_phone, next_of_kin_relationship, profile_picture, role, created_at`,
       [
         first_name, last_name, email, hashed, phone,
-        address, city, state, zip, country,
-        dob, occupation, taxId,
-        nextOfKinName, nextOfKinPhone, nextOfKinRelation,
+        address, city, state, zip, country,           // zip maps to zip_code
+        dob, occupation, taxId,                        // dob maps to date_of_birth, taxId maps to tax_id
+        nextOfKinName, nextOfKinPhone, nextOfKinRelation, // maps to next_of_kin_name, next_of_kin_phone, next_of_kin_relationship
         profilePicture
       ]
     );

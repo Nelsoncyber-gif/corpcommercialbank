@@ -1,12 +1,12 @@
 const pool = require('../config/db');
 
 // ==================== CREATE ACCOUNT ====================
-// Create account - instant approval (no admin review required)
+// Create account request - requires admin approval
 exports.createAccount = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    // Check if user already has an account
+    // Check if user already has an account or pending request
     const existingAccounts = await pool.query(
       'SELECT id FROM accounts WHERE user_id = $1',
       [userId]
@@ -19,28 +19,41 @@ exports.createAccount = async (req, res) => {
       });
     }
 
+    // Check for pending approval requests
+    const pendingRequest = await pool.query(
+      'SELECT id FROM account_approvals WHERE user_id = $1 AND status = $2',
+      [userId, 'pending']
+    );
+
+    if (pendingRequest.rows.length > 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'You already have a pending account request. Please wait for admin approval.'
+      });
+    }
+
     // Generate unique account number
     const accountNumber = Math.floor(Math.random() * 9000000000) + 1000000000;
 
-    // Create account directly (no approval required)
+    // Create pending account approval request (account not active yet)
     const result = await pool.query(
-      `INSERT INTO accounts (user_id, account_number, balance, status, created_at, updated_at)
-       VALUES ($1, $2, $3, $4, NOW(), NOW())
+      `INSERT INTO account_approvals (user_id, account_number, status, requested_at)
+       VALUES ($1, $2, $3, NOW())
        RETURNING *`,
-      [userId, accountNumber, 0.00, 'active']
+      [userId, accountNumber, 'pending']
     );
 
     res.json({
       success: true,
-      message: 'Account opened successfully!',
-      account: result.rows[0],
-      requiresApproval: false
+      message: 'Account request submitted successfully. Please wait for admin approval.',
+      approvalRequest: result.rows[0],
+      requiresApproval: true
     });
   } catch (error) {
-    console.error('Create account error:', error);
+    console.error('Create account request error:', error);
     res.status(500).json({
       success: false,
-      message: 'Failed to open account'
+      message: 'Failed to submit account request'
     });
   }
 };
@@ -55,9 +68,17 @@ exports.getAccounts = async (req, res) => {
       [userId]
     );
 
+    // Also check for pending account approval requests
+    const pendingResult = await pool.query(
+      `SELECT id, account_number, status, requested_at FROM account_approvals WHERE user_id = $1 AND status = 'pending'`,
+      [userId]
+    );
+
     res.status(200).json({
       success: true,
-      accounts: result.rows
+      accounts: result.rows,
+      pendingApprovals: pendingResult.rows,
+      hasPendingRequest: pendingResult.rows.length > 0
     });
 
   } catch (err) {
