@@ -3234,8 +3234,7 @@
         )}
       </>;
     };
-    // CUSTOMER MANAGEMENT COMPONENT (ADMIN)
-// CUSTOMER MANAGEMENT COMPONENT (ADMIN) - FIXED VERSION
+    // CUSTOMER MANAGEMENT COMPONENT (ADMIN) - FIXED VERSION
 const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currency }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
@@ -3245,7 +3244,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
 
   // Filter customers (exclude admins)
   const customers = adminData.users.filter(u => u.role !== 'admin');
-  
+
   // Apply search filter
   const filteredUsers = customers.filter(u =>
     (u.first_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
@@ -3279,27 +3278,28 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
     setShowModal(true);
   };
 
-  // FIX #1: Get accountId first, then call toggle endpoint with accountId
-  const handleFreeze = async (userId) => {
-    if (!confirm('Are you sure you want to freeze/unfreeze this account?')) return;
-    
+  // FIXED: Get user's account status first, then toggle appropriately
+  const handleFreezeToggle = async (user) => {
     try {
-      // First get the user's account to get the accountId
-      const accountsRes = await fetch(`${API}/admin/user-accounts/${userId}`, {
+      // First get the user's account to check current status
+      const accountsRes = await fetch(`${API}/admin/user-accounts/${user.id}`, {
         headers: { Authorization: `Bearer ${auth.token}` }
       });
       const accountsData = await accountsRes.json();
-      
+
       if (!accountsData.success || !accountsData.accounts?.[0]) {
-        showToast('User has no account to freeze', 'error');
+        showToast('User has no account to freeze/unfreeze', 'error');
         return;
       }
-      
-      const accountId = accountsData.accounts[0].id;
-      const currentStatus = accountsData.accounts[0].status;
-      
-      // Now call toggle endpoint with accountId (not userId)
-      const r = await fetch(`${API}/admin/toggle-freeze/${accountId}`, {
+
+      const account = accountsData.accounts[0];
+      const currentStatus = account.status;
+      const action = currentStatus === 'frozen' ? 'unfreeze' : 'freeze';
+
+      if (!confirm(`Are you sure you want to ${action} this account?`)) return;
+
+      // Call toggle endpoint with accountId
+      const r = await fetch(`${API}/admin/toggle-freeze/${account.id}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3307,35 +3307,34 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         }
       });
       const d = await r.json();
-      
+
       if (d.success) {
-        showToast(`Account ${currentStatus === 'frozen' ? 'unfrozen' : 'frozen'} successfully!`);
-        loadUserAccounts(userId); // Refresh accounts
-        loadData(auth.token, auth.user); // Refresh main data
+        showToast(`Account ${action}d successfully!`);
+        // Refresh data
+        loadData(auth.token, auth.user);
       } else {
-        showToast(d.message || 'Failed to update status', 'error');
+        showToast(d.message || `Failed to ${action} account`, 'error');
       }
     } catch (err) {
-      console.error('Freeze error:', err);
+      console.error('Toggle error:', err);
       showToast('Failed to update account status', 'error');
     }
   };
 
-  // FIX #2: Send userId in request body, not URL params
   const handleDelete = async (userId, userName) => {
     if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) return;
-    
+
     try {
-      const r = await fetch(`${API}/admin/delete-user`, {  // No userId in URL
+      const r = await fetch(`${API}/admin/delete-user`, {
         method: 'DELETE',
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${auth.token}`
         },
-        body: JSON.stringify({ userId })  // userId in body only
+        body: JSON.stringify({ userId })
       });
       const d = await r.json();
-      
+
       if (d.success) {
         showToast('Customer deleted successfully!');
         setShowModal(false);
@@ -3361,14 +3360,14 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       <h2 className="section-title">Customer Management</h2>
       <p className="section-subtitle">View and manage all registered customers</p>
     </div>
-    
+
     {/* Debug Info */}
     <div className="alert alert-info" style={{ marginBottom: 20 }}>
-      <strong>Debug:</strong> Users: {adminData.users?.length || 0} | 
-      Customers: {customers.length} | 
+      <strong>Debug:</strong> Users: {adminData.users?.length || 0} |
+      Customers: {customers.length} |
       Filtered: {filteredUsers.length}
     </div>
-    
+
     {/* Search */}
     <div style={{ marginBottom: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
       <input
@@ -3386,7 +3385,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         }}
       />
     </div>
-    
+
     {/* Customer Table */}
     <div className="table-container">
       <table className="table">
@@ -3401,8 +3400,12 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
           </tr>
         </thead>
         <tbody>
-          {filteredUsers.map(user => (
-            <tr key={user.id}>
+          {filteredUsers.map(user => {
+            // Find user's account status (if any)
+            const userAccount = adminData.accounts?.find(a => a.user_id === user.id);
+            const accountStatus = userAccount?.status || 'no_account';
+
+            return <tr key={user.id}>
               <td>
                 <div style={{ fontWeight: 600 }}>
                   {user.first_name || 'N/A'} {user.last_name || ''}
@@ -3417,9 +3420,13 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </span>
               </td>
               <td>
-                <span className={`badge ${user.status === 'frozen' ? 'badge-error' : 'badge-success'}`}>
-                  {user.status === 'frozen' ? '🔒 Frozen' : '✅ Active'}
-                </span>
+                {accountStatus === 'no_account' ? (
+                  <span className="badge badge-warning">⏳ No Account</span>
+                ) : (
+                  <span className={`badge ${accountStatus === 'frozen' ? 'badge-error' : 'badge-success'}`}>
+                    {accountStatus === 'frozen' ? '🔒 Frozen' : '✅ Active'}
+                  </span>
+                )}
               </td>
               <td>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
@@ -3430,13 +3437,23 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   >
                     👁️ View
                   </button>
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={() => handleFreeze(user.id)}
-                    style={{ padding: '6px 12px', fontSize: 13 }}
-                  >
-                    {user.status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
-                  </button>
+
+                  {accountStatus !== 'no_account' && (
+                    <button
+                      className="btn btn-sm"
+                      onClick={() => handleFreezeToggle(user)}
+                      style={{
+                        padding: '6px 12px',
+                        fontSize: 13,
+                        background: accountStatus === 'frozen' ? 'var(--green-success)' : 'var(--orange-warning)',
+                        color: 'var(--white)',
+                        border: 'none'
+                      }}
+                    >
+                      {accountStatus === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                    </button>
+                  )}
+
                   <button
                     className="btn btn-sm"
                     onClick={() => handleDelete(user.id, `${user.first_name} ${user.last_name}`)}
@@ -3451,8 +3468,8 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   </button>
                 </div>
               </td>
-            </tr>
-          ))}
+            </tr>;
+          })}
           {filteredUsers.length === 0 && (
             <tr>
               <td colSpan="6" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>
@@ -3480,7 +3497,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         </tbody>
       </table>
     </div>
-    
+
     {/* View User Modal */}
     {showModal && selectedUser && (
       <div className="modal-overlay" onClick={() => setShowModal(false)}>
@@ -3528,22 +3545,8 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   </span>
                 </div>
               </div>
-              <div>
-                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Status</div>
-                <div style={{ fontSize: 14 }}>
-                  <span className={`badge ${selectedUser.status === 'frozen' ? 'badge-error' : 'badge-success'}`}>
-                    {selectedUser.status === 'frozen' ? '🔒 Frozen' : '✅ Active'}
-                  </span>
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Created At</div>
-                <div style={{ fontSize: 14 }}>
-                  {selectedUser.created_at ? fmtDate(selectedUser.created_at) : 'N/A'}
-                </div>
-              </div>
             </div>
-            
+
             {loading ? (
               <div className="loader-container" style={{ minHeight: 200 }}>
                 <div className="loader" />
@@ -3570,7 +3573,9 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                             {acc.account_number}
                           </div>
                           <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 4 }}>
-                            Status: {acc.status}
+                            Status: <span className={`badge ${acc.status === 'frozen' ? 'badge-error' : 'badge-success'}`} style={{ marginLeft: 4 }}>
+                              {acc.status === 'frozen' ? 'Frozen' : 'Active'}
+                            </span>
                           </div>
                         </div>
                         <div style={{ textAlign: 'right' }}>
@@ -3579,6 +3584,21 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                           </div>
                           <div style={{ fontSize: 11, color: 'var(--gray-500)' }}>Balance</div>
                         </div>
+                      </div>
+                      <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+                        <button
+                          className="btn btn-sm"
+                          onClick={() => handleFreezeToggle({ id: selectedUser.id })}
+                          style={{
+                            background: acc.status === 'frozen' ? 'var(--green-success)' : 'var(--orange-warning)',
+                            color: 'var(--white)',
+                            border: 'none',
+                            padding: '4px 12px',
+                            fontSize: 12
+                          }}
+                        >
+                          {acc.status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                        </button>
                       </div>
                     </div>
                   ))}
