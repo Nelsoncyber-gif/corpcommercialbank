@@ -23,6 +23,29 @@ const {
 
 router.get('/users', protect, adminOnly, getAllUsers);
 
+// Get all accounts (for admin view)
+router.get('/user-accounts', protect, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT a.*, u.first_name, u.last_name, u.email
+       FROM accounts a
+       JOIN users u ON a.user_id = u.id
+       ORDER BY a.created_at DESC`
+    );
+
+    res.json({
+      success: true,
+      accounts: result.rows
+    });
+  } catch (err) {
+    console.error('Get all accounts error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch accounts'
+    });
+  }
+});
+
 router.get('/user-accounts/:userId', protect, adminOnly, getUserAccounts);
 
 
