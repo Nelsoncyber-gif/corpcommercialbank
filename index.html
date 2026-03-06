@@ -3278,28 +3278,25 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
     setShowModal(true);
   };
 
-  // FIXED: Get user's account status first, then toggle appropriately
+  // FIXED: Get account from adminData.accounts and toggle using accountId
   const handleFreezeToggle = async (user) => {
     try {
-      // First get the user's account to check current status
-      const accountsRes = await fetch(`${API}/admin/user-accounts/${user.id}`, {
-        headers: { Authorization: `Bearer ${auth.token}` }
-      });
-      const accountsData = await accountsRes.json();
+      // Find user's account from the accounts array
+      const userAccount = adminData.accounts?.find(a => a.user_id === user.id);
 
-      if (!accountsData.success || !accountsData.accounts?.[0]) {
+      if (!userAccount) {
         showToast('User has no account to freeze/unfreeze', 'error');
         return;
       }
 
-      const account = accountsData.accounts[0];
-      const currentStatus = account.status;
+      const accountId = userAccount.id;
+      const currentStatus = userAccount.status;
       const action = currentStatus === 'frozen' ? 'unfreeze' : 'freeze';
 
       if (!confirm(`Are you sure you want to ${action} this account?`)) return;
 
       // Call toggle endpoint with accountId
-      const r = await fetch(`${API}/admin/toggle-freeze/${account.id}`, {
+      const r = await fetch(`${API}/admin/toggle-freeze/${accountId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -3588,7 +3585,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                       <div style={{ marginTop: 12, display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
                         <button
                           className="btn btn-sm"
-                          onClick={() => handleFreezeToggle({ id: selectedUser.id })}
+                          onClick={() => handleFreezeToggle(selectedUser)}
                           style={{
                             background: acc.status === 'frozen' ? 'var(--green-success)' : 'var(--orange-warning)',
                             color: 'var(--white)',
@@ -3758,7 +3755,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
       const [accounts, setAccounts] = useState([]);
       const [transactions, setTransactions] = useState([]);
-      const [adminData, setAdminData] = useState({ users: [], allTransactions: [] });
+      const [adminData, setAdminData] = useState({ users: [], allTransactions: [], accounts: [] });
       const [pendingApprovals, setPendingApprovals] = useState([]);
       const [loading, setLoading] = useState(true);
       const [toast, setToast] = useState(null);
@@ -3774,9 +3771,6 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
           ]);
           const [ad, td] = await Promise.all([ar.json(), tr.json()]);
 
-          console.log('Accounts response:', ad);
-          console.log('Transactions response:', td);
-
           if (ad.success) {
             setAccounts(ad.accounts || []);
             setPendingApprovals(ad.pendingApprovals || []);
@@ -3786,24 +3780,28 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
           // Load admin data if admin
           if (userObj?.role === 'admin') {
             console.log('Loading admin data...');
+
+            // Fetch ALL accounts for admin view
+            const allAccountsRes = await fetch(`${API}/admin/all-accounts`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            const allAccountsData = await allAccountsRes.json();
+
             const [ur, atr] = await Promise.all([
               fetch(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
               fetch(`${API}/admin/transactions`, { headers: { Authorization: `Bearer ${token}` } })
             ]);
             const [ud, atd] = await Promise.all([ur.json(), atr.json()]);
 
-            console.log('Admin users response:', ud);
-            console.log('Admin transactions response:', atd);
-
             if (ud.success) {
               console.log('Users loaded:', ud.users?.length);
+              console.log('Accounts loaded:', allAccountsData.success ? allAccountsData.accounts?.length : 0);
+
               setAdminData({
                 users: ud.users || [],
-                allTransactions: atd.transactions || []
+                allTransactions: atd.transactions || [],
+                accounts: allAccountsData.success ? allAccountsData.accounts : []
               });
-            } else {
-              console.error('Failed to load users:', ud.message);
-              showToast('Failed to load users: ' + (ud.message || 'Unknown error'), 'error');
             }
           }
         } catch (err) {

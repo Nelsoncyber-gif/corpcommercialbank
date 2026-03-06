@@ -23,6 +23,29 @@ const {
 
 router.get('/users', protect, adminOnly, getAllUsers);
 
+// Get all accounts (for admin view)
+router.get('/all-accounts', protect, adminOnly, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT a.*, u.first_name, u.last_name, u.email
+       FROM accounts a
+       JOIN users u ON a.user_id = u.id
+       ORDER BY a.created_at DESC`
+    );
+
+    res.json({
+      success: true,
+      accounts: result.rows
+    });
+  } catch (err) {
+    console.error('Get all accounts error:', err);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch accounts'
+    });
+  }
+});
+
 router.get('/user-accounts/:userId', protect, adminOnly, getUserAccounts);
 
 
@@ -45,16 +68,16 @@ router.delete('/delete-user/:userId', protect, adminOnly, async (req, res) => {
 // ============== TOGGLE ACCOUNT STATUS =================
 // Legacy route for toggle-account-status
 router.post('/toggle-account-status/:userId', protect, adminOnly, toggleAccountStatus);
-// New route for frontend compatibility (toggle-freeze)
-router.post('/toggle-freeze/:userId', protect, adminOnly, async (req, res) => {
+// New route for frontend compatibility (toggle-freeze) - uses accountId
+router.post('/toggle-freeze/:accountId', protect, adminOnly, async (req, res) => {
   await toggleAccountStatus(req, res);
 });
 /**
- * Toggle account status (freeze/unfreeze) by user ID
- * @route POST /api/admin/toggle-account-status/:userId
+ * Toggle account status (freeze/unfreeze) by account ID
+ * @route POST /api/admin/toggle-account-status/:accountId
  * @access Protected (Admin only)
  */
-router.post('/toggle-account-status/:userId', protect, adminOnly, toggleAccountStatus);
+router.post('/toggle-account-status/:accountId', protect, adminOnly, toggleAccountStatus);
 
 // ============== GET USER DETAILS =================
 /**
