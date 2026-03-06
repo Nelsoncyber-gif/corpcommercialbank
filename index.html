@@ -2714,7 +2714,8 @@
     };
     // AUTH PAGES
     const AuthPage = ({ isLogin, onAuth, onSwitch }) => {
-      const [form, setForm] = useState(isLogin ? { email: '', password: '' } : {
+      const [showLogin, setShowLogin] = useState(isLogin);
+      const [form, setForm] = useState(showLogin ? { email: '', password: '' } : {
         first_name: '',
         last_name: '',
         email: '',
@@ -2736,57 +2737,81 @@
       });
       const [loading, setLoading] = useState(false);
       const [toast, setToast] = useState(null);
-      const [showLogin, setShowLogin] = useState(isLogin);
       const [activeTestimonial, setActiveTestimonial] = useState(0);
+
+      // Reset form when switching between login/register
+      useEffect(() => {
+        setForm(showLogin ? { email: '', password: '' } : {
+          first_name: '',
+          last_name: '',
+          email: '',
+          password: '',
+          confirmPassword: '',
+          phone: '',
+          address: '',
+          city: '',
+          state: '',
+          zip: '',
+          country: '',
+          dob: '',
+          occupation: '',
+          taxId: '',
+          nextOfKinName: '',
+          nextOfKinPhone: '',
+          nextOfKinRelation: '',
+          profilePicture: ''
+        });
+      }, [showLogin]);
       const submit = async e => {
-        e.preventDefault();
+  e.preventDefault();
 
-        // Validation
-        if (!isLogin && form.password !== form.confirmPassword) {
-          setToast({ message: 'Passwords do not match', type: 'error' });
-          return;
-        }
+  // Validation
+  if (!showLogin && form.password !== form.confirmPassword) {  // ✅ Use showLogin
+    setToast({ message: 'Passwords do not match', type: 'error' });
+    return;
+  }
 
-        setLoading(true);
+  setLoading(true);
 
-        try {
-          console.log('Attempting login/register:', {
-            email: form.email,
-            isLogin,
-            endpoint: `${API}/auth/${isLogin ? 'login' : 'register'}`
-          });
+  try {
+    console.log('Attempting login/register:', {
+      email: form.email,
+      isRegistering: !showLogin,  // ✅ Log what we're actually doing
+      endpoint: `${API}/auth/${showLogin ? 'login' : 'register'}`  // ✅ Use showLogin
+    });
 
-          const response = await fetch(`${API}/auth/${isLogin ? 'login' : 'register'}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(form)
-          });
+    const response = await fetch(`${API}/auth/${showLogin ? 'login' : 'register'}`, {  // ✅ Use showLogin
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form)
+    });
 
-          console.log('Response status:', response.status);
+    console.log('Response status:', response.status);
+    console.log('Response headers:', response.headers);
 
-          const data = await response.json();
-          console.log('Response data:', data);
+    const data = await response.json();
+    console.log('Response data:', data);
 
-          if (data.success) {
-            localStorage.setItem('token', data.token);
-            localStorage.setItem('user', JSON.stringify(data.user));
-            onAuth(data.user, data.token);
-          } else {
-            setToast({
-              message: data.message || `${isLogin ? 'Login' : 'Registration'} failed`,
-              type: 'error'
-            });
-          }
-        } catch (error) {
-          console.error('Login/Register error:', error);
-          setToast({
-            message: 'Connection error: ' + error.message,
-            type: 'error'
-          });
-        } finally {
-          setLoading(false);
-        }
-      };
+    if (data.success) {
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+      onAuth(data.user, data.token);
+    } else {
+      setToast({
+        message: data.message || `${showLogin ? 'Login' : 'Registration'} failed`,  // ✅ Use showLogin
+        type: 'error'
+      });
+    }
+  } catch (error) {
+    console.error('Login/Register error:', error);
+    setToast({
+      message: 'Connection error: ' + error.message,
+      type: 'error'
+    });
+  } finally {
+    setLoading(false);
+  }
+};
       // Auto-rotate testimonials
       useEffect(() => {
         const interval = setInterval(() => {
