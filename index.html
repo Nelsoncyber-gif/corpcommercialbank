@@ -3177,6 +3177,31 @@
       const [selectedUser, setSelectedUser] = useState(null);
       const [showModal, setShowModal] = useState(false);
       const [actionType, setActionType] = useState('');
+      const [userAccounts, setUserAccounts] = useState({});
+
+      // Load account status for all users
+      useEffect(() => {
+        const loadAccountStatus = async () => {
+          const accountsMap = {};
+          for (const user of adminData.users) {
+            try {
+              const r = await fetch(`${API}/admin/user-accounts/${user.id}`, {
+                headers: { Authorization: `Bearer ${auth.token}` }
+              });
+              const d = await r.json();
+              if (d.success && d.accounts.length > 0) {
+                accountsMap[user.id] = d.accounts[0];
+              }
+            } catch (err) {
+              console.error('Error loading account for user', user.id, err);
+            }
+          }
+          setUserAccounts(accountsMap);
+        };
+        if (adminData.users && adminData.users.length > 0) {
+          loadAccountStatus();
+        }
+      }, [adminData.users, auth.token]);
 
       const filteredUsers = adminData.users.filter(u => u.role !== 'admin').filter(u =>
         u.first_name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -3186,9 +3211,28 @@
 
       const handleFreeze = async (userId, currentStatus) => {
         try {
-          const r = await fetch(`${API}/admin/toggle-account-status/${userId}`, {
-            method: 'POST',
+          // First get the user's account ID
+          const accRes = await fetch(`${API}/admin/user-accounts/${userId}`, {
             headers: { Authorization: `Bearer ${auth.token}` }
+          });
+          const accData = await accRes.json();
+
+          if (!accData.success || accData.accounts.length === 0) {
+            showToast('User has no account', 'error');
+            return;
+          }
+
+          const accountId = accData.accounts[0].id;
+
+          // Use the existing freeze/unfreeze endpoints
+          const endpoint = currentStatus === 'frozen' ? 'unfreeze' : 'freeze';
+          const r = await fetch(`${API}/admin/${endpoint}`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${auth.token}`
+            },
+            body: JSON.stringify({ accountId })
           });
           const d = await r.json();
           if (d.success) {
@@ -3272,42 +3316,48 @@
               </tr>
             </thead>
             <tbody>
-              {filteredUsers.map(user => (
-                <tr key={user.id}>
-                  <td style={{ fontWeight: 600 }}>{user.first_name} {user.last_name}</td>
-                  <td style={{ color: 'var(--gray-600)' }}>{user.email}</td>
-                  <td style={{ color: 'var(--gray-600)' }}>{user.phone || 'N/A'}</td>
-                  <td style={{ textTransform: 'capitalize' }}><span className="badge badge-info">{user.role}</span></td>
-                  <td>
-                    <span className={`badge ${user.status === 'frozen' ? 'badge-error' : 'badge-success'}`}>
-                      {user.status === 'frozen' ? '🔒 Frozen' : '✅ Active'}
-                    </span>
-                  </td>
-                  <td style={{ display: 'flex', gap: 8 }}>
-                    <button
-                      className="btn btn-sm btn-outline"
-                      onClick={() => handleFreeze(user.id, user.status)}
-                      style={{ padding: '6px 12px', fontSize: 13 }}
-                    >
-                      {user.status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
-                    </button>
-                    <button
-                      className="btn btn-sm btn-outline"
-                      onClick={() => openModal(user, 'view')}
-                      style={{ padding: '6px 12px', fontSize: 13 }}
-                    >
-                      👁️ View
-                    </button>
-                    <button
-                      className="btn btn-sm btn-error"
-                      onClick={() => handleDelete(user.id)}
-                      style={{ padding: '6px 12px', fontSize: 13 }}
-                    >
-                      🗑️ Delete
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {filteredUsers.map(user => {
+                const account = userAccounts[user.id];
+                const status = account ? account.status : 'no_account';
+                return (
+                  <tr key={user.id}>
+                    <td style={{ fontWeight: 600 }}>{user.first_name} {user.last_name}</td>
+                    <td style={{ color: 'var(--gray-600)' }}>{user.email}</td>
+                    <td style={{ color: 'var(--gray-600)' }}>{user.phone || 'N/A'}</td>
+                    <td style={{ textTransform: 'capitalize' }}><span className="badge badge-info">{user.role}</span></td>
+                    <td>
+                      <span className={`badge ${status === 'frozen' ? 'badge-error' : status === 'no_account' ? 'badge-warning' : 'badge-success'}`}>
+                        {status === 'frozen' ? '🔒 Frozen' : status === 'no_account' ? '📭 No Account' : '✅ Active'}
+                      </span>
+                    </td>
+                    <td style={{ display: 'flex', gap: 8 }}>
+                      {account && (
+                        <button
+                          className="btn btn-sm btn-outline"
+                          onClick={() => handleFreeze(user.id, status)}
+                          style={{ padding: '6px 12px', fontSize: 13 }}
+                        >
+                          {status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                        </button>
+                      )}
+                      <button
+                        className="btn btn-sm btn-outline"
+                        onClick={() => openModal(user, 'view')}
+                        style={{ padding: '6px 12px', fontSize: 13 }}
+                      >
+                        👁️ View
+                      </button>
+                      <button
+                        className="btn btn-sm btn-error"
+                        onClick={() => handleDelete(user.id)}
+                        style={{ padding: '6px 12px', fontSize: 13 }}
+                      >
+                        🗑️ Delete
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
               {filteredUsers.length === 0 && <tr><td colSpan="6" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>
                 {searchTerm ? 'No customers match your search' : 'No customers found'}
               </td></tr>}
