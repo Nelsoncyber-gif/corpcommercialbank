@@ -9,6 +9,18 @@ CREATE TABLE IF NOT EXISTS users (
     password VARCHAR(255) NOT NULL,
     phone VARCHAR(20),
     role VARCHAR(20) DEFAULT 'user',
+    address VARCHAR(255),
+    city VARCHAR(100),
+    state VARCHAR(100),
+    zip_code VARCHAR(20),
+    country VARCHAR(100),
+    date_of_birth DATE,
+    occupation VARCHAR(100),
+    tax_id VARCHAR(50),
+    next_of_kin_name VARCHAR(200),
+    next_of_kin_phone VARCHAR(20),
+    next_of_kin_relationship VARCHAR(50),
+    profile_picture VARCHAR(500),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

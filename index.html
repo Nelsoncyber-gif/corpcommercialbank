@@ -3239,8 +3239,6 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
-  const [userAccounts, setUserAccounts] = useState([]);
-  const [loading, setLoading] = useState(false);
 
   // Filter customers (exclude admins)
   const customers = adminData.users.filter(u => u.role !== 'admin');
@@ -3252,29 +3250,8 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
     (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
   );
 
-  const loadUserAccounts = async (userId) => {
-    setLoading(true);
-    try {
-      const r = await fetch(`${API}/admin/user-accounts/${userId}`, {
-        headers: { Authorization: `Bearer ${auth.token}` }
-      });
-      const d = await r.json();
-      if (d.success) {
-        setUserAccounts(d.accounts || []);
-      } else {
-        showToast(d.message || 'Failed to load accounts', 'error');
-      }
-    } catch (err) {
-      console.error('Load accounts error:', err);
-      showToast('Failed to load accounts', 'error');
-    } finally {
-      setLoading(false);
-    }
-  };
-
   const viewUserDetails = (user) => {
     setSelectedUser(user);
-    loadUserAccounts(user.id);
     setShowModal(true);
   };
 
@@ -3498,7 +3475,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
     {/* View User Modal */}
     {showModal && selectedUser && (
       <div className="modal-overlay" onClick={() => setShowModal(false)}>
-        <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 800 }}>
+        <div className="modal" onClick={e => e.stopPropagation()} style={{ maxWidth: 900 }}>
           <div className="modal-header">
             <h3>Customer Details: {selectedUser.first_name} {selectedUser.last_name}</h3>
             <button className="modal-close" onClick={() => setShowModal(false)}>✕</button>
@@ -3519,10 +3496,15 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 />
               </div>
             )}
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+
+            {/* Personal Information */}
+            <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--teal-primary)' }}>
+              📋 Personal Information
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
               <div>
                 <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Full Name</div>
-                <div style={{ fontSize: 16, fontWeight: 600 }}>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>
                   {selectedUser.first_name} {selectedUser.last_name}
                 </div>
               </div>
@@ -3542,19 +3524,89 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   </span>
                 </div>
               </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Date of Birth</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.date_of_birth ? fmtDate(selectedUser.date_of_birth) : 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Occupation</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.occupation || 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Tax ID</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.tax_id || 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Member Since</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.created_at ? fmtDate(selectedUser.created_at) : 'N/A'}</div>
+              </div>
             </div>
 
-            {loading ? (
-              <div className="loader-container" style={{ minHeight: 200 }}>
-                <div className="loader" />
+            {/* Address Information */}
+            <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--teal-primary)' }}>
+              📍 Address Information
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Address</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.address || 'Not provided'}</div>
               </div>
-            ) : userAccounts.length > 0 ? (
-              <div style={{ marginTop: 24 }}>
-                <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--teal-primary)' }}>
-                  💳 Accounts ({userAccounts.length})
-                </h4>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>City</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.city || 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>State</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.state || 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>ZIP Code</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.zip_code || 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Country</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.country || 'Not provided'}</div>
+              </div>
+            </div>
+
+            {/* Next of Kin Information */}
+            <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--teal-primary)' }}>
+              👨‍👩‍👧 Next of Kin Information
+            </h4>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginBottom: 24 }}>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Next of Kin Name</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.next_of_kin_name || 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Next of Kin Phone</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.next_of_kin_phone || 'Not provided'}</div>
+              </div>
+              <div>
+                <div style={{ fontSize: 12, color: 'var(--gray-500)', marginBottom: 4 }}>Relationship</div>
+                <div style={{ fontSize: 14 }}>{selectedUser.next_of_kin_relationship || 'Not provided'}</div>
+              </div>
+            </div>
+
+            {/* Accounts Section */}
+            <h4 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--teal-primary)' }}>
+              💳 Accounts
+            </h4>
+            {(() => {
+              const userAccountsList = adminData.accounts?.filter(a => a.user_id === selectedUser.id) || [];
+
+              if (userAccountsList.length === 0) {
+                return (
+                  <div style={{ textAlign: 'center', padding: 20, color: 'var(--gray-500)' }}>
+                    <div style={{ fontSize: 32, marginBottom: 8 }}>🏦</div>
+                    <div>No accounts found for this customer</div>
+                  </div>
+                );
+              }
+
+              return (
                 <div style={{ display: 'grid', gap: 12 }}>
-                  {userAccounts.map(acc => (
+                  {userAccountsList.map(acc => (
                     <div
                       key={acc.id}
                       style={{
@@ -3600,13 +3652,8 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                     </div>
                   ))}
                 </div>
-              </div>
-            ) : (
-              <div style={{ marginTop: 24, textAlign: 'center', padding: 20, color: 'var(--gray-500)' }}>
-                <div style={{ fontSize: 32, marginBottom: 8 }}>🏦</div>
-                <div>No accounts found for this customer</div>
-              </div>
-            )}
+              );
+            })()}
           </div>
           <div className="modal-footer">
             <button className="btn btn-outline" onClick={() => setShowModal(false)}>Close</button>
