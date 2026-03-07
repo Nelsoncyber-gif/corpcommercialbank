@@ -220,18 +220,48 @@ exports.generateReceipt = async (req, res) => {
        .text('This is a computer-generated receipt and does not require a signature.', {
          align: 'center'
        });
-    
+
     doc.moveDown(0.5);
-    
+
     doc.fontSize(8)
        .fillColor('#999999')
-       .text('For support, contact: support@corpcommercial.com | +1 (903) 517-0151', {
+       .text('For support, contact: support@corpcommercial.com', {
          align: 'center'
        });
-    
-    doc.text('CorpCommercial Bank Financial Services © 2026', {
+
+    doc.moveDown(0.3);
+
+    // Branch locations
+    doc.fontSize(8)
+       .fillColor('#00596B')
+       .text('CORPCOMMERCIAL BANK BRANCH LOCATIONS', {
+         align: 'center',
+         underline: true
+       });
+
+    doc.moveDown(0.3);
+
+    doc.fontSize(7)
+       .fillColor('#666666')
+       .text('🇺🇸 New York, USA: DFE541 Street, New York, NY | +1 (903) 517-0151', {
+         align: 'center'
+       });
+
+    doc.text('🇩🇪 Berlin, Germany: Eichborndamm 167, 13403 Berlin | +49 16 301 54371', {
       align: 'center'
     });
+
+    doc.text('🇨🇦 Toronto, Canada: 100 King Street West, Toronto, ON M5X 1C9 | +1 (416) 555-0199', {
+      align: 'center'
+    });
+
+    doc.moveDown(0.5);
+
+    doc.fontSize(8)
+       .fillColor('#999999')
+       .text('CorpCommercial Bank Financial Services © 2026', {
+         align: 'center'
+       });
 
     // Finalize PDF
     doc.end();
