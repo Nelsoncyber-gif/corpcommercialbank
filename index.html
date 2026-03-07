@@ -4185,35 +4185,129 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                     </div>
                     <div className="form-group">
                       <label className="form-label">Bank Name</label>
-                      <select name="bankName" className="form-select" required>
-                        <option value="">Select a bank...</option>
-                        <option value="Chase">Chase</option>
-                        <option value="Bank of America">Bank of America</option>
-                        <option value="Wells Fargo">Wells Fargo</option>
-                        <option value="Citibank">Citibank</option>
-                        <option value="U.S. Bank">U.S. Bank</option>
-                        <option value="PNC Bank">PNC Bank</option>
-                        <option value="Truist">Truist</option>
-                        <option value="Capital One">Capital One</option>
-                        <option value="TD Bank">TD Bank</option>
-                        <option value="Fifth Third Bank">Fifth Third Bank</option>
-                        <option value="Citizens Bank">Citizens Bank</option>
-                        <option value="KeyBank">KeyBank</option>
-                        <option value="Regions Bank">Regions Bank</option>
-                        <option value="M&T Bank">M&T Bank</option>
-                        <option value="Huntington National Bank">Huntington National Bank</option>
-                        <option value="Santander Bank">Santander Bank</option>
-                        <option value="BMO Harris Bank">BMO Harris Bank</option>
-                        <option value="Ally Bank">Ally Bank</option>
-                        <option value="Marcus by Goldman Sachs">Marcus by Goldman Sachs</option>
-                        <option value="American Express National Bank">American Express National Bank</option>
-                        <option value="Discover Bank">Discover Bank</option>
-                        <option value="Charles Schwab Bank">Charles Schwab Bank</option>
-                        <option value="Navy Federal Credit Union">Navy Federal Credit Union</option>
-                        <option value="State Employees Credit Union">State Employees Credit Union</option>
-                        <option value="Other">Other (Specify in notes)</option>
-                      </select>
-                      <div className="form-hint">Select the recipient's bank from the list</div>
+                      <input 
+                        name="bankName" 
+                        className="form-input" 
+                        placeholder="Type or select your bank..." 
+                        list="bank-list"
+                        required 
+                      />
+                      <datalist id="bank-list">
+                        {/* 🇺🇸 USA Banks */}
+                        <option value="Chase" />
+                        <option value="Bank of America" />
+                        <option value="Wells Fargo" />
+                        <option value="Citibank" />
+                        <option value="U.S. Bank" />
+                        <option value="PNC Bank" />
+                        <option value="Truist" />
+                        <option value="Capital One" />
+                        <option value="TD Bank" />
+                        <option value="Fifth Third Bank" />
+                        <option value="Citizens Bank" />
+                        <option value="KeyBank" />
+                        <option value="Regions Bank" />
+                        <option value="M&T Bank" />
+                        <option value="Huntington National Bank" />
+                        <option value="Santander Bank" />
+                        <option value="BMO Harris Bank" />
+                        <option value="Ally Bank" />
+                        <option value="Marcus by Goldman Sachs" />
+                        <option value="American Express National Bank" />
+                        <option value="Discover Bank" />
+                        <option value="Charles Schwab Bank" />
+                        <option value="Navy Federal Credit Union" />
+                        <option value="State Employees Credit Union" />
+                        {/* 🇩🇪 German Banks */}
+                        <option value="Deutsche Bank" />
+                        <option value="Commerzbank" />
+                        <option value="KfW" />
+                        <option value="DZ Bank" />
+                        <option value="Bayerische Landesbank" />
+                        <option value="Landesbank Baden-Württemberg" />
+                        <option value="Norddeutsche Landesbank" />
+                        <option value="UniCredit Bank Austria" />
+                        <option value="ING-DiBa" />
+                        <option value="Comdirect" />
+                        <option value="Consorsbank" />
+                        <option value="DKB (Deutsche Kreditbank)" />
+                        <option value="Postbank" />
+                        <option value="Targobank" />
+                        <option value="Volksbank" />
+                        <option value="Sparkasse" />
+                        <option value="HypoVereinsbank" />
+                        <option value="Berliner Sparkasse" />
+                        <option value="Hamburger Sparkasse" />
+                        {/* 🇨🇦 Canadian Banks */}
+                        <option value="Royal Bank of Canada (RBC)" />
+                        <option value="Toronto-Dominion Bank (TD)" />
+                        <option value="Bank of Nova Scotia (Scotiabank)" />
+                        <option value="Bank of Montreal (BMO)" />
+                        <option value="Canadian Imperial Bank of Commerce (CIBC)" />
+                        <option value="National Bank of Canada" />
+                        <option value="Desjardins Group" />
+                        <option value="Laurentian Bank" />
+                        <option value="Canadian Western Bank" />
+                        <option value="ATB Financial" />
+                        <option value="HSBC Bank Canada" />
+                        <option value="Tangerine" />
+                        <option value="Simplii Financial" />
+                        <option value="EQ Bank" />
+                        <option value="Manulife Bank" />
+                        {/* 🇬🇧 UK Banks */}
+                        <option value="HSBC" />
+                        <option value="Barclays" />
+                        <option value="Lloyds Bank" />
+                        <option value="NatWest" />
+                        <option value="Royal Bank of Scotland" />
+                        <option value="Santander UK" />
+                        <option value="Standard Chartered" />
+                        <option value="Nationwide Building Society" />
+                        <option value="Metro Bank" />
+                        <option value="Virgin Money" />
+                        {/* 🇨🇭 Swiss Banks */}
+                        <option value="UBS" />
+                        <option value="Credit Suisse" />
+                        <option value="Julius Baer" />
+                        <option value="Pictet & Cie" />
+                        <option value="Lombard Odier" />
+                        {/* 🇫🇷 French Banks */}
+                        <option value="BNP Paribas" />
+                        <option value="Crédit Agricole" />
+                        <option value="Société Générale" />
+                        <option value="Crédit Mutuel" />
+                        <option value="Groupe BPCE" />
+                        {/* 🇳🇱 Dutch Banks */}
+                        <option value="ING Group" />
+                        <option value="Rabobank" />
+                        <option value="ABN AMRO" />
+                        {/* 🇮🇹 Italian Banks */}
+                        <option value="Intesa Sanpaolo" />
+                        <option value="UniCredit" />
+                        <option value="Banco BPM" />
+                        {/* 🇪🇸 Spanish Banks */}
+                        <option value="Banco Santander" />
+                        <option value="BBVA" />
+                        <option value="CaixaBank" />
+                        {/* 🇯🇵 Japanese Banks */}
+                        <option value="Mitsubishi UFJ Financial Group" />
+                        <option value="Sumitomo Mitsui Financial Group" />
+                        <option value="Mizuho Financial Group" />
+                        {/* 🇦🇺 Australian Banks */}
+                        <option value="Commonwealth Bank" />
+                        <option value="Westpac" />
+                        <option value="ANZ" />
+                        <option value="National Australia Bank" />
+                        {/* 🌍 International/Online Banks */}
+                        <option value="Revolut" />
+                        <option value="N26" />
+                        <option value="Monzo" />
+                        <option value="Starling Bank" />
+                        <option value="Wise (TransferWise)" />
+                        <option value="PayPal" />
+                        <option value="Other" />
+                      </datalist>
+                      <div className="form-hint">Type to search or select from the list of international banks</div>
                     </div>
                     <div className="form-group">
                       <label className="form-label">To Account Number</label>
