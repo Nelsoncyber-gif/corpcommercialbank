@@ -3939,6 +3939,100 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         </div>
       </div>;
     };
+
+    // PENDING CARD REQUESTS COMPONENT (ADMIN)
+    const PendingCardRequests = ({ adminData, auth, showToast, API }) => {
+      const [requests, setRequests] = useState([]);
+      const [loading, setLoading] = useState(true);
+
+      useEffect(() => {
+        loadRequests();
+      }, []);
+
+      const loadRequests = async () => {
+        try {
+          const r = await fetch(`${API}/admin/pending-card-requests`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+          });
+          const d = await r.json();
+          if (d.success) {
+            setRequests(d.pendingCardRequests || []);
+          }
+        } catch (err) {
+          console.error('Load card requests error:', err);
+        } finally {
+          setLoading(false);
+        }
+      };
+
+      const handleApprove = async (requestId) => {
+        if (!confirm('Are you sure you want to approve and generate this card?')) return;
+        try {
+          const r = await fetch(`${API}/cards/approve`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${auth.token}`
+            },
+            body: JSON.stringify({ requestId })
+          });
+          const d = await r.json();
+          if (d.success) {
+            showToast(`Card generated successfully! Last 4 digits: ${d.card.last_four}`);
+            loadRequests();
+          } else {
+            showToast(d.message, 'error');
+          }
+        } catch (err) {
+          console.error('Approve card error:', err);
+          showToast('Failed to approve card request', 'error');
+        }
+      };
+
+      if (loading) {
+        return <div className="loader-container"><div className="loader" /></div>;
+      }
+
+      return <div>
+        <div className="table-container">
+          <table className="table">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>Email</th>
+                <th>Phone</th>
+                <th>Card Type</th>
+                <th>Requested Date</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {requests.map(request => (
+                <tr key={request.id}>
+                  <td style={{ fontWeight: 600 }}>{request.first_name} {request.last_name}</td>
+                  <td style={{ color: 'var(--gray-600)' }}>{request.email}</td>
+                  <td style={{ color: 'var(--gray-600)' }}>{request.phone || 'N/A'}</td>
+                  <td><span className="badge badge-info">{request.card_type}</span></td>
+                  <td style={{ color: 'var(--gray-600)' }}>{fmtDate(request.requested_at)}</td>
+                  <td>
+                    <button className="btn btn-sm btn-primary" onClick={() => handleApprove(request.id)} style={{ marginRight: 8 }}>Approve & Generate Card</button>
+                  </td>
+                </tr>
+              ))}
+              {requests.length === 0 && (
+                <tr>
+                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
+                    <div>No pending card requests</div>
+                    <div style={{ fontSize: 13, marginTop: 8 }}>All card requests have been processed</div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>;
+    };
     // MAIN APP
     const App = () => {
       const [auth, setAuth] = useState(null);
@@ -4069,6 +4163,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               {auth.user.role === 'admin' && <>
                 <button className={`nav-link ${view === 'customers' ? 'active' : ''}`} onClick={() => setView('customers')}>Customers</button>
                 <button className={`nav-link ${view === 'approvals' ? 'active' : ''}`} onClick={() => setView('approvals')}>Pending Approvals</button>
+                <button className={`nav-link ${view === 'card-requests' ? 'active' : ''}`} onClick={() => setView('card-requests')}>Card Requests</button>
                 <button className={`nav-link ${view === 'deposit' ? 'active' : ''}`} onClick={() => setView('deposit')}>Process Deposit</button>
                 <button className={`nav-link ${view === 'admin-transactions' ? 'active' : ''}`} onClick={() => setView('admin-transactions')}>All Transactions</button>
                 <button className={`nav-link ${view === 'backdate' ? 'active' : ''}`} onClick={() => setView('backdate')}>Backdate Transaction</button>
@@ -5290,6 +5385,13 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 <p className="section-subtitle">Review and approve customer account requests</p>
               </div>
               <PendingApprovals adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} />
+            </div>}
+            {view === 'card-requests' && auth.user.role === 'admin' && <div>
+              <div className="section-header">
+                <h2 className="section-title">Pending Card Requests</h2>
+                <p className="section-subtitle">Approve and generate customer debit cards</p>
+              </div>
+              <PendingCardRequests adminData={adminData} auth={auth} showToast={showToast} API={API} />
             </div>}
             {view === 'deposit' && auth.user.role === 'admin' && <div>
               <div className="section-header">
