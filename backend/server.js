@@ -47,15 +47,13 @@ const adminRoutes = require('./routes/adminRoutes');
 const chatRoutes = require('./routes/chatRoutes');
 const profileRoutes = require('./routes/profileRoutes');
 const cardRoutes = require('./routes/cardRoutes');
-const otpRoutes = require('./routes/otpRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/accounts', accountRoutes);
 app.use('/api/admin', adminRoutes);
-app.use('/api/chat', chatRoutes);  // ✅ Now chat has its own route
+app.use('/api/chat', chatRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/cards', cardRoutes);
-app.use('/api/otp', otpRoutes);
 
 // Serve static files from root directory
 app.use(express.static(path.join(__dirname, '..')));

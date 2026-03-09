@@ -2738,14 +2738,6 @@
       const [loading, setLoading] = useState(false);
       const [toast, setToast] = useState(null);
       const [activeTestimonial, setActiveTestimonial] = useState(0);
-      const [showOTPModal, setShowOTPModal] = useState(false);
-      const [otpEmail, setOtpEmail] = useState('');
-      const [otpForm, setOtpForm] = useState({ otp: '' });
-      const [showForgotPassword, setShowForgotPassword] = useState(false);
-      const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
-      const [showResetPassword, setShowResetPassword] = useState(false);
-      const [resetToken, setResetToken] = useState('');
-      const [resetPasswordForm, setResetPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
 
       // Reset form when switching between login/register
       useEffect(() => {
@@ -2803,15 +2795,7 @@
     if (data.success) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
-      // Check if verification is required
-      if (data.requiresVerification) {
-        setOtpEmail(form.email);
-        setShowOTPModal(true);
-        setToast({ message: 'Registration successful! Please check your email for verification code.', type: 'success' });
-      } else {
-        onAuth(data.user, data.token);
-      }
+      onAuth(data.user, data.token);
     } else {
       setToast({
         message: data.message || `${showLogin ? 'Login' : 'Registration'} failed`,  // ✅ Use showLogin
@@ -3025,11 +3009,6 @@
                   </>}
                   <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="your@email.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required /></div>
                   <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required /></div>
-                  {showLogin && (
-                    <div style={{ textAlign: 'right', marginTop: -12, marginBottom: 16 }}>
-                      <button type="button" onClick={() => setShowForgotPassword(true)} style={{ background: 'none', border: 'none', color: 'var(--teal-primary)', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, textDecoration: 'underline' }}>Forgot Password?</button>
-                    </div>
-                  )}
                   {!showLogin && <div className="form-group"><label className="form-label">Confirm Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} required /></div>}
                   <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>{loading ? 'Please wait...' : (showLogin ? 'Sign in' : 'Create account')}</button>
                   <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: 'var(--gray-600)' }}>
@@ -3081,130 +3060,6 @@
         </div>
         {/* TESTIMONIALS SECTION */}
         <TestimonialsCarousel activeSlide={activeTestimonial} setActiveSlide={setActiveTestimonial} />
-        
-        {/* OTP Verification Modal */}
-        {showOTPModal && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setShowOTPModal(false)}>
-            <div style={{ background: 'var(--white)', borderRadius: 16, padding: 40, maxWidth: 420, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()}>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>📧</div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--teal-primary)', marginBottom: 8 }}>Verify Your Email</h2>
-                <p style={{ fontSize: 14, color: 'var(--gray-600)' }}>We've sent a 6-digit verification code to<br/><strong>{otpEmail}</strong></p>
-              </div>
-              <form onSubmit={async e => {
-                e.preventDefault();
-                try {
-                  const r = await fetch(`${API}/otp/verify`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: otpEmail, otp: otpForm.otp })
-                  });
-                  const d = await r.json();
-                  if (d.success) {
-                    setToast({ message: 'Email verified successfully!', type: 'success' });
-                    setShowOTPModal(false);
-                    // Update user verification status
-                    const user = JSON.parse(localStorage.getItem('user'));
-                    user.is_verified = true;
-                    localStorage.setItem('user', JSON.stringify(user));
-                    onAuth(user, localStorage.getItem('token'));
-                  } else {
-                    setToast({ message: d.message, type: 'error' });
-                  }
-                } catch (err) {
-                  setToast({ message: 'Verification failed', type: 'error' });
-                }
-              }}>
-                <div className="form-group">
-                  <label className="form-label">Enter Verification Code</label>
-                  <input
-                    type="text"
-                    maxLength="6"
-                    className="form-input"
-                    placeholder="000000"
-                    value={otpForm.otp}
-                    onChange={e => setOtpForm({ otp: e.target.value })}
-                    style={{ textAlign: 'center', fontSize: 24, letterSpacing: 8, fontWeight: 600 }}
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Verify Email</button>
-              </form>
-              <div style={{ textAlign: 'center', marginTop: 20 }}>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const r = await fetch(`${API}/otp/send`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ email: otpEmail })
-                      });
-                      const d = await r.json();
-                      if (d.success) {
-                        setToast({ message: 'New code sent!', type: 'success' });
-                      } else {
-                        setToast({ message: d.message, type: 'error' });
-                      }
-                    } catch (err) {
-                      setToast({ message: 'Failed to resend code', type: 'error' });
-                    }
-                  }}
-                  style={{ background: 'none', border: 'none', color: 'var(--teal-primary)', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, textDecoration: 'underline' }}
-                >
-                  Resend Code
-                </button>
-              </div>
-              <button onClick={() => setShowOTPModal(false)} style={{ marginTop: 16, width: '100%', padding: 12, background: 'none', border: 'none', color: 'var(--gray-500)', cursor: 'pointer', fontSize: 14 }}>Close</button>
-            </div>
-          </div>
-        )}
-        
-        {/* Forgot Password Modal */}
-        {showForgotPassword && (
-          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setShowForgotPassword(false)}>
-            <div style={{ background: 'var(--white)', borderRadius: 16, padding: 40, maxWidth: 420, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()}>
-              <div style={{ textAlign: 'center', marginBottom: 24 }}>
-                <div style={{ fontSize: 48, marginBottom: 12 }}>🔐</div>
-                <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--teal-primary)', marginBottom: 8 }}>Forgot Password?</h2>
-                <p style={{ fontSize: 14, color: 'var(--gray-600)' }}>Enter your email and we'll send you a link to reset your password</p>
-              </div>
-              <form onSubmit={async e => {
-                e.preventDefault();
-                try {
-                  const r = await fetch(`${API}/otp/forgot-password`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ email: forgotPasswordEmail })
-                  });
-                  const d = await r.json();
-                  if (d.success) {
-                    setToast({ message: 'Password reset link sent to your email!', type: 'success' });
-                    setShowForgotPassword(false);
-                  } else {
-                    setToast({ message: d.message, type: 'error' });
-                  }
-                } catch (err) {
-                  setToast({ message: 'Failed to send reset link', type: 'error' });
-                }
-              }}>
-                <div className="form-group">
-                  <label className="form-label">Email Address</label>
-                  <input
-                    type="email"
-                    className="form-input"
-                    placeholder="your@email.com"
-                    value={forgotPasswordEmail}
-                    onChange={e => setForgotPasswordEmail(e.target.value)}
-                    required
-                  />
-                </div>
-                <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Send Reset Link</button>
-              </form>
-              <button onClick={() => setShowForgotPassword(false)} style={{ marginTop: 16, width: '100%', padding: 12, background: 'none', border: 'none', color: 'var(--gray-500)', cursor: 'pointer', fontSize: 14 }}>Cancel</button>
-            </div>
-          </div>
-        )}
       </div>;
     };
     // TESTIMONIALS CAROUSEL COMPONENT
