@@ -48,6 +48,19 @@ function generateCardNumber() {
   return cardNumber + checkDigit;
 }
 
+// Generate CVV
+function generateCVV() {
+  return Math.floor(100 + Math.random() * 9000).toString();
+}
+
+// Generate expiry date (MM/YY format, 5 years from now)
+function generateExpiryDate() {
+  const now = new Date();
+  const year = now.getFullYear() + 5;
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  return `${month}/${String(year).slice(-2)}`;
+}
+
 // Request card
 exports.requestCard = async (req, res) => {
   try {
@@ -74,6 +87,102 @@ exports.requestCard = async (req, res) => {
   } catch (error) {
     console.error('Request card error:', error);
     res.status(500).json({ success: false, message: 'Failed to submit card request' });
+  }
+};
+
+// Approve card request and generate card (Admin only)
+exports.approveCardRequest = async (req, res) => {
+  try {
+    const { requestId } = req.body;
+    const adminId = req.user.id;
+
+    // Get the card request
+    const requestResult = await pool.query(
+      'SELECT * FROM card_requests WHERE id = $1',
+      [requestId]
+    );
+
+    if (requestResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'Card request not found' });
+    }
+
+    const cardRequest = requestResult.rows[0];
+
+    if (cardRequest.status !== 'pending') {
+      return res.status(400).json({ success: false, message: 'Card request is not pending' });
+    }
+
+    // Get user details for card holder name
+    const userResult = await pool.query(
+      'SELECT first_name, last_name FROM users WHERE id = $1',
+      [cardRequest.user_id]
+    );
+
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+    const cardHolderName = `${user.first_name} ${user.last_name}`.toUpperCase();
+
+    // Generate card details
+    const cardNumber = generateCardNumber();
+    const cvv = generateCVV();
+    const expiryDate = generateExpiryDate();
+
+    // Encrypt sensitive data
+    const encryptedCardNumber = encrypt(cardNumber);
+    const encryptedCVV = encrypt(cvv);
+
+    // Create the actual card
+    const cardResult = await pool.query(
+      `INSERT INTO cards (
+        user_id, 
+        card_number, 
+        card_holder_name, 
+        expiry_date, 
+        cvv, 
+        card_type, 
+        status
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7)
+      RETURNING *`,
+      [
+        cardRequest.user_id,
+        encryptedCardNumber,
+        cardHolderName,
+        expiryDate,
+        encryptedCVV,
+        cardRequest.card_type,
+        'active'
+      ]
+    );
+
+    // Update card request status
+    await pool.query(
+      `UPDATE card_requests 
+       SET status = $1, reviewed_at = NOW(), reviewed_by = $2
+       WHERE id = $3`,
+      ['approved', adminId, requestId]
+    );
+
+    // Return card without encrypted data
+    const newCard = cardResult.rows[0];
+    res.json({
+      success: true,
+      message: 'Card approved and generated successfully',
+      card: {
+        id: newCard.id,
+        card_holder_name: newCard.card_holder_name,
+        expiry_date: newCard.expiry_date,
+        card_type: newCard.card_type,
+        status: newCard.status,
+        last_four: cardNumber.slice(-4) // Show only last 4 digits
+      }
+    });
+
+  } catch (error) {
+    console.error('Approve card error:', error);
+    res.status(500).json({ success: false, message: 'Failed to approve card request' });
   }
 };
 

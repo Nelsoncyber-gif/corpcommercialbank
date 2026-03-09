@@ -1,23 +1,27 @@
 const express = require('express');
 const router = express.Router();
-const { protect } = require('../middleware/auth');
+const { protect, adminOnly } = require('../middleware/auth');
 const {
   requestCard,
   getMyRequests,
   getMyCards,
-  getCardDetails
+  getCardDetails,
+  approveCardRequest
 } = require('../controllers/cardController');
 
-// Request a new card
+// Request a new card (User)
 router.post('/request', protect, requestCard);
 
-// Get user's card requests
+// Get user's card requests (User)
 router.get('/requests', protect, getMyRequests);
 
-// Get user's cards
+// Get user's cards (User)
 router.get('/my-cards', protect, getMyCards);
 
-// Get card details
+// Get card details (User)
 router.get('/:cardId', protect, getCardDetails);
+
+// Approve card request (Admin only)
+router.post('/approve', protect, adminOnly, approveCardRequest);
 
 module.exports = router;

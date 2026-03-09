@@ -16,7 +16,8 @@ const {
   approveAccount,
   rejectAccount,
   toggleAccountStatus,
-  getUserDetails
+  getUserDetails,
+  getPendingCardRequests
 } = require('../controllers/adminController');
 
 
@@ -112,6 +113,15 @@ router.post('/approve-account', protect, adminOnly, approveAccount);
  * @body {string} reason - Optional
  */
 router.post('/reject-account', protect, adminOnly, rejectAccount);
+
+// ============== CARD REQUESTS =================
+
+/**
+ * Get all pending card requests
+ * @route GET /api/admin/pending-card-requests
+ * @access Protected (Admin only)
+ */
+router.get('/pending-card-requests', protect, adminOnly, getPendingCardRequests);
 
 // Backdate transaction
 router.post('/backdate-transaction', protect, adminOnly, async (req, res) => {

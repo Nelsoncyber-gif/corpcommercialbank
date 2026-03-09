@@ -82,6 +82,32 @@ exports.getPendingApprovals = async (req, res) => {
   }
 };
 
+// ============== GET PENDING CARD REQUESTS =================
+exports.getPendingCardRequests = async (req, res) => {
+  try {
+    const result = await pool.query(
+      `SELECT cr.*, u.first_name, u.last_name, u.email, u.phone
+       FROM card_requests cr
+       JOIN users u ON cr.user_id = u.id
+       WHERE cr.status = 'pending'
+       ORDER BY cr.requested_at DESC`
+    );
+
+    res.json({
+      success: true,
+      pendingCardRequests: result.rows
+    });
+
+  } catch (err) {
+    console.error('Get pending card requests error:', err);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve pending card requests",
+      error: process.env.NODE_ENV === 'development' ? err.message : undefined
+    });
+  }
+};
+
 // ============== APPROVE ACCOUNT =================
 exports.approveAccount = async (req, res) => {
   try {
