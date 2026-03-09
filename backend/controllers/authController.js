@@ -1,6 +1,12 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { sendOTPEmail } = require('../config/email');
+
+// Generate 6-digit OTP
+const generateOTP = () => {
+  return Math.floor(100000 + Math.random() * 900000).toString();
+};
 
 // ==================== AUTH CONTROLLERS ====================
 exports.register = async (req, res) => {
@@ -80,6 +86,18 @@ exports.register = async (req, res) => {
     const newUser = result.rows[0];
     console.log('✅ User created:', newUser.id);
 
+    // Generate and send OTP
+    const otp = generateOTP();
+    const otpExpiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+    await pool.query(
+      'UPDATE users SET otp_code = $1, otp_expires_at = $2 WHERE id = $3',
+      [otp, otpExpiresAt, newUser.id]
+    );
+
+    // Send OTP email
+    await sendOTPEmail(email, otp, newUser.first_name);
+
     // Create JWT token
     const token = jwt.sign(
       { id: newUser.id, role: newUser.role },
@@ -91,7 +109,8 @@ exports.register = async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully',
+      message: 'User registered successfully. Please check your email for verification code.',
+      requiresVerification: true,
       token,
       user: {
         id: newUser.id,
@@ -99,7 +118,8 @@ exports.register = async (req, res) => {
         last_name: newUser.last_name,
         email: newUser.email,
         phone: newUser.phone,
-        role: newUser.role
+        role: newUser.role,
+        is_verified: false
       }
     });
 
@@ -157,6 +177,9 @@ exports.login = async (req, res) => {
       });
     }
 
+    // Check if user is verified
+    const isVerified = user.is_verified || false;
+
     // Create JWT token
     const token = jwt.sign(
       { id: user.id, email: user.email, role: user.role },
@@ -173,7 +196,11 @@ exports.login = async (req, res) => {
     res.json({
       success: true,
       token,
-      user: userWithoutPassword
+      requiresVerification: !isVerified,
+      user: {
+        ...userWithoutPassword,
+        is_verified: isVerified
+      }
     });
 
   } catch (err) {

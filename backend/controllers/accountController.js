@@ -275,7 +275,17 @@ exports.withdraw = async (req, res) => {
 // ==================== TRANSFER ====================
 exports.transfer = async (req, res) => {
   try {
-    const { fromAccount, toAccount, amount, bankName } = req.body;
+    const { 
+      fromAccount, 
+      toAccount, 
+      amount, 
+      bankName,
+      transferType = 'domestic',
+      swiftCode,
+      beneficiaryAddress,
+      reasonForTransaction,
+      destinationCountry
+    } = req.body;
     const userId = req.user.id;
 
     if (!fromAccount || !toAccount || !amount) {
@@ -381,16 +391,61 @@ exports.transfer = async (req, res) => {
         [parseFloat(amount), toAccount]
       );
 
+      // Insert transaction with international transfer fields
       await client.query(
-        `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account, receiver_name, receiver_account_number, bank_name)
-         VALUES ($1, 'transfer_out', $2, $3, $4, $5, $6, $7)`,
-        [sender.id, parseFloat(amount), sender.account_number, receiver.account_number, receiverName, receiver.account_number, bankName||null]
+        `INSERT INTO transactions (
+          account_id, 
+          type, 
+          amount, 
+          sender_account, 
+          receiver_account, 
+          receiver_name, 
+          receiver_account_number, 
+          bank_name,
+          transfer_type,
+          swift_code,
+          beneficiary_address,
+          reason_for_transaction,
+          destination_country
+        ) VALUES ($1, 'transfer_out', $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
+        [
+          sender.id, 
+          parseFloat(amount), 
+          sender.account_number, 
+          receiver.account_number, 
+          receiverName, 
+          receiver.account_number, 
+          bankName || null,
+          transferType || 'domestic',
+          swiftCode || null,
+          beneficiaryAddress || null,
+          reasonForTransaction || null,
+          destinationCountry || null
+        ]
       );
 
       await client.query(
-        `INSERT INTO transactions (account_id, type, amount, sender_account, receiver_account, receiver_name, receiver_account_number, bank_name)
-         VALUES ($1, 'transfer_in', $2, $3, $4, $5, $6, $7)`,
-        [receiver.id, parseFloat(amount), sender.account_number, receiver.account_number, receiverName, receiver.account_number, bankName||null]
+        `INSERT INTO transactions (
+          account_id, 
+          type, 
+          amount, 
+          sender_account, 
+          receiver_account, 
+          receiver_name, 
+          receiver_account_number, 
+          bank_name,
+          transfer_type
+        ) VALUES ($1, 'transfer_in', $2, $3, $4, $5, $6, $7, $8)`,
+        [
+          receiver.id, 
+          parseFloat(amount), 
+          sender.account_number, 
+          receiver.account_number, 
+          receiverName, 
+          receiver.account_number, 
+          bankName || null,
+          transferType || 'domestic'
+        ]
       );
 
       await client.query("COMMIT");

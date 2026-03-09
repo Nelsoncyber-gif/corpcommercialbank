@@ -6,7 +6,7 @@
   "scripts": {
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
-    "migrate": "node backend/scripts/migrate.js",
+    "migrate": "node backend/scripts/migrate-add-columns.js",
     "migrate:user-columns": "node backend/scripts/add-user-columns.js",
     "build": "echo 'Build complete'"
   },
@@ -28,6 +28,7 @@
     "helmet": "^8.1.0",
     "joi": "^18.0.2",
     "jsonwebtoken": "^9.0.3",
+    "nodemailer": "^6.9.0",
     "pdfkit": "^0.17.2",
     "pg": "^8.18.0",
     "socket.io": "^4.8.3"

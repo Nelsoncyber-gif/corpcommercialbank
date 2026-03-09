@@ -2738,6 +2738,14 @@
       const [loading, setLoading] = useState(false);
       const [toast, setToast] = useState(null);
       const [activeTestimonial, setActiveTestimonial] = useState(0);
+      const [showOTPModal, setShowOTPModal] = useState(false);
+      const [otpEmail, setOtpEmail] = useState('');
+      const [otpForm, setOtpForm] = useState({ otp: '' });
+      const [showForgotPassword, setShowForgotPassword] = useState(false);
+      const [forgotPasswordEmail, setForgotPasswordEmail] = useState('');
+      const [showResetPassword, setShowResetPassword] = useState(false);
+      const [resetToken, setResetToken] = useState('');
+      const [resetPasswordForm, setResetPasswordForm] = useState({ newPassword: '', confirmPassword: '' });
 
       // Reset form when switching between login/register
       useEffect(() => {
@@ -2795,7 +2803,15 @@
     if (data.success) {
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      onAuth(data.user, data.token);
+      
+      // Check if verification is required
+      if (data.requiresVerification) {
+        setOtpEmail(form.email);
+        setShowOTPModal(true);
+        setToast({ message: 'Registration successful! Please check your email for verification code.', type: 'success' });
+      } else {
+        onAuth(data.user, data.token);
+      }
     } else {
       setToast({
         message: data.message || `${showLogin ? 'Login' : 'Registration'} failed`,  // ✅ Use showLogin
@@ -3009,6 +3025,11 @@
                   </>}
                   <div className="form-group"><label className="form-label">Email</label><input className="form-input" type="email" placeholder="your@email.com" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} required /></div>
                   <div className="form-group"><label className="form-label">Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.password} onChange={e => setForm({ ...form, password: e.target.value })} required /></div>
+                  {showLogin && (
+                    <div style={{ textAlign: 'right', marginTop: -12, marginBottom: 16 }}>
+                      <button type="button" onClick={() => setShowForgotPassword(true)} style={{ background: 'none', border: 'none', color: 'var(--teal-primary)', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', fontSize: 13, textDecoration: 'underline' }}>Forgot Password?</button>
+                    </div>
+                  )}
                   {!showLogin && <div className="form-group"><label className="form-label">Confirm Password</label><input className="form-input" type="password" placeholder="••••••••" value={form.confirmPassword} onChange={e => setForm({ ...form, confirmPassword: e.target.value })} required /></div>}
                   <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }} disabled={loading}>{loading ? 'Please wait...' : (showLogin ? 'Sign in' : 'Create account')}</button>
                   <p style={{ textAlign: 'center', marginTop: 20, fontSize: 14, color: 'var(--gray-600)' }}>
@@ -3060,6 +3081,130 @@
         </div>
         {/* TESTIMONIALS SECTION */}
         <TestimonialsCarousel activeSlide={activeTestimonial} setActiveSlide={setActiveTestimonial} />
+        
+        {/* OTP Verification Modal */}
+        {showOTPModal && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setShowOTPModal(false)}>
+            <div style={{ background: 'var(--white)', borderRadius: 16, padding: 40, maxWidth: 420, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>📧</div>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--teal-primary)', marginBottom: 8 }}>Verify Your Email</h2>
+                <p style={{ fontSize: 14, color: 'var(--gray-600)' }}>We've sent a 6-digit verification code to<br/><strong>{otpEmail}</strong></p>
+              </div>
+              <form onSubmit={async e => {
+                e.preventDefault();
+                try {
+                  const r = await fetch(`${API}/otp/verify`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: otpEmail, otp: otpForm.otp })
+                  });
+                  const d = await r.json();
+                  if (d.success) {
+                    setToast({ message: 'Email verified successfully!', type: 'success' });
+                    setShowOTPModal(false);
+                    // Update user verification status
+                    const user = JSON.parse(localStorage.getItem('user'));
+                    user.is_verified = true;
+                    localStorage.setItem('user', JSON.stringify(user));
+                    onAuth(user, localStorage.getItem('token'));
+                  } else {
+                    setToast({ message: d.message, type: 'error' });
+                  }
+                } catch (err) {
+                  setToast({ message: 'Verification failed', type: 'error' });
+                }
+              }}>
+                <div className="form-group">
+                  <label className="form-label">Enter Verification Code</label>
+                  <input
+                    type="text"
+                    maxLength="6"
+                    className="form-input"
+                    placeholder="000000"
+                    value={otpForm.otp}
+                    onChange={e => setOtpForm({ otp: e.target.value })}
+                    style={{ textAlign: 'center', fontSize: 24, letterSpacing: 8, fontWeight: 600 }}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Verify Email</button>
+              </form>
+              <div style={{ textAlign: 'center', marginTop: 20 }}>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const r = await fetch(`${API}/otp/send`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: otpEmail })
+                      });
+                      const d = await r.json();
+                      if (d.success) {
+                        setToast({ message: 'New code sent!', type: 'success' });
+                      } else {
+                        setToast({ message: d.message, type: 'error' });
+                      }
+                    } catch (err) {
+                      setToast({ message: 'Failed to resend code', type: 'error' });
+                    }
+                  }}
+                  style={{ background: 'none', border: 'none', color: 'var(--teal-primary)', fontWeight: 500, cursor: 'pointer', fontFamily: 'inherit', fontSize: 14, textDecoration: 'underline' }}
+                >
+                  Resend Code
+                </button>
+              </div>
+              <button onClick={() => setShowOTPModal(false)} style={{ marginTop: 16, width: '100%', padding: 12, background: 'none', border: 'none', color: 'var(--gray-500)', cursor: 'pointer', fontSize: 14 }}>Close</button>
+            </div>
+          </div>
+        )}
+        
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999 }} onClick={() => setShowForgotPassword(false)}>
+            <div style={{ background: 'var(--white)', borderRadius: 16, padding: 40, maxWidth: 420, width: '90%', boxShadow: '0 20px 60px rgba(0,0,0,0.3)' }} onClick={e => e.stopPropagation()}>
+              <div style={{ textAlign: 'center', marginBottom: 24 }}>
+                <div style={{ fontSize: 48, marginBottom: 12 }}>🔐</div>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: 'var(--teal-primary)', marginBottom: 8 }}>Forgot Password?</h2>
+                <p style={{ fontSize: 14, color: 'var(--gray-600)' }}>Enter your email and we'll send you a link to reset your password</p>
+              </div>
+              <form onSubmit={async e => {
+                e.preventDefault();
+                try {
+                  const r = await fetch(`${API}/otp/forgot-password`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email: forgotPasswordEmail })
+                  });
+                  const d = await r.json();
+                  if (d.success) {
+                    setToast({ message: 'Password reset link sent to your email!', type: 'success' });
+                    setShowForgotPassword(false);
+                  } else {
+                    setToast({ message: d.message, type: 'error' });
+                  }
+                } catch (err) {
+                  setToast({ message: 'Failed to send reset link', type: 'error' });
+                }
+              }}>
+                <div className="form-group">
+                  <label className="form-label">Email Address</label>
+                  <input
+                    type="email"
+                    className="form-input"
+                    placeholder="your@email.com"
+                    value={forgotPasswordEmail}
+                    onChange={e => setForgotPasswordEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Send Reset Link</button>
+              </form>
+              <button onClick={() => setShowForgotPassword(false)} style={{ marginTop: 16, width: '100%', padding: 12, background: 'none', border: 'none', color: 'var(--gray-500)', cursor: 'pointer', fontSize: 14 }}>Cancel</button>
+            </div>
+          </div>
+        )}
       </div>;
     };
     // TESTIMONIALS CAROUSEL COMPONENT
@@ -3799,6 +3944,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       const [auth, setAuth] = useState(null);
       const [showLogin, setShowLogin] = useState(true);
       const [view, setView] = useState('overview');
+      const [transferType, setTransferType] = useState('domestic');
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
       const [accounts, setAccounts] = useState([]);
       const [transactions, setTransactions] = useState([]);
@@ -4158,20 +4304,108 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'transfer' && <div>
               <div className="section-header">
                 <h2 className="section-title">Transfer Funds</h2>
-                <p className="section-subtitle">Send money to another account instantly</p>
+                <p className="section-subtitle">Send money domestically or internationally</p>
               </div>
-              <div style={{ maxWidth: 600, margin: '0 auto' }}>
+              <div style={{ maxWidth: 700, margin: '0 auto' }}>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
+                  {/* Transfer Type Tabs */}
+                  <div style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '2px solid var(--gray-200)', paddingBottom: 12 }}>
+                    <button
+                      type="button"
+                      onClick={() => setTransferType('domestic')}
+                      style={{
+                        flex: 1,
+                        padding: '12px 20px',
+                        border: 'none',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: 14,
+                        background: transferType === 'domestic' ? 'var(--teal-primary)' : 'var(--gray-100)',
+                        color: transferType === 'domestic' ? 'var(--white)' : 'var(--gray-700)',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      🏠 Domestic Transfer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTransferType('international')}
+                      style={{
+                        flex: 1,
+                        padding: '12px 20px',
+                        border: 'none',
+                        borderRadius: 8,
+                        cursor: 'pointer',
+                        fontWeight: 600,
+                        fontSize: 14,
+                        background: transferType === 'international' ? 'var(--teal-primary)' : 'var(--gray-100)',
+                        color: transferType === 'international' ? 'var(--white)' : 'var(--gray-700)',
+                        transition: 'all 0.2s'
+                      }}
+                    >
+                      🌍 International Transfer
+                    </button>
+                  </div>
+
                   <form onSubmit={async e => {
                     e.preventDefault();
                     const fd = new FormData(e.target);
+                    
+                    // Validate PIN for international transfers
+                    if (transferType === 'international') {
+                      const pin = fd.get('pin');
+                      if (!pin) {
+                        showToast('PIN is required for international transfers', 'error');
+                        return;
+                      }
+                      // Verify PIN
+                      try {
+                        const pinRes = await fetch(`${API}/otp/verify-pin`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` },
+                          body: JSON.stringify({ pin })
+                        });
+                        const pinData = await pinRes.json();
+                        if (!pinData.success) {
+                          showToast(pinData.message || 'Invalid PIN', 'error');
+                          return;
+                        }
+                      } catch (err) {
+                        showToast('PIN verification failed', 'error');
+                        return;
+                      }
+                    }
+                    
                     try {
                       // Find destination account by account number using the new find endpoint
                       const toAccRes = await fetch(`${API}/accounts/find?accountNumber=${encodeURIComponent(fd.get('to'))}`, { headers: { Authorization: `Bearer ${auth.token}` } });
                       const toAccData = await toAccRes.json();
                       if (!toAccData.success) { showToast('Recipient account not found', 'error'); return; }
                       const toAcc = toAccData.account;
-                      const r = await fetch(`${API}/accounts/transfer`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` }, body: JSON.stringify({ fromAccount: parseInt(fd.get('from')), toAccount: toAcc.id, amount: parseFloat(fd.get('amount')), bankName: fd.get('bankName') }) });
+                      
+                      // Prepare transfer data
+                      const transferData = {
+                        fromAccount: parseInt(fd.get('from')),
+                        toAccount: toAcc.id,
+                        amount: parseFloat(fd.get('amount')),
+                        bankName: fd.get('bankName'),
+                        transferType: transferType
+                      };
+                      
+                      // Add international transfer fields
+                      if (transferType === 'international') {
+                        transferData.swiftCode = fd.get('swiftCode');
+                        transferData.beneficiaryAddress = fd.get('beneficiaryAddress');
+                        transferData.reasonForTransaction = fd.get('reason');
+                        transferData.destinationCountry = fd.get('country');
+                      }
+                      
+                      const r = await fetch(`${API}/accounts/transfer`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` },
+                        body: JSON.stringify(transferData)
+                      });
                       const d = await r.json();
                       if (d.success) { showToast('Transfer successful!'); loadData(auth.token, auth.user); e.target.reset(); }
                       else showToast(d.message, 'error');
@@ -4183,14 +4417,15 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                         {accounts.filter(a => a.status !== 'frozen').map(a => <option key={a.id} value={a.id}>{a.account_number} — {fmt(a.balance, currency)}</option>)}
                       </select>
                     </div>
+                    
                     <div className="form-group">
                       <label className="form-label">Bank Name</label>
-                      <input 
-                        name="bankName" 
-                        className="form-input" 
-                        placeholder="Type or select your bank..." 
+                      <input
+                        name="bankName"
+                        className="form-input"
+                        placeholder="Type or select your bank..."
                         list="bank-list"
-                        required 
+                        required
                       />
                       <datalist id="bank-list">
                         {/* 🇺🇸 USA Banks */}
@@ -4318,7 +4553,80 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                       <label className="form-label">Amount (USD)</label>
                       <input name="amount" type="number" step="0.01" min="0.01" className="form-input" placeholder="0.00" required />
                     </div>
-                    <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Send Transfer</button>
+                    
+                    {/* International Transfer Fields */}
+                    {transferType === 'international' && (
+                      <>
+                        <div className="form-group" style={{ background: 'var(--teal-pale)', padding: 16, borderRadius: 8, border: '1px solid var(--teal-light)' }}>
+                          <label className="form-label" style={{ color: 'var(--teal-primary)', fontWeight: 600 }}>🌐 International Transfer Details</label>
+                        </div>
+                        
+                        <div className="form-group">
+                          <label className="form-label">SWIFT / BIC Code</label>
+                          <input name="swiftCode" className="form-input" placeholder="e.g., CHASUS33XXX" required />
+                          <div className="form-hint">8-11 characters identifying the bank internationally</div>
+                        </div>
+                        
+                        <div className="form-group">
+                          <label className="form-label">Beneficiary Address</label>
+                          <textarea name="beneficiaryAddress" className="form-input" placeholder="Full address of the recipient" rows="3" required />
+                        </div>
+                        
+                        <div className="form-group">
+                          <label className="form-label">Destination Country</label>
+                          <select name="country" className="form-select" required>
+                            <option value="">Select country...</option>
+                            <option value="United States">United States</option>
+                            <option value="United Kingdom">United Kingdom</option>
+                            <option value="Canada">Canada</option>
+                            <option value="Germany">Germany</option>
+                            <option value="France">France</option>
+                            <option value="Netherlands">Netherlands</option>
+                            <option value="Switzerland">Switzerland</option>
+                            <option value="Spain">Spain</option>
+                            <option value="Italy">Italy</option>
+                            <option value="Japan">Japan</option>
+                            <option value="Australia">Australia</option>
+                            <option value="China">China</option>
+                            <option value="India">India</option>
+                            <option value="Brazil">Brazil</option>
+                            <option value="Mexico">Mexico</option>
+                            <option value="South Africa">South Africa</option>
+                            <option value="Nigeria">Nigeria</option>
+                            <option value="Kenya">Kenya</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        
+                        <div className="form-group">
+                          <label className="form-label">Reason for Transaction</label>
+                          <select name="reason" className="form-select" required>
+                            <option value="">Select reason...</option>
+                            <option value="Family Support">Family Support / Maintenance</option>
+                            <option value="Education">Education / Tuition Fees</option>
+                            <option value="Medical">Medical Treatment</option>
+                            <option value="Business">Business Payment</option>
+                            <option value="Services">Payment for Services</option>
+                            <option value="Goods">Payment for Goods</option>
+                            <option value="Investment">Investment</option>
+                            <option value="Loan Repayment">Loan Repayment</option>
+                            <option value="Donation">Donation / Charity</option>
+                            <option value="Travel">Travel Expenses</option>
+                            <option value="Other">Other</option>
+                          </select>
+                        </div>
+                        
+                        <div className="form-group">
+                          <label className="form-label">Transaction PIN</label>
+                          <input name="pin" type="password" maxLength="6" className="form-input" placeholder="Enter your 6-digit PIN" required />
+                          <div className="form-hint">Required for international transfer verification</div>
+                        </div>
+                      </>
+                    )}
+                    
+                    <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>
+                      {transferType === 'international' ? 'Send International Transfer' : 'Send Transfer'}
+                    </button>
                   </form>
                 </div>
               </div>

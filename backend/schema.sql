@@ -21,6 +21,12 @@ CREATE TABLE IF NOT EXISTS users (
     next_of_kin_phone VARCHAR(20),
     next_of_kin_relationship VARCHAR(50),
     profile_picture VARCHAR(500),
+    pin_hash VARCHAR(255),
+    is_verified BOOLEAN DEFAULT FALSE,
+    otp_code VARCHAR(6),
+    otp_expires_at TIMESTAMP,
+    reset_token VARCHAR(255),
+    reset_token_expires_at TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -47,6 +53,11 @@ CREATE TABLE IF NOT EXISTS transactions (
     bank_name VARCHAR(100),
     description TEXT,
     original_date TIMESTAMP,
+    transfer_type VARCHAR(20) DEFAULT 'domestic', -- domestic or international
+    swift_code VARCHAR(50),
+    beneficiary_address TEXT,
+    reason_for_transaction TEXT,
+    destination_country VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 

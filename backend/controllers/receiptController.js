@@ -9,7 +9,7 @@ exports.generateReceipt = async (req, res) => {
 
     // Fetch the transaction with all needed fields
     const result = await pool.query(
-      `SELECT 
+      `SELECT
         t.id,
         t.type,
         t.amount,
@@ -17,6 +17,11 @@ exports.generateReceipt = async (req, res) => {
         t.receiver_name,
         t.receiver_account_number,
         t.bank_name,
+        t.transfer_type,
+        t.swift_code,
+        t.beneficiary_address,
+        t.reason_for_transaction,
+        t.destination_country,
         a.account_number,
         a.user_id,
         u.first_name,
@@ -177,19 +182,47 @@ exports.generateReceipt = async (req, res) => {
     if (transaction.type === 'transfer_out' || transaction.type === 'transfer_in') {
       doc.fontSize(10)
          .fillColor('#000000');
-      
+
       if (transaction.receiver_name) {
         doc.text(`Recipient: ${transaction.receiver_name}`);
       }
-      
+
       if (transaction.receiver_account_number) {
         doc.text(`Recipient Account: ${transaction.receiver_account_number}`);
       }
-      
+
       if (transaction.bank_name) {
         doc.text(`Bank: ${transaction.bank_name}`);
       }
-      
+
+      // International transfer details
+      if (transaction.transfer_type === 'international') {
+        doc.moveDown(0.5);
+        doc.fontSize(10)
+           .fillColor('#00596B')
+           .text('International Transfer Details:', { underline: true });
+        
+        doc.fillColor('#000000')
+           .moveDown(0.3);
+
+        if (transaction.swift_code) {
+          doc.fontSize(10)
+             .text(`SWIFT Code: ${transaction.swift_code}`);
+        }
+
+        if (transaction.beneficiary_address) {
+          doc.text(`Beneficiary Address: ${transaction.beneficiary_address}`);
+        }
+
+        if (transaction.destination_country) {
+          doc.text(`Destination Country: ${transaction.destination_country}`);
+        }
+
+        if (transaction.reason_for_transaction) {
+          doc.text(`Reason for Transaction: ${transaction.reason_for_transaction}`);
+        }
+      }
+
       doc.moveDown(1);
     }
 
