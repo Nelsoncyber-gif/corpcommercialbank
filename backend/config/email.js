@@ -2,11 +2,31 @@ const nodemailer = require('nodemailer');
 
 // Create transporter
 const createTransporter = () => {
+  // Check if using SendGrid
+  if (process.env.EMAIL_SERVICE === 'sendgrid' && process.env.SENDGRID_API_KEY) {
+    return nodemailer.createTransport({
+      host: 'smtp.sendgrid.net',
+      port: 587,
+      secure: false,
+      auth: {
+        user: 'apikey',
+        pass: process.env.SENDGRID_API_KEY
+      }
+    });
+  }
+  
+  // Default: Gmail or other SMTP
   return nodemailer.createTransport({
     service: process.env.EMAIL_SERVICE || 'gmail',
+    host: process.env.SMTP_HOST || undefined,
+    port: parseInt(process.env.SMTP_PORT) || 587,
+    secure: process.env.EMAIL_SERVICE === 'gmail', // true for 465, false for other ports
     auth: {
       user: process.env.EMAIL_USER,
       pass: process.env.EMAIL_PASSWORD
+    },
+    tls: {
+      rejectUnauthorized: process.env.NODE_ENV === 'production' // false for testing
     }
   });
 };
