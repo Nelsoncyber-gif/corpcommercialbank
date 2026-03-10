@@ -5896,6 +5896,46 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
 
                           {/* Card Content */}
                           <div style={{ position: 'relative', zIndex: 10 }}>
+                            {/* EMV Chip */}
+                            <div style={{
+                              width: '50px',
+                              height: '40px',
+                              background: 'linear-gradient(135deg, #d4af37 0%, #f4d03f 50%, #b8860b 100%)',
+                              borderRadius: '6px',
+                              position: 'relative',
+                              boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(255,255,255,0.2)',
+                              marginBottom: '20px',
+                              overflow: 'hidden'
+                            }}>
+                              <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                width: '30px',
+                                height: '1px',
+                                background: 'rgba(0,0,0,0.4)'
+                              }} />
+                              <div style={{
+                                position: 'absolute',
+                                top: '50%',
+                                left: '50%',
+                                transform: 'translate(-50%, -50%)',
+                                width: '1px',
+                                height: '30px',
+                                background: 'rgba(0,0,0,0.4)'
+                              }} />
+                              <div style={{
+                                position: 'absolute',
+                                top: '25%',
+                                left: '25%',
+                                width: '50%',
+                                height: '50%',
+                                border: '1px solid rgba(0,0,0,0.2)',
+                                borderRadius: '4px'
+                              }} />
+                            </div>
+
                             {/* Card Number with Show/Hide Button */}
                             <div style={{ marginBottom: '24px', marginTop: '40px' }}>
                               <div style={{
