@@ -7,8 +7,8 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <title>CorpCommercial Bank – Financial Services</title>
-  <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
-  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+  <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+  <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
   <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
   <link
@@ -2713,6 +2713,23 @@
       return <div className={`toast ${type}`}><span style={{ fontSize: 20 }}>{type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span><span>{message}</span></div>;
     };
 
+    // ERROR HANDLER COMPONENT
+    const ErrorHandler = ({ error }) => {
+      console.error('🔴 React Error:', error);
+      return (
+        <div style={{ padding: 20, background: '#fee', borderRadius: 8, margin: 20 }}>
+          <h3 style={{ color: '#c00' }}>Error Details:</h3>
+          <pre style={{ background: '#fff', padding: 10, overflow: 'auto' }}>
+            {error?.toString()}
+          </pre>
+          <h4>Component Stack:</h4>
+          <pre style={{ background: '#fff', padding: 10, overflow: 'auto' }}>
+            {error?.stack}
+          </pre>
+        </div>
+      );
+    };
+
     // ERROR BOUNDARY COMPONENT
     class ErrorBoundary extends React.Component {
       constructor(props) {
@@ -2725,34 +2742,12 @@
       }
 
       componentDidCatch(error, errorInfo) {
-        console.error('Caught error:', error, errorInfo);
+        console.error('🔴 Caught error:', error, errorInfo);
       }
 
       render() {
         if (this.state.hasError) {
-          return (
-            <div style={{ padding: 20, textAlign: 'center' }}>
-              <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
-              <h3>Something went wrong</h3>
-              <pre style={{ 
-                background: '#fee2e2', 
-                padding: 10, 
-                borderRadius: 4,
-                fontSize: 12,
-                textAlign: 'left',
-                maxWidth: 600,
-                margin: '20px auto'
-              }}>
-                {this.state.error?.toString()}
-              </pre>
-              <button 
-                className="btn btn-primary"
-                onClick={() => window.location.reload()}
-              >
-                Reload Page
-              </button>
-            </div>
-          );
+          return <ErrorHandler error={this.state.error} />;
         }
         return this.props.children;
       }
@@ -4445,118 +4440,100 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       };
       useEffect(() => { const t = localStorage.getItem('token'), u = localStorage.getItem('user'); if (t && u) { const userObj = JSON.parse(u); setAuth({ user: userObj, token: t }); loadData(t, userObj); } }, []);
       const loadData = async (token, userObj) => {
-        console.log('Loading data for user:', userObj);
+        console.log('📊 loadData started for user:', userObj);
+        
         try {
-          const [ar, tr, cr] = await Promise.all([
-            fetch(`${API}/accounts/get-accounts`, { headers: { Authorization: `Bearer ${token}` } }),
-            fetch(`${API}/accounts/transactions`, { headers: { Authorization: `Bearer ${token}` } }),
-            fetch(`${API}/cards/my-cards`, { headers: { Authorization: `Bearer ${token}` } })
-          ]);
-          const [ad, td, cd] = await Promise.all([ar.json(), tr.json(), cr.json()]);
-
-          if (ad.success) {
-            setAccounts(ad.accounts || []);
-            setPendingApprovals(ad.pendingApprovals || []);
+          // Test API connection first
+          try {
+            const testRes = await fetch(`${API}/auth/test`);
+            const testData = await testRes.json();
+            console.log('✅ API test successful:', testData);
+          } catch (testErr) {
+            console.error('❌ API connection test failed:', testErr);
           }
-          if (td.success) setTransactions(td.transactions || []);
-          if (cd.success) setUserCards(cd.cards || []);
 
-          // In your App component, add state for verification
-const [verificationData, setVerificationData] = useState(null);
+          // Load user accounts
+          console.log('📡 Fetching accounts...');
+          const accountsRes = await fetch(`${API}/accounts/get-accounts`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log('📡 Accounts response status:', accountsRes.status);
+          const accountsData = await accountsRes.json();
+          console.log('📦 Accounts data:', accountsData);
 
-// Update the part where you handle registration response
-const handleAuth = (user, token) => {
-  setAuth({ user, token });
-  loadData(token, user);
-};
+          // Load transactions
+          console.log('📡 Fetching transactions...');
+          const transRes = await fetch(`${API}/accounts/transactions`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log('📡 Transactions response status:', transRes.status);
+          const transData = await transRes.json();
+          console.log('📦 Transactions data:', transData);
 
-const handleRegistration = async (formData) => {
-  try {
-    const response = await fetch(`${API}/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(formData)
-    });
-    
-    const data = await response.json();
-    
-    if (data.success) {
-      if (data.requiresVerification) {
-        // Show OTP verification screen
-        setVerificationData({
-          email: data.email,
-          userId: data.userId
-        });
-      } else {
-        handleAuth(data.user, data.token);
-      }
-    } else {
-      setToast({ message: data.message, type: 'error' });
-    }
-  } catch (error) {
-    setToast({ message: 'Registration failed', type: 'error' });
-  }
-};
-
-// Update the render logic
-if (!auth) {
-  if (verificationData) {
-    return (
-      <OTPVerification
-        email={verificationData.email}
-        userId={verificationData.userId}
-        onVerified={handleAuth}
-        onCancel={() => setVerificationData(null)}
-      />
-    );
-  }
-  return <AuthPage isLogin={showLogin} onAuth={handleAuth} onSwitch={() => setShowLogin(!showLogin)} />;
-}
+          if (accountsData.success) {
+            setAccounts(accountsData.accounts || []);
+            setPendingApprovals(accountsData.pendingApprovals || []);
+          }
+          if (transData.success) setTransactions(transData.transactions || []);
 
           // Load admin data if admin
           if (userObj?.role === 'admin') {
-            console.log('Loading admin data...');
-
-            // Fetch ALL accounts for admin view
-            const allAccountsRes = await fetch(`${API}/admin/all-accounts`, {
+            console.log('👑 Loading admin data...');
+            
+            // Load users
+            console.log('📡 Fetching users...');
+            const usersRes = await fetch(`${API}/admin/users`, {
               headers: { Authorization: `Bearer ${token}` }
             });
-            const allAccountsData = await allAccountsRes.json();
+            console.log('📡 Users response status:', usersRes.status);
+            const usersData = await usersRes.json();
+            console.log('📦 Users data:', usersData);
 
-            const [ur, atr] = await Promise.all([
-              fetch(`${API}/admin/users`, { headers: { Authorization: `Bearer ${token}` } }),
-              fetch(`${API}/admin/transactions`, { headers: { Authorization: `Bearer ${token}` } })
-            ]);
-            const [ud, atd] = await Promise.all([ur.json(), atr.json()]);
-
-            // Debug logging
-            console.log('Users API response:', ud);
-            console.log('Users data structure:', {
-              hasUsers: !!ud.users,
-              userCount: ud.users?.length,
-              firstUser: ud.users?.[0]
+            // Load all transactions
+            console.log('📡 Fetching all transactions...');
+            const allTransRes = await fetch(`${API}/admin/transactions`, {
+              headers: { Authorization: `Bearer ${token}` }
             });
+            console.log('📡 All transactions response status:', allTransRes.status);
+            const allTransData = await allTransRes.json();
+            console.log('📦 All transactions data:', allTransData);
 
-            if (ud.success) {
-              // Make sure users is an array
-              const safeUsers = Array.isArray(ud.users) ? ud.users : [];
-              
-              console.log('Users loaded:', safeUsers.length);
-              console.log('Accounts loaded:', allAccountsData.success ? allAccountsData.accounts?.length : 0);
-
-              setAdminData({
-                users: safeUsers,
-                allTransactions: atd.transactions || [],
-                accounts: allAccountsData.success ? allAccountsData.accounts : []
+            // Try to load accounts if endpoint exists
+            let accountsData_admin = { accounts: [] };
+            try {
+              console.log('📡 Fetching all accounts...');
+              const accountsRes_admin = await fetch(`${API}/admin/all-accounts`, {
+                headers: { Authorization: `Bearer ${token}` }
               });
-              
-              console.log('Admin data set with', safeUsers.length, 'users');
+              if (accountsRes_admin.ok) {
+                accountsData_admin = await accountsRes_admin.json();
+                console.log('📦 All accounts data:', accountsData_admin);
+              }
+            } catch (accountsErr) {
+              console.log('⚠️ All accounts endpoint not available:', accountsErr.message);
+            }
+
+            if (usersData.success) {
+              console.log('✅ Setting admin data with', usersData.users?.length, 'users');
+              setAdminData({
+                users: usersData.users || [],
+                allTransactions: allTransData.success ? allTransData.transactions : [],
+                accounts: accountsData_admin.success ? accountsData_admin.accounts : []
+              });
+            } else {
+              console.error('❌ Failed to load users:', usersData);
+              showToast('Failed to load users: ' + (usersData.message || 'Unknown error'), 'error');
+              setAdminData({ users: [], allTransactions: [], accounts: [] });
             }
           }
+          
+          setLoading(false);
+          console.log('✅ loadData completed successfully');
+          
         } catch (err) {
-          console.error('Load data error:', err);
+          console.error('❌ Load data error:', err);
+          console.error('❌ Error stack:', err.stack);
           showToast('Failed to load data: ' + err.message, 'error');
-        } finally {
           setLoading(false);
         }
       };
@@ -4600,9 +4577,15 @@ if (!auth) {
           showToast(err.message || 'Failed to download receipt', 'error');
         }
       };
-      if (!auth) return <AuthPage isLogin={showLogin} onAuth={(u, t) => { setAuth({ user: u, token: t }); loadData(t, u); }} onSwitch={() => setShowLogin(!showLogin)} />;
+      
+      // Render Auth page if not logged in
+      if (!auth) {
+        return <AuthPage isLogin={showLogin} onAuth={(u, t) => { setAuth({ user: u, token: t }); loadData(t, u); }} onSwitch={() => setShowLogin(!showLogin)} />;
+      }
+      
       const totalBalance = accounts.reduce((s, a) => s + parseFloat(a.balance || 0), 0);
       const frozenCount = accounts.filter(a => a.status === 'frozen').length;
+      
       return <div>
         {toast && <Toast {...toast} onClose={() => setToast(null)} />}
         {/* TOP NAV */}
