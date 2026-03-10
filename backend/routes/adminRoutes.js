@@ -115,25 +115,10 @@ router.post('/approve-account', protect, adminOnly, approveAccount);
 router.post('/reject-account', protect, adminOnly, rejectAccount);
 
 // ============== CARD REQUESTS =================
-
-/**
- * Get all pending card requests
- * @route GET /api/admin/pending-card-requests
- * @access Protected (Admin only)
- */
-router.get('/pending-card-requests', protect, adminOnly, async (req, res) => {
-  try {
-    // Use the new card controller function
-    const cardController = require('../controllers/cardController');
-    await cardController.getAllCardRequests(req, res);
-  } catch (error) {
-    console.error('Get pending card requests error:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Failed to fetch pending card requests'
-    });
-  }
-});
+// Note: Card request routes moved to routes/adminCardRoutes.js
+// GET  /api/cards/admin/requests
+// POST /api/cards/admin/requests/approve
+// POST /api/cards/admin/requests/reject
 
 // Backdate transaction
 router.post('/backdate-transaction', protect, adminOnly, async (req, res) => {
