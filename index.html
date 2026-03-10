@@ -4470,11 +4470,21 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
           const transData = await transRes.json();
           console.log('📦 Transactions data:', transData);
 
+          // Load user cards
+          console.log('📡 Fetching cards...');
+          const cardsRes = await fetch(`${API}/cards/my-cards`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          console.log('📡 Cards response status:', cardsRes.status);
+          const cardsData = await cardsRes.json();
+          console.log('📦 Cards data:', cardsData);
+
           if (accountsData.success) {
             setAccounts(accountsData.accounts || []);
             setPendingApprovals(accountsData.pendingApprovals || []);
           }
           if (transData.success) setTransactions(transData.transactions || []);
+          if (cardsData.success) setUserCards(cardsData.cards || []);
 
           // Load admin data if admin
           if (userObj?.role === 'admin') {
