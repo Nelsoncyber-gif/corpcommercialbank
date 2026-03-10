@@ -4351,7 +4351,18 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             processDeposit: 'Process Deposit', allTransactions: 'All Transactions', backdateTransaction: 'Backdate',
             branches: 'Branches', withdraw: 'Withdraw', transactions: 'Transactions',
             changePassword: 'Change Password', setPin: 'Set PIN', loansCredit: 'Loans & Credit',
-            investmentCenter: 'Investment Center', yourCards: 'Your Cards', requestNew: 'Request New Card'
+            investmentCenter: 'Investment Center', yourCards: 'Your Cards', requestNew: 'Request New Card',
+            manageAccounts: 'Manage your checking and savings accounts', viewActivity: 'View all your account activity',
+            sendMoney: 'Send money domestically or internationally', withdrawMoney: 'Withdraw money from your account',
+            manageCards: 'Manage your debit and credit cards', orderCard: 'Order a new debit card',
+            trackStatus: 'Track your card request status', manageSettings: 'Manage your account settings',
+            updatePassword: 'Update your login password', createPIN: 'Create a 6-digit PIN',
+            noAccounts: 'No accounts yet', openAccount: 'Open your first account',
+            noTransactions: 'No transactions yet', noCards: 'No cards yet',
+            downloadReceipt: 'Download', completed: 'Completed', availableBalance: 'Available balance',
+            waitingForAdmin: 'Waiting for admin', pendingApproval: 'Pending Approval',
+            frozen: 'Frozen', active: 'Active', noAccount: 'No Account',
+            backToCards: 'Back to Cards', backToProfile: 'Back to Profile'
           },
           es: {
             home: 'Inicio', overview: 'Resumen', accounts: 'Cuentas', cards: 'Tarjetas',
@@ -4372,7 +4383,18 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             processDeposit: 'Procesar Depósito', allTransactions: 'Todas las Transacciones', backdateTransaction: 'Retroceder',
             branches: 'Sucursales', withdraw: 'Retirar', transactions: 'Transacciones',
             changePassword: 'Cambiar Contraseña', setPin: 'Establecer PIN', loansCredit: 'Préstamos y Crédito',
-            investmentCenter: 'Centro de Inversión', yourCards: 'Tus Tarjetas', requestNew: 'Solicitar Nueva'
+            investmentCenter: 'Centro de Inversión', yourCards: 'Tus Tarjetas', requestNew: 'Solicitar Nueva',
+            manageAccounts: 'Administra tus cuentas', viewActivity: 'Ver toda tu actividad',
+            sendMoney: 'Enviar dinero nacional o internacional', withdrawMoney: 'Retirar dinero',
+            manageCards: 'Administrar tarjetas', orderCard: 'Ordenar nueva tarjeta',
+            trackStatus: 'Seguimiento de solicitud', manageSettings: 'Administrar configuración',
+            updatePassword: 'Actualizar contraseña', createPIN: 'Crear PIN de 6 dígitos',
+            noAccounts: 'Sin cuentas aún', openAccount: 'Abre tu primera cuenta',
+            noTransactions: 'Sin transacciones', noCards: 'Sin tarjetas',
+            downloadReceipt: 'Descargar', completed: 'Completado', availableBalance: 'Saldo disponible',
+            waitingForAdmin: 'Esperando admin', pendingApproval: 'Aprobación Pendiente',
+            frozen: 'Congelada', active: 'Activa', noAccount: 'Sin Cuenta',
+            backToCards: 'Volver a Tarjetas', backToProfile: 'Volver al Perfil'
           },
           fr: {
             home: 'Accueil', overview: 'Aperçu', accounts: 'Comptes', cards: 'Cartes',
@@ -4898,7 +4920,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'accounts' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('myAccounts')}</h2>
-                <p className="section-subtitle">Manage your checking and savings accounts</p>
+                <p className="section-subtitle">{translate('manageAccounts')}</p>
               </div>
               <div className="cards-grid">
                 {accounts.map(a => <div key={a.id} className={`account-card ${a.status === 'frozen' ? 'frozen' : ''}`}>
@@ -4957,7 +4979,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'transactions' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('transactions')}</h2>
-                <p className="section-subtitle">View all your account activity</p>
+                <p className="section-subtitle">{translate('viewActivity')}</p>
               </div>
               <div className="table-container">
                 <table className="table">
@@ -4972,7 +4994,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'transfer' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('transfers')}</h2>
-                <p className="section-subtitle">Send money domestically or internationally</p>
+                <p className="section-subtitle">{translate('sendMoney')}</p>
               </div>
               <div style={{ maxWidth: 700, margin: '0 auto' }}>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
@@ -5278,7 +5300,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'withdraw' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('withdraw')}</h2>
-                <p className="section-subtitle">Withdraw money from your account</p>
+                <p className="section-subtitle">{translate('withdrawMoney')}</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
@@ -5319,20 +5341,20 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               <div>
                 <div className="section-header">
                   <h2 className="section-title">{translate('yourCards')}</h2>
-                  <p className="section-subtitle">Manage your debit and credit cards</p>
+                  <p className="section-subtitle">{translate('manageCards')}</p>
                 </div>
                 
                 {/* Action Cards */}
                 <div className="cards-grid" style={{ marginBottom: 32 }}>
                   <div className="card" style={{ cursor: 'pointer', border: '2px dashed var(--teal-light)' }} onClick={() => setView('request-card')}>
                     <div style={{ fontSize: 40, marginBottom: 12, textAlign: 'center' }}>➕</div>
-                    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--teal-primary)' }}>Request New Card</div>
-                    <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>Order a new debit card</div>
+                    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--teal-primary)' }}>{translate('requestNew')}</div>
+                    <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>{translate('orderCard')}</div>
                   </div>
                   <div className="card" style={{ cursor: 'pointer', border: '2px dashed var(--teal-light)' }} onClick={() => setView('card-requests')}>
                     <div style={{ fontSize: 40, marginBottom: 12, textAlign: 'center' }}>📋</div>
-                    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--teal-primary)' }}>View Requests</div>
-                    <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>Check request status</div>
+                    <div style={{ textAlign: 'center', fontWeight: 600, color: 'var(--teal-primary)' }}>{translate('viewRequests')}</div>
+                    <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>{translate('trackStatus')}</div>
                   </div>
                 </div>
 
@@ -5622,10 +5644,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'request-card' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('requestNew')}</h2>
-                <p className="section-subtitle">Order a new debit card for your account</p>
+                <p className="section-subtitle">{translate('orderCard')}</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setView('cards')} style={{ marginBottom: 16 }}>← Back to Cards</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setView('cards')} style={{ marginBottom: 16 }}>← {translate('backToCards')}</button>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
                   <div className="alert alert-info" style={{ marginBottom: 20 }}>💡 Your card will be mailed to your registered address within 5-7 business days</div>
                   <form onSubmit={async e => {
@@ -5658,10 +5680,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'card-requests' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('cardRequests')}</h2>
-                <p className="section-subtitle">Track your card request status</p>
+                <p className="section-subtitle">{translate('trackStatus')}</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setView('cards')} style={{ marginBottom: 16 }}>← Back to Cards</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setView('cards')} style={{ marginBottom: 16 }}>← {translate('backToCards')}</button>
                 <div id="card-requests-list" style={{ textAlign: 'center', padding: 40, color: 'var(--gray-500)' }}>
                   <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
                   <div>No card requests found</div>
@@ -5672,7 +5694,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'profile' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('myProfile')}</h2>
-                <p className="section-subtitle">Manage your account settings and preferences</p>
+                <p className="section-subtitle">{translate('manageSettings')}</p>
               </div>
               <div style={{ maxWidth: 900, margin: '0 auto' }}>
                 {/* Info box for users without accounts */}
@@ -5881,10 +5903,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'change-password' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('changePassword')}</h2>
-                <p className="section-subtitle">Update your login password</p>
+                <p className="section-subtitle">{translate('updatePassword')}</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setView('profile')} style={{ marginBottom: 16 }}>← Back to Profile</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setView('profile')} style={{ marginBottom: 16 }}>← {translate('backToProfile')}</button>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
                   <form onSubmit={async e => {
                     e.preventDefault();
@@ -5918,10 +5940,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'set-pin' && <div>
               <div className="section-header">
                 <h2 className="section-title">{translate('setPin')}</h2>
-                <p className="section-subtitle">Create a 6-digit PIN for transaction verification</p>
+                <p className="section-subtitle">{translate('createPIN')}</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
-                <button className="btn btn-ghost btn-sm" onClick={() => setView('profile')} style={{ marginBottom: 16 }}>← Back to Profile</button>
+                <button className="btn btn-ghost btn-sm" onClick={() => setView('profile')} style={{ marginBottom: 16 }}>← {translate('backToProfile')}</button>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
                   <form onSubmit={async e => {
                     e.preventDefault();
