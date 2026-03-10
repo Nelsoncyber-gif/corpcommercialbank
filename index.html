@@ -5356,98 +5356,232 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                       
                       return (
                         <div key={card.id} className="account-card" style={{ 
-                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          background: `linear-gradient(135deg, ${card.card_type === 'Visa' ? '#1a1f71, #0a3d91' : '#eb001b, #8b0000'})`,
                           position: 'relative',
-                          minHeight: '220px'
+                          minHeight: '240px',
+                          borderRadius: '16px',
+                          padding: '24px',
+                          color: 'white',
+                          boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                          overflow: 'hidden'
                         }}>
-                          {/* Eye button for show/hide */}
-                          <button
-                            onClick={() => toggleCardVisibility(card.id)}
-                            style={{
-                              position: 'absolute',
-                              top: 16,
-                              right: 16,
-                              background: 'rgba(255,255,255,0.2)',
-                              border: 'none',
-                              borderRadius: '50%',
-                              width: 36,
-                              height: 36,
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              cursor: 'pointer',
-                              color: 'white',
-                              fontSize: 18,
-                              zIndex: 10
-                            }}
-                            disabled={isLoading}
-                          >
-                            {isLoading ? '⏳' : (isVisible ? '👁️' : '👁️‍🗨️')}
-                          </button>
+                          {/* Decorative Background Pattern */}
+                          <div style={{
+                            position: 'absolute',
+                            top: '-100px',
+                            right: '-100px',
+                            width: '300px',
+                            height: '300px',
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.1)'
+                          }} />
+                          <div style={{
+                            position: 'absolute',
+                            bottom: '-50px',
+                            left: '-50px',
+                            width: '200px',
+                            height: '200px',
+                            borderRadius: '50%',
+                            background: 'rgba(255,255,255,0.05)'
+                          }} />
 
-                          {/* Card Type Badge */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                            <span className="badge" style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
-                              {card.status}
-                            </span>
-                            <span style={{ fontSize: 24 }}>{card.card_type === 'Visa' ? '💙' : '🟠'}</span>
-                          </div>
-
-                          {/* Card Number Display */}
-                          <div className="account-card-number" style={{ 
-                            fontSize: 18, 
-                            letterSpacing: 2,
-                            fontFamily: 'monospace',
-                            marginBottom: 20
-                          }}>
-                            {isVisible && details ? (
-                              <div>
-                                <div style={{ fontSize: 16 }}>
-                                  {details.card_number.replace(/(\d{4})/g, '$1 ').trim()}
-                                </div>
-                                <div style={{ 
-                                  fontSize: 12, 
-                                  marginTop: 8,
-                                  display: 'flex',
-                                  gap: 20
-                                }}>
-                                  <span>CVV: {details.cvv}</span>
-                                </div>
+                          {/* Card Content */}
+                          <div style={{ position: 'relative', zIndex: 10 }}>
+                            {/* Top Row: Chip & Contactless */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
+                              {/* EMV Chip */}
+                              <div style={{
+                                width: '50px',
+                                height: '40px',
+                                background: 'linear-gradient(135deg, #f4d03f 0%, #d4ac0d 100%)',
+                                borderRadius: '6px',
+                                position: 'relative',
+                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
+                              }}>
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  width: '30px',
+                                  height: '2px',
+                                  background: 'rgba(0,0,0,0.3)'
+                                }} />
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '50%',
+                                  left: '50%',
+                                  transform: 'translate(-50%, -50%)',
+                                  width: '2px',
+                                  height: '30px',
+                                  background: 'rgba(0,0,0,0.3)'
+                                }} />
                               </div>
-                            ) : (
-                              <span>•••• •••• •••• {card.id?.toString().slice(-4) || '****'}</span>
+
+                              {/* Contactless Icon */}
+                              <div style={{ fontSize: '28px', opacity: 0.8 }}>
+                                📶
+                              </div>
+                            </div>
+
+                            {/* Card Number with Show/Hide Button */}
+                            <div style={{ marginBottom: '24px' }}>
+                              <div style={{ 
+                                fontSize: '11px', 
+                                opacity: 0.7, 
+                                marginBottom: '6px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px'
+                              }}>Card Number</div>
+                              <div style={{ 
+                                fontSize: '22px', 
+                                fontFamily: "'Courier New', monospace",
+                                letterSpacing: '3px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                              }}>
+                                <span>
+                                  {isVisible && details ? (
+                                    <span>{details.card_number.replace(/(\d{4})/g, '$1 ').trim()}</span>
+                                  ) : (
+                                    <span>•••• •••• •••• {card.id?.toString().slice(-4) || '****'}</span>
+                                  )}
+                                </span>
+                                <button
+                                  onClick={() => toggleCardVisibility(card.id)}
+                                  disabled={isLoading}
+                                  style={{
+                                    background: 'rgba(255,255,255,0.2)',
+                                    border: 'none',
+                                    borderRadius: '50%',
+                                    width: '32px',
+                                    height: '32px',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    cursor: isLoading ? 'not-allowed' : 'pointer',
+                                    color: 'white',
+                                    fontSize: '16px',
+                                    transition: 'all 0.2s',
+                                    opacity: isLoading ? 0.5 : 1
+                                  }}
+                                  title={isVisible ? 'Hide card number' : 'Show card number'}
+                                >
+                                  {isLoading ? '⏳' : (isVisible ? '🙈' : '👁️')}
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Middle Row: Card Holder & Network Logo */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '16px' }}>
+                              <div>
+                                <div style={{ 
+                                  fontSize: '10px', 
+                                  opacity: 0.7,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '1px',
+                                  marginBottom: '4px'
+                                }}>Card Holder</div>
+                                <div style={{ 
+                                  fontWeight: 600, 
+                                  fontSize: '15px',
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '1px',
+                                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                }}>{card.card_holder_name || 'CARD HOLDER'}</div>
+                              </div>
+                              
+                              {/* Card Network Logo */}
+                              <div style={{ fontSize: '32px', fontWeight: 'bold', fontStyle: 'italic' }}>
+                                {card.card_type === 'Visa' ? (
+                                  <span style={{ fontSize: '28px' }}>💙</span>
+                                ) : (
+                                  <span style={{ fontSize: '28px' }}>🟠</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Bottom Row: Expiry & Status */}
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
+                              <div>
+                                <div style={{ 
+                                  fontSize: '10px', 
+                                  opacity: 0.7,
+                                  textTransform: 'uppercase',
+                                  letterSpacing: '1px',
+                                  marginBottom: '4px'
+                                }}>Expires</div>
+                                <div style={{ 
+                                  fontWeight: 600, 
+                                  fontSize: '14px',
+                                  letterSpacing: '1px',
+                                  textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                                }}>{card.expiry_date || 'MM/YY'}</div>
+                              </div>
+                              
+                              {/* Status Badge */}
+                              <div style={{
+                                background: card.status === 'active' ? 'rgba(16, 185, 129, 0.3)' : 'rgba(107, 114, 128, 0.3)',
+                                color: card.status === 'active' ? '#10B981' : '#6B7280',
+                                padding: '6px 14px',
+                                borderRadius: '20px',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                backdropFilter: 'blur(10px)',
+                                border: `1px solid ${card.status === 'active' ? 'rgba(16, 185, 129, 0.5)' : 'rgba(107, 114, 128, 0.5)'}`
+                              }}>
+                                {card.status || 'Active'}
+                              </div>
+                            </div>
+
+                            {/* CVV Display (when visible) */}
+                            {isVisible && details && (
+                              <div style={{
+                                marginTop: '16px',
+                                padding: '12px 16px',
+                                background: 'rgba(255,255,255,0.1)',
+                                borderRadius: '8px',
+                                backdropFilter: 'blur(10px)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                display: 'flex',
+                                justifyContent: 'space-between',
+                                alignItems: 'center'
+                              }}>
+                                <div style={{ fontSize: '11px', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '1px' }}>CVV</div>
+                                <div style={{ 
+                                  fontSize: '16px', 
+                                  fontFamily: "'Courier New', monospace",
+                                  letterSpacing: '2px',
+                                  fontWeight: 600
+                                }}>{details.cvv}</div>
+                              </div>
+                            )}
+
+                            {/* Security Warning (when visible) */}
+                            {isVisible && (
+                              <div style={{ 
+                                marginTop: '12px',
+                                fontSize: '10px',
+                                color: '#ffd700',
+                                textAlign: 'center',
+                                padding: '8px',
+                                background: 'rgba(255, 215, 0, 0.1)',
+                                borderRadius: '6px',
+                                border: '1px solid rgba(255, 215, 0, 0.3)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                gap: '6px'
+                              }}>
+                                <span>⚠️</span>
+                                <span>Never share card details with anyone</span>
+                              </div>
                             )}
                           </div>
-
-                          {/* Card Holder and Expiry */}
-                          <div style={{ 
-                            display: 'flex', 
-                            justifyContent: 'space-between', 
-                            marginTop: 'auto'
-                          }}>
-                            <div>
-                              <div style={{ fontSize: 11, opacity: 0.7 }}>Card Holder</div>
-                              <div style={{ fontWeight: 600, fontSize: 14 }}>{card.card_holder_name}</div>
-                            </div>
-                            <div style={{ textAlign: 'right' }}>
-                              <div style={{ fontSize: 11, opacity: 0.7 }}>Expires</div>
-                              <div style={{ fontWeight: 600, fontSize: 14 }}>{card.expiry_date}</div>
-                            </div>
-                          </div>
-
-                          {/* Security Warning when visible */}
-                          {isVisible && (
-                            <div style={{ 
-                              marginTop: 16,
-                              fontSize: 10,
-                              color: '#ffd700',
-                              textAlign: 'center',
-                              borderTop: '1px solid rgba(255,255,255,0.2)',
-                              paddingTop: 8
-                            }}>
-                              ⚠️ Never share these details with anyone
-                            </div>
-                          )}
                         </div>
                       );
                     })}
