@@ -4205,8 +4205,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       const [currency, setCurrency] = useState('USD');
       const [userProfile, setUserProfile] = useState(null);
       const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
-      const [cardData, setCardData] = useState({ cards: [], pendingRequests: [], rejectedRequests: [] });
-
+      
       // Translation helper
       const translate = (key) => {
         const translations = {
@@ -4380,16 +4379,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         localStorage.setItem('language', newLang);
         document.documentElement.dir = ['ar', 'he'].includes(newLang) ? 'rtl' : 'ltr';
       };
-      
-      useEffect(() => { 
-        const t = localStorage.getItem('token'), u = localStorage.getItem('user'); 
-        if (t && u) { 
-          const userObj = JSON.parse(u); 
-          setAuth({ user: userObj, token: t }); 
-          loadData(t, userObj); 
-        } 
-      }, []);
-      
+      useEffect(() => { const t = localStorage.getItem('token'), u = localStorage.getItem('user'); if (t && u) { const userObj = JSON.parse(u); setAuth({ user: userObj, token: t }); loadData(t, userObj); } }, []);
       const loadData = async (token, userObj) => {
         console.log('Loading data for user:', userObj);
         try {
@@ -4405,14 +4395,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             setPendingApprovals(ad.pendingApprovals || []);
           }
           if (td.success) setTransactions(td.transactions || []);
-          if (cd.success) {
-            setUserCards(cd.cards || []);
-            setCardData({
-              cards: cd.cards || [],
-              pendingRequests: cd.pendingRequests || [],
-              rejectedRequests: cd.rejectedRequests || []
-            });
-          }
+          if (cd.success) setUserCards(cd.cards || []);
 
           // In your App component, add state for verification
 const [verificationData, setVerificationData] = useState(null);
@@ -5199,7 +5182,7 @@ if (!auth) {
                 <div id="user-cards-container">
                   <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--teal-primary)' }}>Your Active Cards</h3>
                   <div id="cards-list">
-                    {cardData.cards.length === 0 ? (
+                    {userCards.length === 0 ? (
                       <div style={{ textAlign: 'center', padding: 40, color: 'var(--gray-500)' }}>
                         <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
                         <div>No cards yet. Request your first card above.</div>
@@ -5207,7 +5190,7 @@ if (!auth) {
                       </div>
                     ) : (
                       <div style={{ display: 'grid', gap: 20, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-                        {cardData.cards.map(card => (
+                        {userCards.map(card => (
                           <div key={card.id} style={{
                             background: 'linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%)',
                             borderRadius: 16,
@@ -5336,62 +5319,13 @@ if (!auth) {
                 <h2 className="section-title">Card Requests</h2>
                 <p className="section-subtitle">Track your card request status</p>
               </div>
-              <div style={{ maxWidth: 800, margin: '0 auto' }}>
+              <div style={{ maxWidth: 600, margin: '0 auto' }}>
                 <button className="btn btn-ghost btn-sm" onClick={() => setView('cards')} style={{ marginBottom: 16 }}>← Back to Cards</button>
-                
-                {/* Pending Requests */}
-                {cardData.pendingRequests.length > 0 && (
-                  <div style={{ marginBottom: 24 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--teal-primary)' }}>⏳ Pending Requests</h3>
-                    <div style={{ display: 'grid', gap: 12 }}>
-                      {cardData.pendingRequests.map(req => (
-                        <div key={req.id} style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 8, padding: 16 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div>
-                              <div style={{ fontWeight: 600, color: 'var(--gray-900)' }}>{req.card_type} Card Request</div>
-                              <div style={{ fontSize: 13, color: 'var(--gray-600)' }}>Submitted: {fmtDate(req.requested_at)}</div>
-                            </div>
-                            <span className="badge badge-warning">Pending Review</span>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* Rejected Requests */}
-                {cardData.rejectedRequests.length > 0 && (
-                  <div style={{ marginBottom: 24 }}>
-                    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--teal-primary)' }}>❌ Rejected Requests</h3>
-                    <div style={{ display: 'grid', gap: 12 }}>
-                      {cardData.rejectedRequests.map(req => (
-                        <div key={req.id} style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 8, padding: 16 }}>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-                            <div style={{ fontWeight: 600, color: 'var(--gray-900)' }}>{req.card_type} Card Request</div>
-                            <span className="badge badge-error">Rejected</span>
-                          </div>
-                          {req.review_notes && (
-                            <div style={{ fontSize: 13, color: 'var(--gray-600)', padding: '8px 12px', background: 'var(--gray-50)', borderRadius: 4 }}>
-                              <strong>Reason:</strong> {req.review_notes}
-                            </div>
-                          )}
-                          <div style={{ fontSize: 12, color: 'var(--gray-500)', marginTop: 8 }}>
-                            Rejected: {fmtDate(req.requested_at)}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
-                {/* No Requests */}
-                {cardData.pendingRequests.length === 0 && cardData.rejectedRequests.length === 0 && (
-                  <div id="card-requests-list" style={{ textAlign: 'center', padding: 40, color: 'var(--gray-500)', background: 'var(--white)', borderRadius: 8, border: '1px solid var(--gray-200)' }}>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
-                    <div>No card requests found</div>
-                    <div style={{ fontSize: 13, marginTop: 8 }}>Request a card to see its status here</div>
-                  </div>
-                )}
+                <div id="card-requests-list" style={{ textAlign: 'center', padding: 40, color: 'var(--gray-500)' }}>
+                  <div style={{ fontSize: 48, marginBottom: 16 }}>📬</div>
+                  <div>No card requests found</div>
+                  <div style={{ fontSize: 13, marginTop: 8 }}>Request a card to see its status here</div>
+                </div>
               </div>
             </div>}
             {view === 'profile' && <div>
