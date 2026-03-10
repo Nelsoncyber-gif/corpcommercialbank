@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const { register, login, logout, changePassword, verifyOTP, resendOTP } = require('../controllers/authController');
+const { register, login, logout, changePassword } = require('../controllers/authController');
 const { validate } = require('../middleware/validation');
 const { protect } = require('../middleware/auth');
 
@@ -20,10 +20,6 @@ router.post(
   validate(['email', 'password']),
   login
 );
-
-// OTP Verification routes
-router.post('/verify-otp', verifyOTP);
-router.post('/resend-otp', resendOTP);
 
 router.post('/logout', protect, logout);
 

@@ -10,7 +10,7 @@
   <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
   <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
   <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
-  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
@@ -254,14 +254,16 @@
       .mobile-menu-btn { display: none; }
     }
 
-    /* MOBILE MENU OVERLAY */
+    /* MOBILE MENU OVERLAY - Enhanced */
     .mobile-menu-overlay {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.5);
+      background: rgba(0,0,0,0.6);
+      backdrop-filter: blur(4px);
       z-index: 1100;
-      animation: fadeIn 0.2s;
+      animation: fadeIn 0.25s ease-out;
+      -webkit-tap-highlight-color: transparent;
     }
 
     .mobile-menu-overlay.open { display: block; }
@@ -276,24 +278,32 @@
       top: 0;
       right: -100%;
       width: 85%;
-      max-width: 360px;
+      max-width: 380px;
       height: 100vh;
+      height: 100dvh;
       background: var(--white);
-      box-shadow: var(--shadow-xl);
-      transition: right 0.3s ease;
+      box-shadow: -8px 0 32px rgba(0,0,0,0.15);
+      transition: right 0.35s cubic-bezier(0.4, 0, 0.2, 1);
       z-index: 1200;
       overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      display: flex;
+      flex-direction: column;
     }
 
     .mobile-menu.open { right: 0; }
 
     .mobile-menu-header {
-      padding: 20px;
+      padding: 20px 24px;
       border-bottom: 1px solid var(--gray-200);
       display: flex;
       justify-content: space-between;
       align-items: center;
-      min-height: 70px;
+      min-height: 72px;
+      background: var(--white);
+      position: sticky;
+      top: 0;
+      z-index: 10;
     }
 
     .mobile-menu-close {
@@ -309,63 +319,91 @@
       display: flex;
       align-items: center;
       justify-content: center;
+      border-radius: 8px;
+      transition: background 0.2s;
+    }
+
+    .mobile-menu-close:hover {
+      background: var(--gray-100);
     }
 
     .mobile-menu-items {
-      padding: 20px;
+      padding: 16px 24px 40px;
+      flex: 1;
+      overflow-y: auto;
     }
 
     .mobile-menu-item {
-      display: block;
-      padding: 16px 0;
-      font-size: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px 16px;
+      font-size: 15px;
       font-weight: 500;
       color: var(--gray-700);
       text-decoration: none;
-      border-bottom: 1px solid var(--gray-100);
+      border: none;
+      border-radius: 8px;
+      margin-bottom: 8px;
       cursor: pointer;
-      background: none;
-      border-left: none;
-      border-right: none;
-      border-top: none;
+      background: transparent;
       width: 100%;
       text-align: left;
       font-family: inherit;
-      min-height: 48px;
-      display: flex;
-      align-items: center;
+      min-height: 52px;
+      transition: all 0.2s;
+      border-left: 3px solid transparent;
     }
 
-    .mobile-menu-item:hover, .mobile-menu-item.active {
+    .mobile-menu-item:hover {
+      background: var(--gray-50);
       color: var(--teal-primary);
+    }
+
+    .mobile-menu-item.active {
       background: var(--teal-pale);
+      color: var(--teal-primary);
+      border-left-color: var(--teal-primary);
+      font-weight: 600;
     }
 
     .mobile-currency-selector {
-      padding: 16px 0;
-      border-bottom: 1px solid var(--gray-100);
-      margin-bottom: 16px;
+      padding: 16px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      margin-bottom: 20px;
     }
 
     .mobile-currency-selector label {
       display: block;
-      font-size: 12px;
-      font-weight: 600;
+      font-size: 11px;
+      font-weight: 700;
       color: var(--gray-500);
       text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 8px;
+      letter-spacing: 1.2px;
+      margin-bottom: 10px;
     }
 
     .mobile-currency-selector select {
       width: 100%;
-      padding: 12px;
+      padding: 12px 14px;
       border: 1px solid var(--gray-300);
-      border-radius: 6px;
+      border-radius: 8px;
       font-size: 14px;
       background: var(--white);
       cursor: pointer;
       font-family: inherit;
+      color: var(--gray-900);
+      appearance: none;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236B7280' d='M6 8L1 3h10z'/%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 12px center;
+    }
+
+    .mobile-menu-divider {
+      height: 1px;
+      background: var(--gray-200);
+      margin: 16px 0;
     }
 
     .btn {
@@ -424,103 +462,6 @@
     .btn-lg {
       padding: 14px 28px;
       font-size: 16px;
-    }
-
-    /* MOBILE MENU OVERLAY */
-    .mobile-menu-overlay {
-      display: none;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 9998 !important;
-      animation: fadeIn 0.2s;
-      -webkit-tap-highlight-color: transparent;
-      touch-action: manipulation;
-    }
-
-    .mobile-menu-overlay.open {
-      display: block !important;
-    }
-
-    @keyframes fadeIn {
-      from {
-        opacity: 0;
-      }
-
-      to {
-        opacity: 1;
-      }
-    }
-
-    .mobile-menu {
-      position: fixed;
-      top: 0;
-      right: -100%;
-      width: 85%;
-      max-width: 360px;
-      height: 100vh;
-      height: 100dvh;
-      background: var(--white);
-      box-shadow: var(--shadow-xl);
-      transition: right 0.3s ease;
-      z-index: 9999 !important;
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-
-    .mobile-menu.open {
-      right: 0 !important;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-
-    .mobile-menu-header {
-      padding: 20px;
-      border-bottom: 1px solid var(--gray-200);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .mobile-menu-close {
-      background: none;
-      border: none;
-      font-size: 28px;
-      color: var(--gray-700);
-      cursor: pointer;
-      padding: 4px;
-    }
-
-    .mobile-menu-items {
-      padding: 20px;
-      padding-bottom: 60px !important;
-    }
-
-    .mobile-menu-item {
-      display: block !important;
-      padding: 14px 0;
-      font-size: 16px;
-      font-weight: 500;
-      color: var(--gray-700);
-      text-decoration: none;
-      border-bottom: 1px solid var(--gray-100);
-      cursor: pointer;
-      background: none !important;
-      border-left: none;
-      border-right: none;
-      border-top: none;
-      width: 100%;
-      text-align: left;
-      font-family: inherit;
-      visibility: visible !important;
-      opacity: 1 !important;
-    }
-
-    .mobile-menu-item:hover,
-    .mobile-menu-item.active {
-      color: var(--teal-primary);
     }
 
     /* HERO SECTION WITH TRANSPARENT OVERLAY */
@@ -2379,8 +2320,10 @@
     }
 
     /* ========================================
-       DASHBOARD NAVIGATION - MOBILE SCROLL
+       COMPREHENSIVE RESPONSIVE NAVIGATION
        ======================================== */
+    
+    /* Tablet and below (1024px) - Horizontal scroll nav */
     @media (max-width: 1024px) {
       .nav-links {
         display: flex !important;
@@ -2389,14 +2332,19 @@
         right: 140px;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-        padding: 8px 0;
+        scrollbar-width: thin;
+        padding: 4px 0;
         max-width: none;
+        gap: 4px;
       }
 
       .nav-links::-webkit-scrollbar {
-        display: none;
+        height: 3px;
+      }
+
+      .nav-links::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 2px;
       }
 
       .nav-links .nav-link {
@@ -2404,6 +2352,11 @@
         white-space: nowrap;
         padding: 8px 12px;
         font-size: 13px;
+        border-radius: 6px;
+      }
+
+      .nav-links .nav-link:hover {
+        background: var(--gray-100);
       }
 
       .top-nav-inner {
@@ -2411,10 +2364,11 @@
       }
     }
 
+    /* Mobile (768px) */
     @media (max-width: 768px) {
       .nav-links {
         left: 16px;
-        right: 120px;
+        right: 110px;
       }
 
       .nav-links .nav-link {
@@ -2435,10 +2389,11 @@
       }
     }
 
+    /* Small mobile (414px) */
     @media (max-width: 414px) {
       .nav-links {
         left: 12px;
-        right: 100px;
+        right: 95px;
       }
 
       .nav-links .nav-link {
@@ -2450,16 +2405,44 @@
         font-size: 12px;
         padding: 6px 8px;
         margin-right: 6px;
+        max-width: 80px;
       }
 
       .btn-sm {
         padding: 4px 10px;
         font-size: 12px;
       }
+
+      .logo-text {
+        font-size: 13px;
+      }
+
+      .logo-tagline {
+        font-size: 7px;
+      }
+    }
+
+    /* Very small (375px) */
+    @media (max-width: 375px) {
+      .nav-links {
+        left: 10px;
+        right: 90px;
+      }
+
+      .nav-links .nav-link {
+        font-size: 10px;
+        padding: 5px 7px;
+      }
+
+      .nav-actions select {
+        font-size: 11px;
+        padding: 5px 6px;
+        max-width: 70px;
+      }
     }
 
     /* ========================================
-       MODAL IMPROVEMENTS FOR MOBILE
+       IMPROVED MODAL FOR MOBILE
        ======================================== */
     .modal-overlay {
       position: fixed;
@@ -2590,35 +2573,69 @@
     /* ========================================
        DASHBOARD CONTENT MOBILE FIXES
        ======================================== */
-    @media (max-width: 414px) {
-      /* Stats cards - better spacing */
+    
+    /* Tablet - 2 column grids */
+    @media (max-width: 768px) {
       .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+      
+      .cards-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+      }
+      
+      .service-cards {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 20px;
+      }
+      
+      .team-grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 24px;
+      }
+    }
+    
+    /* Mobile - Single column grids */
+    @media (max-width: 480px) {
+      /* Stats grid - keep 2 columns on mobile for better info density */
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
         gap: 12px;
       }
 
       .stat-card {
-        padding: 16px;
+        padding: 14px 12px;
       }
 
       .stat-value {
-        font-size: 24px;
+        font-size: 20px;
       }
 
       .stat-label {
-        font-size: 11px;
+        font-size: 10px;
       }
 
-      /* Cards grid */
+      /* Cards grid - single column */
       .cards-grid {
         gap: 16px;
       }
 
       .account-card {
-        padding: 20px;
+        padding: 20px 16px;
       }
 
       .account-card-balance {
-        font-size: 24px;
+        font-size: 22px;
+      }
+      
+      .account-card-label {
+        font-size: 11px;
+      }
+      
+      .account-card-number {
+        font-size: 12px;
       }
 
       /* Section headers */
@@ -2634,11 +2651,96 @@
         font-size: 13px;
       }
 
+      /* Service cards */
+      .service-cards {
+        grid-template-columns: 1fr;
+      }
+      
+      .service-card {
+        padding: 24px 18px;
+      }
+      
+      .service-icon {
+        width: 56px;
+        height: 56px;
+        font-size: 24px;
+      }
+
+      /* Team grid */
+      .team-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .team-photo {
+        height: 240px;
+      }
+
+      /* Footer */
+      .footer-grid {
+        grid-template-columns: 1fr;
+        gap: 24px;
+      }
+
       /* Form containers */
       [style*="max-width: 600px"],
       [style*="max-width: 500px"],
       [style*="max-width: 900px"] {
         width: 100%;
+        padding: 0 8px;
+      }
+      
+      /* Table improvements */
+      .table-container {
+        border-radius: 8px;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+      
+      .table {
+        min-width: 600px;
+        font-size: 12px;
+      }
+      
+      .table th {
+        font-size: 10px;
+        padding: 10px 8px;
+      }
+      
+      .table td {
+        padding: 10px 8px;
+      }
+      
+      /* Action buttons in tables */
+      .table .btn {
+        padding: 4px 10px;
+        font-size: 11px;
+      }
+    }
+
+    /* Extra small -进一步优化 */
+    @media (max-width: 375px) {
+      .stats-grid {
+        gap: 10px;
+      }
+      
+      .stat-card {
+        padding: 12px 10px;
+      }
+      
+      .stat-value {
+        font-size: 18px;
+      }
+      
+      .stat-label {
+        font-size: 9px;
+      }
+      
+      .account-card-balance {
+        font-size: 20px;
+      }
+      
+      .section-title {
+        font-size: 20px;
       }
     }
 
@@ -2837,10 +2939,6 @@
         // View activity
         viewActivity: 'View all your account activity', sendMoneyDomestic: 'Send money domestically or internationally',
         withdrawMoney: 'Withdraw money from your account', trackStatus: 'Track your card request status',
-        // Verification
-        verifyEmail: 'Verify Email', enterVerificationCode: 'Enter Verification Code',
-        weSentCode: 'We\'ve sent a 6-digit code to', resendCode: 'Resend Code',
-        verifying: 'Verifying...', backToLogin: 'Back to Login',
         // Empty states
         noCustomers: 'No customers yet', noPendingApprovals: 'No pending approvals',
         noCardRequests: 'No card requests',
@@ -3572,242 +3670,6 @@
     setLoading(false);
   }
 
-  // OTP VERIFICATION COMPONENT
-const OTPVerification = ({ email, userId, onVerified, onCancel }) => {
-  const [otp, setOtp] = useState(['', '', '', '', '', '']);
-  const [loading, setLoading] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
-  const [timer, setTimer] = useState(60);
-  const [canResend, setCanResend] = useState(false);
-  const inputRefs = useRef([]);
-
-  // Countdown timer for resend
-  useEffect(() => {
-    let interval;
-    if (timer > 0 && !canResend) {
-      interval = setInterval(() => {
-        setTimer((prev) => {
-          if (prev <= 1) {
-            setCanResend(true);
-            return 0;
-          }
-          return prev - 1;
-        });
-      }, 1000);
-    }
-    return () => clearInterval(interval);
-  }, [timer, canResend]);
-
-  const handleOtpChange = (index, value) => {
-    if (value.length > 1) {
-      // Handle paste
-      const pastedOtp = value.slice(0, 6).split('');
-      const newOtp = [...otp];
-      pastedOtp.forEach((digit, i) => {
-        if (i < 6) newOtp[i] = digit;
-      });
-      setOtp(newOtp);
-      
-      // Focus last filled input
-      const lastFilledIndex = Math.min(pastedOtp.length - 1, 5);
-      if (inputRefs.current[lastFilledIndex]) {
-        inputRefs.current[lastFilledIndex].focus();
-      }
-    } else if (/^\d*$/.test(value)) {
-      const newOtp = [...otp];
-      newOtp[index] = value;
-      setOtp(newOtp);
-      
-      // Auto-focus next input
-      if (value && index < 5 && inputRefs.current[index + 1]) {
-        inputRefs.current[index + 1].focus();
-      }
-    }
-  };
-
-  const handleKeyDown = (index, e) => {
-    if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      // Focus previous input on backspace
-      inputRefs.current[index - 1].focus();
-    }
-  };
-
-  const handleSubmit = async () => {
-    const otpCode = otp.join('');
-    if (otpCode.length !== 6) {
-      alert('Please enter all 6 digits');
-      return;
-    }
-
-    setLoading(true);
-    try {
-      const response = await fetch(`${API}/auth/verify-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, otp: otpCode })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('user', JSON.stringify(data.user));
-        onVerified(data.user, data.token);
-      } else {
-        alert(data.message || 'Verification failed');
-      }
-    } catch (error) {
-      console.error('Verification error:', error);
-      alert('Verification failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleResend = async () => {
-    setResendLoading(true);
-    try {
-      const response = await fetch(`${API}/auth/resend-otp`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
-      });
-      
-      const data = await response.json();
-      
-      if (data.success) {
-        alert('New OTP sent to your email');
-        setTimer(60);
-        setCanResend(false);
-        // Clear OTP inputs
-        setOtp(['', '', '', '', '', '']);
-        if (inputRefs.current[0]) {
-          inputRefs.current[0].focus();
-        }
-      } else {
-        alert(data.message || 'Failed to resend OTP');
-      }
-    } catch (error) {
-      console.error('Resend error:', error);
-      alert('Failed to resend OTP');
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
-  return (
-    <div className="auth-page">
-      <div className="auth-background" />
-      <div className="hero" style={{ height: '300px' }}>
-        <div className="container">
-          <div className="hero-content">
-            <div className="hero-label">Email Verification</div>
-            <h1 className="hero-title">Verify Your Email</h1>
-            <p className="hero-subtitle">We've sent a 6-digit code to {email}</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="section">
-        <div className="container">
-          <div style={{ maxWidth: 500, margin: '0 auto' }}>
-            <div className="form-container" style={{ 
-              background: 'var(--white)', 
-              border: '1px solid var(--gray-200)', 
-              borderRadius: 12, 
-              padding: 32, 
-              boxShadow: 'var(--shadow-lg)',
-              textAlign: 'center'
-            }}>
-              <div style={{ marginBottom: 32 }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>📧</div>
-                <h2 style={{ fontSize: 24, marginBottom: 8, color: 'var(--teal-primary)' }}>
-                  Enter Verification Code
-                </h2>
-                <p style={{ color: 'var(--gray-600)', fontSize: 14 }}>
-                  Enter the 6-digit code sent to your email
-                </p>
-              </div>
-
-              {/* OTP Input Boxes */}
-              <div style={{ 
-                display: 'flex', 
-                gap: 12, 
-                justifyContent: 'center', 
-                marginBottom: 24 
-              }}>
-                {otp.map((digit, index) => (
-                  <input
-                    key={index}
-                    ref={(el) => (inputRefs.current[index] = el)}
-                    type="text"
-                    maxLength={6}
-                    value={digit}
-                    onChange={(e) => handleOtpChange(index, e.target.value)}
-                    onKeyDown={(e) => handleKeyDown(index, e)}
-                    style={{
-                      width: 50,
-                      height: 60,
-                      textAlign: 'center',
-                      fontSize: 24,
-                      fontWeight: 'bold',
-                      border: '2px solid var(--gray-300)',
-                      borderRadius: 8,
-                      outline: 'none',
-                      transition: 'all 0.2s',
-                      ...(digit && {
-                        borderColor: 'var(--teal-primary)',
-                        boxShadow: '0 0 0 3px var(--teal-pale)'
-                      })
-                    }}
-                  />
-                ))}
-              </div>
-
-              {/* Submit Button */}
-              <button
-                className="btn btn-primary btn-lg"
-                onClick={handleSubmit}
-                disabled={loading || otp.join('').length !== 6}
-                style={{ width: '100%', marginBottom: 16 }}
-              >
-                {loading ? 'Verifying...' : 'Verify Email'}
-              </button>
-
-              {/* Resend Section */}
-              <div style={{ marginTop: 20 }}>
-                {!canResend ? (
-                  <p style={{ color: 'var(--gray-500)', fontSize: 13 }}>
-                    Resend code in {timer} seconds
-                  </p>
-                ) : (
-                  <button
-                    className="btn btn-outline"
-                    onClick={handleResend}
-                    disabled={resendLoading}
-                    style={{ width: '100%' }}
-                  >
-                    {resendLoading ? 'Sending...' : 'Resend Code'}
-                  </button>
-                )}
-              </div>
-
-              {/* Cancel Button */}
-              <button
-                className="btn btn-ghost"
-                onClick={onCancel}
-                style={{ marginTop: 16, width: '100%' }}
-              >
-                ← Back to Login
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-};
-};
       // Auto-rotate testimonials
       useEffect(() => {
         const interval = setInterval(() => {
@@ -5151,7 +5013,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             amount: '金额', transferType: '转账类型', domestic: '国内',
             international: '国际', sendTransfer: '发送转账', transactionPin: '交易密码',
             myProfile: '我的资料', firstName: '名字', lastName: '姓氏',
-            email: '邮箱', phone: '电话', address: '地址', setPin: '设置密码',
+            email: '邮箱', phone: '电话', address: '地址', setPin: '设��密码',
             login: '登录', register: '注册', password: '密码',
             loading: '加载中...', save: '保存', cancel: '取消', success: '成功',
             error: '错误', language: '语言', selectLanguage: '选择语言',
