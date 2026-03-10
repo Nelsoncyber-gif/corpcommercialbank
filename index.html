@@ -4328,13 +4328,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
           setLoadingCardId(null);
         }
       };
-      const [pendingApprovals, setPendingApprovals] = useState([]);
-      const [loading, setLoading] = useState(true);
-      const [toast, setToast] = useState(null);
-      const [currency, setCurrency] = useState('USD');
-      const [userProfile, setUserProfile] = useState(null);
-      const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
-      
+
       // Translation helper
       const translate = (key) => {
         const translations = {
