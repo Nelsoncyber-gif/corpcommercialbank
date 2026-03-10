@@ -266,13 +266,27 @@ exports.getCardDetails = async (req, res) => {
     const card = result.rows[0];
 
     // Decrypt sensitive data
-    card.card_number = decrypt(card.card_number);
-    card.cvv = decrypt(card.cvv);
+    try {
+      card.card_number = decrypt(card.card_number);
+      card.cvv = decrypt(card.cvv);
+    } catch (decryptError) {
+      console.error('Decryption error:', decryptError);
+      return res.status(500).json({ 
+        success: false, 
+        message: 'Error decrypting card data' 
+      });
+    }
+
+    // Remove any sensitive fields you don't want to send
+    delete card.user_id; // Optional: remove user_id if not needed
 
     res.json({ success: true, card });
   } catch (error) {
     console.error('Get card details error:', error);
-    res.status(500).json({ success: false, message: 'Failed to fetch card details' });
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch card details' 
+    });
   }
 };
 

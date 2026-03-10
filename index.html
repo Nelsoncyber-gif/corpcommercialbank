@@ -4247,113 +4247,6 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         </div>
       );
     };
-    // Card Component with Show/Hide
-    const CardDisplay = ({ card, auth }) => {
-      const [showNumber, setShowNumber] = React.useState(false);
-      
-      return (
-        <div style={{
-          background: 'linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%)',
-          borderRadius: 16,
-          padding: 24,
-          color: 'white',
-          position: 'relative',
-          overflow: 'hidden',
-          minHeight: 200,
-          boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-        }}>
-          {/* Card Background Pattern */}
-          <div style={{
-            position: 'absolute',
-            top: -50,
-            right: -50,
-            width: 200,
-            height: 200,
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.1)'
-          }} />
-          <div style={{
-            position: 'absolute',
-            bottom: -30,
-            left: -30,
-            width: 150,
-            height: 150,
-            borderRadius: '50%',
-            background: 'rgba(255,255,255,0.05)'
-          }} />
-
-          {/* Card Content */}
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            {/* Card Header */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-              <div>
-                <div style={{ fontSize: 12, opacity: 0.8, textTransform: 'uppercase', letterSpacing: 1 }}>{card.card_type}</div>
-                <div style={{ fontSize: 14, fontWeight: 600 }}>Debit Card</div>
-              </div>
-              <div style={{ fontSize: 24 }}>🏦</div>
-            </div>
-
-            {/* Card Number with Show/Hide */}
-            <div style={{ marginBottom: 20 }}>
-              <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>Card Number</div>
-              <div style={{ fontSize: 20, fontFamily: 'monospace', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-                <span>
-                  {showNumber ? (
-                    <span>{card.cardNumberVisible || '**** **** **** ' + (card.last_four || '****')}</span>
-                  ) : (
-                    <span>**** **** **** {card.last_four || '****'}</span>
-                  )}
-                </span>
-                <button
-                  onClick={() => setShowNumber(!showNumber)}
-                  style={{
-                    background: 'rgba(255,255,255,0.2)',
-                    border: 'none',
-                    color: 'white',
-                    padding: '4px 8px',
-                    borderRadius: 4,
-                    fontSize: 11,
-                    cursor: 'pointer'
-                  }}
-                >
-                  {showNumber ? '🙈 Hide' : '👁️ Show'}
-                </button>
-              </div>
-            </div>
-
-            {/* Card Holder & Expiry */}
-            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-              <div>
-                <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Card Holder</div>
-                <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase' }}>
-                  {card.card_holder_name || `${auth.user.first_name || ''} ${auth.user.last_name || ''}`.toUpperCase()}
-                </div>
-              </div>
-              <div>
-                <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Expires</div>
-                <div style={{ fontSize: 13, fontWeight: 500 }}>{card.expiry_date || 'MM/YY'}</div>
-              </div>
-            </div>
-
-            {/* Card Status Badge */}
-            <div style={{
-              position: 'absolute',
-              top: 24,
-              right: 24,
-              background: card.status === 'active' ? '#10B981' : '#6B7280',
-              color: 'white',
-              padding: '4px 12px',
-              borderRadius: 12,
-              fontSize: 11,
-              fontWeight: 600,
-              textTransform: 'uppercase'
-            }}>
-              {card.status || 'Active'}
-            </div>
-          </div>
-        </div>
-      );
-    };
 
     // MAIN APP
     const App = () => {
@@ -4366,6 +4259,75 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       const [transactions, setTransactions] = useState([]);
       const [userCards, setUserCards] = useState([]);
       const [adminData, setAdminData] = useState({ users: [], allTransactions: [], accounts: [] });
+      const [pendingApprovals, setPendingApprovals] = useState([]);
+      const [loading, setLoading] = useState(true);
+      const [toast, setToast] = useState(null);
+      const [currency, setCurrency] = useState('USD');
+      const [userProfile, setUserProfile] = useState(null);
+      const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
+      const [cardData, setCardData] = useState({ cards: [], pendingRequests: [], rejectedRequests: [] });
+      
+      // Function to load card data
+      const loadCardData = async () => {
+        try {
+          const res = await fetch(`${API}/cards/my-cards`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+          });
+          const data = await res.json();
+          if (data.success) {
+            setCardData({
+              cards: data.cards || [],
+              pendingRequests: data.pendingRequests || [],
+              rejectedRequests: data.rejectedRequests || []
+            });
+          }
+        } catch (error) {
+          console.error('Load card data error:', error);
+        }
+      };
+      
+      // Load card data when viewing cards page
+      useEffect(() => {
+        if (view === 'cards' && auth?.token) {
+          loadCardData();
+        }
+      }, [view]);
+      
+      // Card visibility state
+      const [visibleCards, setVisibleCards] = useState({});
+      const [cardDetails, setCardDetails] = useState({});
+      const [loadingCardId, setLoadingCardId] = useState(null);
+
+      // Function to toggle card visibility
+      const toggleCardVisibility = async (cardId) => {
+        if (visibleCards[cardId]) {
+          setVisibleCards(prev => ({ ...prev, [cardId]: false }));
+          return;
+        }
+
+        setLoadingCardId(cardId);
+        try {
+          const response = await fetch(`${API}/cards/${cardId}`, {
+            headers: { Authorization: `Bearer ${auth.token}` }
+          });
+          const data = await response.json();
+          
+          if (data.success) {
+            setCardDetails(prev => ({ 
+              ...prev, 
+              [cardId]: data.card
+            }));
+            setVisibleCards(prev => ({ ...prev, [cardId]: true }));
+          } else {
+            showToast(data.message || 'Failed to load card details', 'error');
+          }
+        } catch (error) {
+          console.error('Error loading card details:', error);
+          showToast('Failed to load card details', 'error');
+        } finally {
+          setLoadingCardId(null);
+        }
+      };
       const [pendingApprovals, setPendingApprovals] = useState([]);
       const [loading, setLoading] = useState(true);
       const [toast, setToast] = useState(null);
@@ -5337,12 +5299,14 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </div>
               </div>
             </div>}
-            {view === 'cards' && <div>
-              <div className="section-header">
-                <h2 className="section-title">Your Cards</h2>
-                <p className="section-subtitle">Manage your debit and credit cards</p>
-              </div>
-              <div style={{ maxWidth: 800, margin: '0 auto' }}>
+            {view === 'cards' && (
+              <div>
+                <div className="section-header">
+                  <h2 className="section-title">Your Cards</h2>
+                  <p className="section-subtitle">Manage your debit and credit cards</p>
+                </div>
+                
+                {/* Action Cards */}
                 <div className="cards-grid" style={{ marginBottom: 32 }}>
                   <div className="card" style={{ cursor: 'pointer', border: '2px dashed var(--teal-light)' }} onClick={() => setView('request-card')}>
                     <div style={{ fontSize: 40, marginBottom: 12, textAlign: 'center' }}>➕</div>
@@ -5356,27 +5320,155 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   </div>
                 </div>
 
-                {/* User's Active Cards */}
-                <div id="user-cards-container">
-                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--teal-primary)' }}>Your Active Cards</h3>
-                  <div id="cards-list">
-                    {userCards.length === 0 ? (
-                      <div style={{ textAlign: 'center', padding: 40, color: 'var(--gray-500)' }}>
-                        <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
-                        <div>No cards yet. Request your first card above.</div>
-                        <div style={{ fontSize: 13, marginTop: 8 }}>Card requests are processed within 5-7 business days</div>
+                {/* Pending Requests */}
+                {cardData?.pendingRequests?.length > 0 && (
+                  <div style={{ marginBottom: 24 }}>
+                    <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12, color: 'var(--orange-warning)' }}>
+                      ⏳ Pending Requests
+                    </h3>
+                    {cardData.pendingRequests.map(req => (
+                      <div key={req.id} style={{
+                        padding: 16,
+                        background: '#FEF3C7',
+                        border: '1px solid #F59E0B',
+                        borderRadius: 8,
+                        marginBottom: 8
+                      }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div>
+                            <div style={{ fontWeight: 600 }}>{req.card_type} Card</div>
+                            <div style={{ fontSize: 12, color: '#92400E' }}>
+                              Requested on {fmtDate(req.requested_at)}
+                            </div>
+                          </div>
+                          <span className="badge badge-warning">Pending Approval</span>
+                        </div>
                       </div>
-                    ) : (
-                      <div style={{ display: 'grid', gap: 20, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-                        {userCards.map(card => (
-                          <CardDisplay key={card.id} card={card} auth={auth} />
-                        ))}
-                      </div>
-                    )}
+                    ))}
                   </div>
-                </div>
+                )}
+
+                {/* Active Cards */}
+                <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--teal-primary)' }}>
+                  Your Active Cards
+                </h3>
+                
+                {cardData?.cards?.length > 0 ? (
+                  <div className="cards-grid">
+                    {cardData.cards.map(card => {
+                      const isVisible = visibleCards[card.id];
+                      const details = cardDetails[card.id];
+                      const isLoading = loadingCardId === card.id;
+                      
+                      return (
+                        <div key={card.id} className="account-card" style={{ 
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          position: 'relative',
+                          minHeight: '220px'
+                        }}>
+                          {/* Eye button for show/hide */}
+                          <button
+                            onClick={() => toggleCardVisibility(card.id)}
+                            style={{
+                              position: 'absolute',
+                              top: 16,
+                              right: 16,
+                              background: 'rgba(255,255,255,0.2)',
+                              border: 'none',
+                              borderRadius: '50%',
+                              width: 36,
+                              height: 36,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              cursor: 'pointer',
+                              color: 'white',
+                              fontSize: 18,
+                              zIndex: 10
+                            }}
+                            disabled={isLoading}
+                          >
+                            {isLoading ? '⏳' : (isVisible ? '👁️' : '👁️‍🗨️')}
+                          </button>
+
+                          {/* Card Type Badge */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
+                            <span className="badge" style={{ background: 'rgba(255,255,255,0.2)', color: 'white' }}>
+                              {card.status}
+                            </span>
+                            <span style={{ fontSize: 24 }}>{card.card_type === 'Visa' ? '💙' : '🟠'}</span>
+                          </div>
+
+                          {/* Card Number Display */}
+                          <div className="account-card-number" style={{ 
+                            fontSize: 18, 
+                            letterSpacing: 2,
+                            fontFamily: 'monospace',
+                            marginBottom: 20
+                          }}>
+                            {isVisible && details ? (
+                              <div>
+                                <div style={{ fontSize: 16 }}>
+                                  {details.card_number.replace(/(\d{4})/g, '$1 ').trim()}
+                                </div>
+                                <div style={{ 
+                                  fontSize: 12, 
+                                  marginTop: 8,
+                                  display: 'flex',
+                                  gap: 20
+                                }}>
+                                  <span>CVV: {details.cvv}</span>
+                                </div>
+                              </div>
+                            ) : (
+                              <span>•••• •••• •••• {card.id?.toString().slice(-4) || '****'}</span>
+                            )}
+                          </div>
+
+                          {/* Card Holder and Expiry */}
+                          <div style={{ 
+                            display: 'flex', 
+                            justifyContent: 'space-between', 
+                            marginTop: 'auto'
+                          }}>
+                            <div>
+                              <div style={{ fontSize: 11, opacity: 0.7 }}>Card Holder</div>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{card.card_holder_name}</div>
+                            </div>
+                            <div style={{ textAlign: 'right' }}>
+                              <div style={{ fontSize: 11, opacity: 0.7 }}>Expires</div>
+                              <div style={{ fontWeight: 600, fontSize: 14 }}>{card.expiry_date}</div>
+                            </div>
+                          </div>
+
+                          {/* Security Warning when visible */}
+                          {isVisible && (
+                            <div style={{ 
+                              marginTop: 16,
+                              fontSize: 10,
+                              color: '#ffd700',
+                              textAlign: 'center',
+                              borderTop: '1px solid rgba(255,255,255,0.2)',
+                              paddingTop: 8
+                            }}>
+                              ⚠️ Never share these details with anyone
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: 40, background: 'var(--gray-50)', borderRadius: 8 }}>
+                    <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
+                    <div style={{ fontSize: 16, color: 'var(--gray-700)' }}>No active cards</div>
+                    <p style={{ fontSize: 13, color: 'var(--gray-500)', marginTop: 8 }}>
+                      Request a card above. Cards are issued after admin approval.
+                    </p>
+                  </div>
+                )}
               </div>
-            </div>}
+            )}
             {view === 'request-card' && <div>
               <div className="section-header">
                 <h2 className="section-title">Request New Card</h2>
