@@ -121,7 +121,19 @@ router.post('/reject-account', protect, adminOnly, rejectAccount);
  * @route GET /api/admin/pending-card-requests
  * @access Protected (Admin only)
  */
-router.get('/pending-card-requests', protect, adminOnly, getPendingCardRequests);
+router.get('/pending-card-requests', protect, adminOnly, async (req, res) => {
+  try {
+    // Use the new card controller function
+    const cardController = require('../controllers/cardController');
+    await cardController.getAllCardRequests(req, res);
+  } catch (error) {
+    console.error('Get pending card requests error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch pending card requests'
+    });
+  }
+});
 
 // Backdate transaction
 router.post('/backdate-transaction', protect, adminOnly, async (req, res) => {

@@ -6,22 +6,20 @@ const {
   getMyRequests,
   getMyCards,
   getCardDetails,
-  approveCardRequest
+  approveCardRequest,
+  getAllCardRequests,
+  rejectCardRequest
 } = require('../controllers/cardController');
 
-// Request a new card (User)
+// User Routes
 router.post('/request', protect, requestCard);
-
-// Get user's card requests (User)
 router.get('/requests', protect, getMyRequests);
-
-// Get user's cards (User)
 router.get('/my-cards', protect, getMyCards);
-
-// Get card details (User)
 router.get('/:cardId', protect, getCardDetails);
 
-// Approve card request (Admin only)
-router.post('/approve', protect, adminOnly, approveCardRequest);
+// Admin Routes
+router.get('/admin/all-requests', protect, adminOnly, getAllCardRequests);
+router.post('/admin/approve', protect, adminOnly, approveCardRequest);
+router.post('/admin/reject', protect, adminOnly, rejectCardRequest);
 
 module.exports = router;

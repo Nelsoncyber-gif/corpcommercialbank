@@ -264,3 +264,237 @@ exports.getCardDetails = async (req, res) => {
     res.status(500).json({ success: false, message: 'Failed to fetch card details' });
   }
 };
+
+// ==================== ADMIN: GET ALL CARD REQUESTS ====================
+exports.getAllCardRequests = async (req, res) => {
+  try {
+    // Only admin can access
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ 
+        success: false, 
+        message: 'Access denied. Admin only.' 
+      });
+    }
+
+    const result = await pool.query(
+      `SELECT cr.*, u.first_name, u.last_name, u.email, u.phone 
+       FROM card_requests cr
+       JOIN users u ON cr.user_id = u.id
+       WHERE cr.status = 'pending'
+       ORDER BY cr.requested_at DESC`
+    );
+
+    res.json({ 
+      success: true, 
+      requests: result.rows 
+    });
+  } catch (error) {
+    console.error('Get all card requests error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch card requests' 
+    });
+  }
+};
+
+// ==================== ADMIN: APPROVE CARD REQUEST ====================
+exports.approveCardRequest = async (req, res) => {
+  const client = await pool.connect();
+  
+  try {
+    const { requestId } = req.body;
+    const adminId = req.user.id;
+
+    // Validate input
+    const parsedRequestId = parseInt(requestId);
+    if (isNaN(parsedRequestId) || parsedRequestId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid request ID is required"
+      });
+    }
+
+    await client.query('BEGIN');
+
+    // Get the pending card request
+    const requestResult = await client.query(
+      `SELECT cr.*, u.first_name, u.last_name, u.email 
+       FROM card_requests cr
+       JOIN users u ON cr.user_id = u.id
+       WHERE cr.id = $1 AND cr.status = 'pending'`,
+      [parsedRequestId]
+    );
+
+    if (requestResult.rows.length === 0) {
+      await client.query('ROLLBACK');
+      return res.status(404).json({
+        success: false,
+        message: "Pending card request not found"
+      });
+    }
+
+    const request = requestResult.rows[0];
+
+    // Generate card details
+    const cardNumber = generateCardNumber();
+    const cvv = Math.floor(100 + Math.random() * 900).toString();
+    const expiryMonth = String(new Date().getMonth() + 1).padStart(2, '0');
+    const expiryYear = (new Date().getFullYear() + 3).toString().slice(-2);
+    const expiryDate = `${expiryMonth}/${expiryYear}`;
+    
+    // Card holder name (format: FIRST_NAME LAST_NAME)
+    const cardHolderName = `${request.first_name} ${request.last_name}`.toUpperCase();
+
+    // Check if user already has a card
+    const existingCard = await client.query(
+      'SELECT id FROM cards WHERE user_id = $1',
+      [request.user_id]
+    );
+
+    if (existingCard.rows.length > 0) {
+      await client.query('ROLLBACK');
+      return res.status(400).json({
+        success: false,
+        message: "User already has a card"
+      });
+    }
+
+    // Create the actual card with encrypted data
+    await client.query(
+      `INSERT INTO cards 
+       (user_id, card_number, card_holder_name, expiry_date, cvv, card_type, status, daily_limit)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+      [
+        request.user_id,
+        encrypt(cardNumber),      // Encrypt card number
+        cardHolderName,
+        expiryDate,
+        encrypt(cvv),             // Encrypt CVV
+        request.card_type,
+        'active',
+        1000.00                   // Default daily limit
+      ]
+    );
+
+    // Update request status
+    await client.query(
+      `UPDATE card_requests 
+       SET status = 'approved', reviewed_at = NOW(), reviewed_by = $1
+       WHERE id = $2`,
+      [adminId, parsedRequestId]
+    );
+
+    await client.query('COMMIT');
+
+    res.json({
+      success: true,
+      message: 'Card request approved successfully',
+      card: {
+        cardNumber: cardNumber.slice(-4), // Return only last 4 digits
+        cardHolderName,
+        expiryDate,
+        type: request.card_type
+      }
+    });
+
+  } catch (error) {
+    await client.query('ROLLBACK');
+    console.error('Approve card request error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to approve card request' 
+    });
+  } finally {
+    client.release();
+  }
+};
+
+// ==================== ADMIN: REJECT CARD REQUEST ====================
+exports.rejectCardRequest = async (req, res) => {
+  try {
+    const { requestId, reason } = req.body;
+    const adminId = req.user.id;
+
+    const parsedRequestId = parseInt(requestId);
+    if (isNaN(parsedRequestId) || parsedRequestId <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid request ID is required"
+      });
+    }
+
+    const result = await pool.query(
+      `UPDATE card_requests 
+       SET status = 'rejected', reviewed_at = NOW(), reviewed_by = $1, review_notes = $2
+       WHERE id = $3 AND status = 'pending'
+       RETURNING *`,
+      [adminId, reason || 'Request rejected', parsedRequestId]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: "Pending card request not found"
+      });
+    }
+
+    res.json({
+      success: true,
+      message: 'Card request rejected'
+    });
+
+  } catch (error) {
+    console.error('Reject card request error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to reject card request' 
+    });
+  }
+};
+
+// ==================== GET USER CARDS (WITH STATUS) ====================
+exports.getMyCards = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Get active cards
+    const cardsResult = await pool.query(
+      `SELECT id, card_holder_name, expiry_date, card_type, status, 
+              balance, daily_limit, created_at 
+       FROM cards 
+       WHERE user_id = $1`,
+      [userId]
+    );
+
+    // Get pending requests
+    const pendingResult = await pool.query(
+      `SELECT id, card_type, status, requested_at 
+       FROM card_requests 
+       WHERE user_id = $1 AND status = 'pending'
+       ORDER BY requested_at DESC`,
+      [userId]
+    );
+
+    // Get rejected requests
+    const rejectedResult = await pool.query(
+      `SELECT id, card_type, status, requested_at, review_notes 
+       FROM card_requests 
+       WHERE user_id = $1 AND status = 'rejected'
+       ORDER BY requested_at DESC`,
+      [userId]
+    );
+
+    res.json({ 
+      success: true, 
+      cards: cardsResult.rows,
+      pendingRequests: pendingResult.rows,
+      rejectedRequests: rejectedResult.rows
+    });
+  } catch (error) {
+    console.error('Get cards error:', error);
+    res.status(500).json({ 
+      success: false, 
+      message: 'Failed to fetch cards' 
+    });
+  }
+};
