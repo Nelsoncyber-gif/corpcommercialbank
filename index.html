@@ -4349,7 +4349,9 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             error: 'Error', language: 'Language', selectLanguage: 'Select Language',
             customers: 'Customers', pendingApprovals: 'Pending Approvals', cardRequests: 'Card Requests',
             processDeposit: 'Process Deposit', allTransactions: 'All Transactions', backdateTransaction: 'Backdate',
-            branches: 'Branches', withdraw: 'Withdraw', transactions: 'Transactions'
+            branches: 'Branches', withdraw: 'Withdraw', transactions: 'Transactions',
+            changePassword: 'Change Password', setPin: 'Set PIN', loansCredit: 'Loans & Credit',
+            investmentCenter: 'Investment Center', yourCards: 'Your Cards', requestNew: 'Request New Card'
           },
           es: {
             home: 'Inicio', overview: 'Resumen', accounts: 'Cuentas', cards: 'Tarjetas',
@@ -4368,7 +4370,9 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             error: 'Error', language: 'Idioma', selectLanguage: 'Seleccionar Idioma',
             customers: 'Clientes', pendingApprovals: 'Aprobaciones Pendientes', cardRequests: 'Solicitudes de Tarjeta',
             processDeposit: 'Procesar Depósito', allTransactions: 'Todas las Transacciones', backdateTransaction: 'Retroceder',
-            branches: 'Sucursales', withdraw: 'Retirar', transactions: 'Transacciones'
+            branches: 'Sucursales', withdraw: 'Retirar', transactions: 'Transacciones',
+            changePassword: 'Cambiar Contraseña', setPin: 'Establecer PIN', loansCredit: 'Préstamos y Crédito',
+            investmentCenter: 'Centro de Inversión', yourCards: 'Tus Tarjetas', requestNew: 'Solicitar Nueva'
           },
           fr: {
             home: 'Accueil', overview: 'Aperçu', accounts: 'Comptes', cards: 'Cartes',
@@ -4893,7 +4897,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'accounts' && <div>
               <div className="section-header">
-                <h2 className="section-title">Your Accounts</h2>
+                <h2 className="section-title">{translate('myAccounts')}</h2>
                 <p className="section-subtitle">Manage your checking and savings accounts</p>
               </div>
               <div className="cards-grid">
@@ -4952,7 +4956,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'transactions' && <div>
               <div className="section-header">
-                <h2 className="section-title">Transaction History</h2>
+                <h2 className="section-title">{translate('transactions')}</h2>
                 <p className="section-subtitle">View all your account activity</p>
               </div>
               <div className="table-container">
@@ -4967,7 +4971,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'transfer' && <div>
               <div className="section-header">
-                <h2 className="section-title">Transfer Funds</h2>
+                <h2 className="section-title">{translate('transfers')}</h2>
                 <p className="section-subtitle">Send money domestically or internationally</p>
               </div>
               <div style={{ maxWidth: 700, margin: '0 auto' }}>
@@ -5273,7 +5277,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'withdraw' && <div>
               <div className="section-header">
-                <h2 className="section-title">Withdraw Funds</h2>
+                <h2 className="section-title">{translate('withdraw')}</h2>
                 <p className="section-subtitle">Withdraw money from your account</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -5314,7 +5318,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {view === 'cards' && (
               <div>
                 <div className="section-header">
-                  <h2 className="section-title">Your Cards</h2>
+                  <h2 className="section-title">{translate('yourCards')}</h2>
                   <p className="section-subtitle">Manage your debit and credit cards</p>
                 </div>
                 
@@ -5617,7 +5621,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             )}
             {view === 'request-card' && <div>
               <div className="section-header">
-                <h2 className="section-title">Request New Card</h2>
+                <h2 className="section-title">{translate('requestNew')}</h2>
                 <p className="section-subtitle">Order a new debit card for your account</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -5653,7 +5657,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'card-requests' && <div>
               <div className="section-header">
-                <h2 className="section-title">Card Requests</h2>
+                <h2 className="section-title">{translate('cardRequests')}</h2>
                 <p className="section-subtitle">Track your card request status</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -5667,7 +5671,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'profile' && <div>
               <div className="section-header">
-                <h2 className="section-title">My Profile</h2>
+                <h2 className="section-title">{translate('myProfile')}</h2>
                 <p className="section-subtitle">Manage your account settings and preferences</p>
               </div>
               <div style={{ maxWidth: 900, margin: '0 auto' }}>
@@ -5876,7 +5880,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'change-password' && <div>
               <div className="section-header">
-                <h2 className="section-title">Change Password</h2>
+                <h2 className="section-title">{translate('changePassword')}</h2>
                 <p className="section-subtitle">Update your login password</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -5913,7 +5917,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'set-pin' && <div>
               <div className="section-header">
-                <h2 className="section-title">Set Transaction PIN</h2>
+                <h2 className="section-title">{translate('setPin')}</h2>
                 <p className="section-subtitle">Create a 6-digit PIN for transaction verification</p>
               </div>
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
@@ -5951,7 +5955,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'loans' && <div>
               <div className="section-header">
-                <h2 className="section-title">Loans & Credit</h2>
+                <h2 className="section-title">{translate('loansCredit')}</h2>
                 <p className="section-subtitle">Personal loans, mortgages, and credit solutions</p>
               </div>
               <div className="cards-grid mb-6">
@@ -6023,7 +6027,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'investments' && <div>
               <div className="section-header">
-                <h2 className="section-title">Investment Center</h2>
+                <h2 className="section-title">{translate('investmentCenter')}</h2>
                 <p className="section-subtitle">Grow your wealth with our investment solutions</p>
               </div>
               <div className="cards-grid mb-6">
@@ -6157,7 +6161,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--teal-primary)' }}>Recent Notifications</h3>
                 <div style={{ display: 'grid', gap: 12 }}>
                   <div style={{ padding: 16, background: 'var(--teal-pale)', borderRadius: 8, borderLeft: '4px solid var(--teal-primary)' }}>
-                    <div style={{ fontWeight: 600, color: 'var(--teal-dark)', marginBottom: 4 }}>🎉 Welcome to CorpCommercial Bank!</div>
+                    <div style={{ fontWeight: 600, color: 'var(--teal-dark)', marginBottom: 4 }}>���� Welcome to CorpCommercial Bank!</div>
                     <div style={{ fontSize: 13, color: 'var(--gray-600)' }}>Thank you for banking with us. Explore our features to make the most of your banking experience.</div>
                     <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 8 }}>Just now</div>
                   </div>
@@ -6171,7 +6175,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>}
             {view === 'branches' && <div>
               <div className="section-header">
-                <h2 className="section-title">Our Global Branches</h2>
+                <h2 className="section-title">{translate('branches')}</h2>
                 <p className="section-subtitle">CorpCommercial Bank operates in the world's most important financial markets</p>
               </div>
               <div style={{ background: 'var(--teal-pale)', border: '1px solid var(--teal-light)', borderRadius: 8, padding: 20, marginBottom: 32, textAlign: 'center' }}>
