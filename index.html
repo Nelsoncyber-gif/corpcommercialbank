@@ -2712,6 +2712,52 @@
       useEffect(() => { const t = setTimeout(onClose, 4000); return () => clearTimeout(t) }, []);
       return <div className={`toast ${type}`}><span style={{ fontSize: 20 }}>{type === 'success' ? '✓' : type === 'error' ? '✕' : 'ℹ'}</span><span>{message}</span></div>;
     };
+
+    // ERROR BOUNDARY COMPONENT
+    class ErrorBoundary extends React.Component {
+      constructor(props) {
+        super(props);
+        this.state = { hasError: false, error: null };
+      }
+
+      static getDerivedStateFromError(error) {
+        return { hasError: true, error };
+      }
+
+      componentDidCatch(error, errorInfo) {
+        console.error('Caught error:', error, errorInfo);
+      }
+
+      render() {
+        if (this.state.hasError) {
+          return (
+            <div style={{ padding: 20, textAlign: 'center' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>⚠️</div>
+              <h3>Something went wrong</h3>
+              <pre style={{ 
+                background: '#fee2e2', 
+                padding: 10, 
+                borderRadius: 4,
+                fontSize: 12,
+                textAlign: 'left',
+                maxWidth: 600,
+                margin: '20px auto'
+              }}>
+                {this.state.error?.toString()}
+              </pre>
+              <button 
+                className="btn btn-primary"
+                onClick={() => window.location.reload()}
+              >
+                Reload Page
+              </button>
+            </div>
+          );
+        }
+        return this.props.children;
+      }
+    }
+
     // AUTH PAGES
     const AuthPage = ({ isLogin, onAuth, onSwitch }) => {
       const [showLogin, setShowLogin] = useState(isLogin);
@@ -3472,19 +3518,36 @@ const OTPVerification = ({ email, userId, onVerified, onCancel }) => {
     };
     // CUSTOMER MANAGEMENT COMPONENT (ADMIN) - FIXED VERSION
 const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currency }) => {
+  // SAFETY: Ensure adminData has the right structure
+  const safeAdminData = {
+    users: Array.isArray(adminData?.users) ? adminData.users : [],
+    accounts: Array.isArray(adminData?.accounts) ? adminData.accounts : [],
+    allTransactions: Array.isArray(adminData?.allTransactions) ? adminData.allTransactions : []
+  };
+  
+  console.log('CustomerManagement rendering with:', {
+    usersCount: safeAdminData.users.length,
+    accountsCount: safeAdminData.accounts.length,
+    firstUser: safeAdminData.users[0]
+  });
+  
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
-  // Filter customers (exclude admins)
-  const customers = adminData.users.filter(u => u.role !== 'admin');
-
-  // Apply search filter
-  const filteredUsers = customers.filter(u =>
-    (u.first_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (u.last_name?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
-    (u.email?.toLowerCase() || '').includes(searchTerm.toLowerCase())
-  );
+  // Filter customers safely (exclude admins)
+  const customers = safeAdminData.users.filter(u => u && u.role !== 'admin');
+  
+  // Apply search filter safely
+  const filteredUsers = customers.filter(u => {
+    if (!u) return false;
+    const searchLower = searchTerm.toLowerCase();
+    return (
+      (u.first_name?.toLowerCase() || '').includes(searchLower) ||
+      (u.last_name?.toLowerCase() || '').includes(searchLower) ||
+      (u.email?.toLowerCase() || '').includes(searchLower)
+    );
+  });
 
   const viewUserDetails = (user) => {
     setSelectedUser(user);
@@ -3611,74 +3674,75 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         </thead>
         <tbody>
           {filteredUsers.map(user => {
-            // Find user's account status (if any)
-            const userAccount = adminData.accounts?.find(a => a.user_id === user.id);
-            const accountStatus = userAccount?.status || 'no_account';
-
-            return <tr key={user.id}>
-              <td>
-                <div style={{ fontWeight: 600 }}>
-                  {user.first_name || 'N/A'} {user.last_name || ''}
-                </div>
-                <div style={{ fontSize: 12, color: 'var(--gray-500)' }}>ID: {user.id}</div>
-              </td>
-              <td style={{ color: 'var(--gray-600)' }}>{user.email || 'N/A'}</td>
-              <td style={{ color: 'var(--gray-600)' }}>{user.phone || 'N/A'}</td>
-              <td>
-                <span className="badge badge-info" style={{ textTransform: 'capitalize' }}>
-                  {user.role || 'user'}
-                </span>
-              </td>
-              <td>
-                {accountStatus === 'no_account' ? (
-                  <span className="badge badge-warning">⏳ No Account</span>
-                ) : (
-                  <span className={`badge ${accountStatus === 'frozen' ? 'badge-error' : 'badge-success'}`}>
-                    {accountStatus === 'frozen' ? '🔒 Frozen' : '✅ Active'}
+            // Find user's account
+            const userAccount = adminData?.accounts?.find(a => a.user_id === user.id);
+            
+            return (
+              <tr key={user.id}>
+                <td>
+                  <div style={{ fontWeight: 600 }}>
+                    {user.first_name || 'N/A'} {user.last_name || ''}
+                  </div>
+                  <div style={{ fontSize: 12, color: 'var(--gray-500)' }}>ID: {user.id}</div>
+                </td>
+                <td>{user.email || 'N/A'}</td>
+                <td>{user.phone || 'N/A'}</td>
+                <td>
+                  <span className="badge badge-info">
+                    {user.role || 'user'}
                   </span>
-                )}
-              </td>
-              <td>
-                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-                  <button
-                    className="btn btn-sm btn-outline"
-                    onClick={() => viewUserDetails(user)}
-                    style={{ padding: '6px 12px', fontSize: 13 }}
-                  >
-                    👁️ View
-                  </button>
+                </td>
+                <td>
+                  {!userAccount ? (
+                    <span className="badge badge-warning">No Account</span>
+                  ) : (
+                    <span className={`badge ${userAccount.status === 'frozen' ? 'badge-error' : 'badge-success'}`}>
+                      {userAccount.status === 'frozen' ? 'Frozen' : 'Active'}
+                    </span>
+                  )}
+                </td>
+                <td>
+                  <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+                    <button
+                      className="btn btn-sm btn-outline"
+                      onClick={() => viewUserDetails(user)}
+                      style={{ padding: '6px 12px', fontSize: 13 }}
+                    >
+                      👁️ View
+                    </button>
 
-                  {accountStatus !== 'no_account' && (
+                    {userAccount && (
+                      <button
+                        className="btn btn-sm"
+                        onClick={() => handleFreezeToggle(user)}
+                        style={{
+                          padding: '6px 12px',
+                          fontSize: 13,
+                          background: userAccount.status === 'frozen' ? 'var(--green-success)' : 'var(--orange-warning)',
+                          color: 'var(--white)',
+                          border: 'none'
+                        }}
+                      >
+                        {userAccount.status === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                      </button>
+                    )}
+
                     <button
                       className="btn btn-sm"
-                      onClick={() => handleFreezeToggle(user)}
+                      onClick={() => handleDelete(user.id, `${user.first_name} ${user.last_name}`)}
                       style={{
                         padding: '6px 12px',
                         fontSize: 13,
-                        background: accountStatus === 'frozen' ? 'var(--green-success)' : 'var(--orange-warning)',
-                        color: 'var(--white)',
-                        border: 'none'
+                        background: 'var(--red-error)',
+                        color: 'var(--white)'
                       }}
                     >
-                      {accountStatus === 'frozen' ? '🔓 Unfreeze' : '🔒 Freeze'}
+                      🗑️ Delete
                     </button>
-                  )}
-
-                  <button
-                    className="btn btn-sm"
-                    onClick={() => handleDelete(user.id, `${user.first_name} ${user.last_name}`)}
-                    style={{
-                      padding: '6px 12px',
-                      fontSize: 13,
-                      background: 'var(--red-error)',
-                      color: 'var(--white)'
-                    }}
-                  >
-                    🗑️ Delete
-                  </button>
-                </div>
-              </td>
-            </tr>;
+                  </div>
+                </td>
+              </tr>
+            );
           })}
           {filteredUsers.length === 0 && (
             <tr>
@@ -4465,15 +4529,28 @@ if (!auth) {
             ]);
             const [ud, atd] = await Promise.all([ur.json(), atr.json()]);
 
+            // Debug logging
+            console.log('Users API response:', ud);
+            console.log('Users data structure:', {
+              hasUsers: !!ud.users,
+              userCount: ud.users?.length,
+              firstUser: ud.users?.[0]
+            });
+
             if (ud.success) {
-              console.log('Users loaded:', ud.users?.length);
+              // Make sure users is an array
+              const safeUsers = Array.isArray(ud.users) ? ud.users : [];
+              
+              console.log('Users loaded:', safeUsers.length);
               console.log('Accounts loaded:', allAccountsData.success ? allAccountsData.accounts?.length : 0);
 
               setAdminData({
-                users: ud.users || [],
+                users: safeUsers,
                 allTransactions: atd.transactions || [],
                 accounts: allAccountsData.success ? allAccountsData.accounts : []
               });
+              
+              console.log('Admin data set with', safeUsers.length, 'users');
             }
           }
         } catch (err) {
@@ -6005,7 +6082,11 @@ if (!auth) {
         </footer>
       </div>
     }
-    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    ReactDOM.createRoot(document.getElementById('root')).render(
+      <ErrorBoundary>
+        <App />
+      </ErrorBoundary>
+    );
   </script>
 </body>
 
