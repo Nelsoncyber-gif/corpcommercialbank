@@ -4346,7 +4346,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             email: 'Email', phone: 'Phone', address: 'Address', setPin: 'Set PIN',
             login: 'Login', register: 'Register', password: 'Password',
             loading: 'Loading...', save: 'Save', cancel: 'Cancel', success: 'Success',
-            error: 'Error', language: 'Language', selectLanguage: 'Select Language'
+            error: 'Error', language: 'Language', selectLanguage: 'Select Language',
+            customers: 'Customers', pendingApprovals: 'Pending Approvals', cardRequests: 'Card Requests',
+            processDeposit: 'Process Deposit', allTransactions: 'All Transactions', backdateTransaction: 'Backdate',
+            branches: 'Branches', withdraw: 'Withdraw', transactions: 'Transactions'
           },
           es: {
             home: 'Inicio', overview: 'Resumen', accounts: 'Cuentas', cards: 'Tarjetas',
@@ -4362,7 +4365,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             email: 'Correo', phone: 'Teléfono', address: 'Dirección', setPin: 'Establecer PIN',
             login: 'Iniciar Sesión', register: 'Registrarse', password: 'Contraseña',
             loading: 'Cargando...', save: 'Guardar', cancel: 'Cancelar', success: 'Éxito',
-            error: 'Error', language: 'Idioma', selectLanguage: 'Seleccionar Idioma'
+            error: 'Error', language: 'Idioma', selectLanguage: 'Seleccionar Idioma',
+            customers: 'Clientes', pendingApprovals: 'Aprobaciones Pendientes', cardRequests: 'Solicitudes de Tarjeta',
+            processDeposit: 'Procesar Depósito', allTransactions: 'Todas las Transacciones', backdateTransaction: 'Retroceder',
+            branches: 'Sucursales', withdraw: 'Retirar', transactions: 'Transacciones'
           },
           fr: {
             home: 'Accueil', overview: 'Aperçu', accounts: 'Comptes', cards: 'Cartes',
@@ -4378,7 +4384,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             email: 'Email', phone: 'Téléphone', address: 'Adresse', setPin: 'Définir NIP',
             login: 'Connexion', register: "S'inscrire", password: 'Mot de passe',
             loading: 'Chargement...', save: 'Enregistrer', cancel: 'Annuler', success: 'Succès',
-            error: 'Erreur', language: 'Langue', selectLanguage: 'Choisir Langue'
+            error: 'Erreur', language: 'Langue', selectLanguage: 'Choisir Langue',
+            customers: 'Clients', pendingApprovals: 'Approbations en Attente', cardRequests: 'Demandes de Carte',
+            processDeposit: 'Traiter Dépôt', allTransactions: 'Toutes Transactions', backdateTransaction: 'Antidater',
+            branches: 'Agences', withdraw: 'Retirer', transactions: 'Transactions'
           },
           de: {
             home: 'Startseite', overview: 'Übersicht', accounts: 'Konten', cards: 'Karten',
@@ -4394,7 +4403,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             email: 'E-Mail', phone: 'Telefon', address: 'Adresse', setPin: 'PIN Festlegen',
             login: 'Anmelden', register: 'Registrieren', password: 'Passwort',
             loading: 'Laden...', save: 'Speichern', cancel: 'Abbrechen', success: 'Erfolg',
-            error: 'Fehler', language: 'Sprache', selectLanguage: 'Sprache Wählen'
+            error: 'Fehler', language: 'Sprache', selectLanguage: 'Sprache Wählen',
+            customers: 'Kunden', pendingApprovals: 'Ausstehende Genehmigungen', cardRequests: 'Kartenanträge',
+            processDeposit: 'Einzahlen', allTransactions: 'Alle Transaktionen', backdateTransaction: 'Zurückdatieren',
+            branches: 'Filialen', withdraw: 'Abheben', transactions: 'Transaktionen'
           },
           zh: {
             home: '首页', overview: '概览', accounts: '账户', cards: '卡片',
@@ -4410,7 +4422,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             email: '邮箱', phone: '电话', address: '地址', setPin: '设置密码',
             login: '登录', register: '注册', password: '密码',
             loading: '加载中...', save: '保存', cancel: '取消', success: '成功',
-            error: '错误', language: '语言', selectLanguage: '选择语言'
+            error: '错误', language: '语言', selectLanguage: '选择语言',
+            customers: '客户', pendingApprovals: '待审批', cardRequests: '卡片申请',
+            processDeposit: '处理存款', allTransactions: '所有交易', backdateTransaction: '回溯',
+            branches: '分行', withdraw: '取款', transactions: '交易'
           },
           ar: {
             home: 'الرئيسية', overview: 'نظرة عامة', accounts: 'الحسابات', cards: 'البطاقات',
@@ -4426,7 +4441,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             email: 'البريد الإلكتروني', phone: 'الهاتف', address: 'العنوان', setPin: 'تعيين PIN',
             login: 'تسجيل الدخول', register: 'تسجيل جديد', password: 'كلمة المرور',
             loading: 'جاري التحميل...', save: 'حفظ', cancel: 'إلغاء', success: 'نجاح',
-            error: 'خطأ', language: 'اللغة', selectLanguage: 'اختر اللغة'
+            error: 'خطأ', language: 'اللغة', selectLanguage: 'اختر اللغة',
+            customers: 'العملاء', pendingApprovals: 'الموافقات المعلقة', cardRequests: 'طلبات البطاقة',
+            processDeposit: 'معالجة الإيداع', allTransactions: 'جميع المعاملات', backdateTransaction: 'التأريخ',
+            branches: 'الفروع', withdraw: 'سحب', transactions: 'المعاملات'
           },
           ja: {
             home: 'ホーム', overview: '概要', accounts: '口座', cards: 'カード',
@@ -4670,24 +4688,24 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               <div className="logo-tagline">Financial Services</div>
             </div>
             <div className="nav-links">
-              <button className={`nav-link ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>Overview</button>
+              <button className={`nav-link ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>{translate('overview')}</button>
               {auth.user.role !== 'admin' && <>
-                <button className={`nav-link ${view === 'accounts' ? 'active' : ''}`} onClick={() => setView('accounts')}>Accounts</button>
-                <button className={`nav-link ${view === 'transactions' ? 'active' : ''}`} onClick={() => setView('transactions')}>Transactions</button>
-                <button className={`nav-link ${view === 'transfer' ? 'active' : ''}`} onClick={() => setView('transfer')}>Transfer</button>
-                <button className={`nav-link ${view === 'withdraw' ? 'active' : ''}`} onClick={() => setView('withdraw')}>Withdraw</button>
-                <button className={`nav-link ${view === 'cards' ? 'active' : ''}`} onClick={() => setView('cards')}>Cards</button>
-                <button className={`nav-link ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>Profile</button>
+                <button className={`nav-link ${view === 'accounts' ? 'active' : ''}`} onClick={() => setView('accounts')}>{translate('accounts')}</button>
+                <button className={`nav-link ${view === 'transactions' ? 'active' : ''}`} onClick={() => setView('transactions')}>{translate('transactions')}</button>
+                <button className={`nav-link ${view === 'transfer' ? 'active' : ''}`} onClick={() => setView('transfer')}>{translate('transfers')}</button>
+                <button className={`nav-link ${view === 'withdraw' ? 'active' : ''}`} onClick={() => setView('withdraw')}>{translate('withdraw')}</button>
+                <button className={`nav-link ${view === 'cards' ? 'active' : ''}`} onClick={() => setView('cards')}>{translate('cards')}</button>
+                <button className={`nav-link ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>{translate('profile')}</button>
               </>}
               {auth.user.role === 'admin' && <>
-                <button className={`nav-link ${view === 'customers' ? 'active' : ''}`} onClick={() => setView('customers')}>Customers</button>
-                <button className={`nav-link ${view === 'approvals' ? 'active' : ''}`} onClick={() => setView('approvals')}>Pending Approvals</button>
-                <button className={`nav-link ${view === 'card-requests' ? 'active' : ''}`} onClick={() => setView('card-requests')}>Card Requests</button>
-                <button className={`nav-link ${view === 'deposit' ? 'active' : ''}`} onClick={() => setView('deposit')}>Process Deposit</button>
-                <button className={`nav-link ${view === 'admin-transactions' ? 'active' : ''}`} onClick={() => setView('admin-transactions')}>All Transactions</button>
-                <button className={`nav-link ${view === 'backdate' ? 'active' : ''}`} onClick={() => setView('backdate')}>Backdate Transaction</button>
+                <button className={`nav-link ${view === 'customers' ? 'active' : ''}`} onClick={() => setView('customers')}>{translate('customers')}</button>
+                <button className={`nav-link ${view === 'approvals' ? 'active' : ''}`} onClick={() => setView('approvals')}>{translate('pendingApprovals')}</button>
+                <button className={`nav-link ${view === 'card-requests' ? 'active' : ''}`} onClick={() => setView('card-requests')}>{translate('cardRequests')}</button>
+                <button className={`nav-link ${view === 'deposit' ? 'active' : ''}`} onClick={() => setView('deposit')}>{translate('processDeposit')}</button>
+                <button className={`nav-link ${view === 'admin-transactions' ? 'active' : ''}`} onClick={() => setView('admin-transactions')}>{translate('allTransactions')}</button>
+                <button className={`nav-link ${view === 'backdate' ? 'active' : ''}`} onClick={() => setView('backdate')}>{translate('backdateTransaction')}</button>
               </>}
-              <button className={`nav-link ${view === 'branches' ? 'active' : ''}`} onClick={() => setView('branches')}>Branches</button>
+              <button className={`nav-link ${view === 'branches' ? 'active' : ''}`} onClick={() => setView('branches')}>{translate('branches')}</button>
             </div>
             <div className="nav-actions">
               {/* Language Selector */}
