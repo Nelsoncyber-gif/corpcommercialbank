@@ -168,12 +168,21 @@
 
     .nav-links {
       display: none;
-      gap: 32px;
+      gap: 20px;
       align-items: center;
+      flex-shrink: 0;
     }
 
     @media (min-width: 1024px) {
-      .nav-links { display: flex; }
+      .nav-links { 
+        display: flex;
+        overflow-x: auto;
+        scrollbar-width: thin;
+        max-width: calc(100% - 400px);
+      }
+      .nav-links::-webkit-scrollbar {
+        height: 4px;
+      }
     }
 
     .nav-link {
@@ -194,6 +203,8 @@
       display: flex;
       align-items: center;
       gap: 8px;
+      flex-shrink: 0;
+      min-width: fit-content;
     }
 
     @media (min-width: 768px) {
@@ -2381,6 +2392,7 @@
         scrollbar-width: none;
         -ms-overflow-style: none;
         padding: 8px 0;
+        max-width: none;
       }
 
       .nav-links::-webkit-scrollbar {
