@@ -3669,6 +3669,7 @@
   } finally {
     setLoading(false);
   }
+};
 
       // Auto-rotate testimonials
       useEffect(() => {
@@ -3677,6 +3678,7 @@
         }, 6000);
         return () => clearInterval(interval);
       }, []);
+      
       return <div className="auth-page">
         {toast && <Toast {...toast} onClose={() => setToast(null)} />}
         <QuickActionsMenu />
