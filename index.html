@@ -2871,7 +2871,69 @@
         accountRequestUnderReview: 'Your account request is under review', openFirstAccount: 'Open your first account to start banking with CorpCommercial',
         accountRequestSubmitted: 'Account request submitted! Please wait for admin approval.', accountOpenedSuccessfully: 'Account opened successfully!',
         failedToOpenAccount: 'Failed to open account', accountRequestPending: 'Account Request Pending',
-        accountRequestWaiting: 'Your account request is waiting for admin approval'
+        accountRequestWaiting: 'Your account request is waiting for admin approval',
+        // Transactions table
+        transactionId: 'Transaction ID', date: 'Date', type: 'Type', receiver: 'Receiver',
+        bank: 'Bank', receipt: 'Receipt', download: 'Download',
+        // Transfer
+        bankName: 'Bank Name', typeOrSelectBank: 'Type or select your bank...', recipientAccountNumber: 'Recipient account number',
+        swiftCode: 'SWIFT/BIC Code', swiftCodePlaceholder: 'Enter SWIFT code', beneficiaryAddress: 'Beneficiary Address',
+        fullAddress: 'Full address of recipient', destinationCountry: 'Destination Country',
+        reasonForTransfer: 'Reason for Transfer', purposeOfPayment: 'Purpose of payment',
+        transferSuccessful: 'Transfer successful!', transferFailed: 'Transfer failed',
+        // Withdraw
+        selectAccount: 'Select Account', withdrawalMethod: 'Withdrawal Method',
+        bankTransfer: 'Bank Transfer', check: 'Check', atmWithdrawal: 'ATM Withdrawal',
+        withdrawalSuccessful: 'Withdrawal successful!', withdrawalFailed: 'Withdrawal failed',
+        withdrawFunds: 'Withdraw Funds',
+        // Profile
+        manageSettings: 'Manage your account settings', quickTip: 'Quick Tip',
+        completeProfileBeforeAccount: 'You can complete your profile information before creating a bank account.',
+        toStartUsingBanking: 'To start using banking features (transfers, deposits, etc.), you\'ll need to',
+        openAnAccount: 'Open an account', refreshProfile: 'Refresh Profile',
+        profilePicture: 'Profile Picture', changePicture: 'Change Picture',
+        imageTooLarge: 'Image too large. Maximum size is 5MB',
+        invalidFileType: 'Invalid file type. Please use JPG, PNG, or WebP',
+        uploadSuccess: 'Profile picture updated successfully!',
+        uploadFailed: 'Failed to upload picture', removePicture: 'Remove Picture',
+        removePictureConfirm: 'Are you sure you want to remove your profile picture?',
+        pictureRemoved: 'Profile picture removed', removeFailed: 'Failed to remove picture',
+        personalInformation: 'Personal Information', fullName: 'Full Name',
+        notProvided: 'Not provided', editProfile: 'Edit Profile',
+        saveChanges: 'Save Changes', cancel: 'Cancel',
+        // Change password
+        changePassword: 'Change Password', currentPassword: 'Current Password',
+        newPassword: 'New Password', confirmNewPassword: 'Confirm New Password',
+        passwordChanged: 'Password changed successfully!', passwordChangeFailed: 'Failed to change password',
+        // Set PIN
+        setPin: 'Set PIN', transactionPin: 'Transaction PIN', pinSet: 'PIN set successfully!',
+        pinSetFailed: 'Failed to set PIN',
+        // Footer
+        aboutUs: 'About Us', services: 'Services', support: 'Support', legal: 'Legal',
+        about: 'About', leadership: 'Leadership', careers: 'Careers', contact: 'Contact',
+        personalBanking: 'Personal Banking', businessBanking: 'Business Banking', investments: 'Investments', insurance: 'Insurance',
+        helpCenter: 'Help Center', security: 'Security', contactSupport: 'Contact Support',
+        privacyPolicy: 'Privacy Policy', termsOfService: 'Terms of Service', compliance: 'Compliance', accessibility: 'Accessibility',
+        allRightsReserved: 'All rights reserved.',
+        // Admin
+        customerManagement: 'Customer Management', viewAndManageCustomers: 'View and manage all registered customers',
+        debug: 'Debug', users: 'Users', customers: 'Customers', filtered: 'Filtered',
+        searchByNameOrEmail: 'Search by name or email...', notAvailable: 'N/A',
+        view: 'View', freeze: 'Freeze', unfreeze: 'Unfreeze',
+        userHasNoAccount: 'User has no account to freeze/unfreeze', areYouSure: 'Are you sure',
+        areYouSureDelete: 'Are you sure you want to delete', thisActionCannotBeUndone: 'This action cannot be undone.',
+        customerDeleted: 'Customer deleted successfully!', failedToUpdateStatus: 'Failed to update account status',
+        // Cards
+        yourCards: 'Your Cards', manageCards: 'Manage your debit and credit cards',
+        requestNew: 'Request New Card', orderCard: 'Order a new debit card',
+        viewRequests: 'View Requests', trackStatus: 'Track your card request status',
+        pendingRequests: 'Pending Requests', activeCards: 'Your Active Cards',
+        cardType: 'Card Type', cardNumber: 'Card Number', cardHolder: 'Card Holder',
+        expires: 'Expires', cvv: 'CVV', showDetails: 'Show Details', hideDetails: 'Hide Details',
+        loading: 'Loading...',
+        // Approvals
+        pendingApprovals: 'Pending Approvals', reviewAndApprove: 'Review and approve customer account requests',
+        approve: 'Approve', reject: 'Reject', noPendingApprovals: 'No pending approvals'
       },
       es: {
         home: 'Inicio', overview: 'Resumen', accounts: 'Cuentas', cards: 'Tarjetas',
@@ -3876,7 +3938,7 @@ const OTPVerification = ({ email, userId, onVerified, onCancel }) => {
               <div className="service-card">
                 <img src="https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?w=400&q=80" alt="Personal Loan" style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', marginBottom: '20px' }} />
                 <h3 className="service-title">{t('personalLoan') || 'Personal Loan'}</h3>
-                <p className="service-description">{t('personalLoanDesc') || 'Whether it's a sudden expense or just vacation to get away.'}</p>
+                <p className="service-description">{t('personalLoanDesc') || 'Whether it\'s a sudden expense or just vacation to get away.'}</p>
                 <ul className="service-features">
                   <li>{t('qualityService') || 'Quality Service'}</li>
                   <li>{t('customerSatisfaction') || 'Customer Satisfaction'}</li>
@@ -4159,26 +4221,27 @@ const OTPVerification = ({ email, userId, onVerified, onCancel }) => {
     };
     // CUSTOMER MANAGEMENT COMPONENT (ADMIN) - FIXED VERSION
 const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currency }) => {
+  const { t: translate } = useTranslation();
   // SAFETY: Ensure adminData has the right structure
   const safeAdminData = {
     users: Array.isArray(adminData?.users) ? adminData.users : [],
     accounts: Array.isArray(adminData?.accounts) ? adminData.accounts : [],
     allTransactions: Array.isArray(adminData?.allTransactions) ? adminData.allTransactions : []
   };
-  
+
   console.log('CustomerManagement rendering with:', {
     usersCount: safeAdminData.users.length,
     accountsCount: safeAdminData.accounts.length,
     firstUser: safeAdminData.users[0]
   });
-  
+
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState(null);
   const [showModal, setShowModal] = useState(false);
 
   // Filter customers safely (exclude admins)
   const customers = safeAdminData.users.filter(u => u && u.role !== 'admin');
-  
+
   // Apply search filter safely
   const filteredUsers = customers.filter(u => {
     if (!u) return false;
@@ -4198,59 +4261,43 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
   // FIXED: Get account from adminData.accounts and toggle using accountId
   const handleFreezeToggle = async (user) => {
     try {
-      // Find user's account from the accounts array
       const userAccount = adminData.accounts?.find(a => a.user_id === user.id);
-
       if (!userAccount) {
-        showToast('User has no account to freeze/unfreeze', 'error');
+        showToast(translate('userHasNoAccount') || 'User has no account to freeze/unfreeze', 'error');
         return;
       }
-
       const accountId = userAccount.id;
       const currentStatus = userAccount.status;
       const action = currentStatus === 'frozen' ? 'unfreeze' : 'freeze';
-
-      if (!confirm(`Are you sure you want to ${action} this account?`)) return;
-
-      // Call toggle endpoint with accountId
+      if (!confirm(`${translate('areYouSure') || 'Are you sure'} you want to ${action} this account?`)) return;
       const r = await fetch(`${API}/admin/toggle-freeze/${accountId}`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${auth.token}`
-        }
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` }
       });
       const d = await r.json();
-
       if (d.success) {
-        showToast(`Account ${action}d successfully!`);
-        // Refresh data
+        showToast(`${action[0].toUpperCase() + action.slice(1)}d successfully!`);
         loadData(auth.token, auth.user);
       } else {
         showToast(d.message || `Failed to ${action} account`, 'error');
       }
     } catch (err) {
       console.error('Toggle error:', err);
-      showToast('Failed to update account status', 'error');
+      showToast(translate('failedToUpdateStatus') || 'Failed to update account status', 'error');
     }
   };
 
   const handleDelete = async (userId, userName) => {
-    if (!confirm(`Are you sure you want to delete ${userName}? This action cannot be undone.`)) return;
-
+    if (!confirm(`${translate('areYouSureDelete') || 'Are you sure you want to delete'} ${userName}? ${translate('thisActionCannotBeUndone') || 'This action cannot be undone.'}`)) return;
     try {
       const r = await fetch(`${API}/admin/delete-user`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${auth.token}`
-        },
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${auth.token}` },
         body: JSON.stringify({ userId })
       });
       const d = await r.json();
-
       if (d.success) {
-        showToast('Customer deleted successfully!');
+        showToast(translate('customerDeleted') || 'Customer deleted successfully!');
         setShowModal(false);
         setSelectedUser(null);
         loadData(auth.token, auth.user);
@@ -4271,46 +4318,28 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
 
   return <div>
     <div className="section-header">
-      <h2 className="section-title">Customer Management</h2>
-      <p className="section-subtitle">View and manage all registered customers</p>
+      <h2 className="section-title">{translate('customerManagement') || 'Customer Management'}</h2>
+      <p className="section-subtitle">{translate('viewAndManageCustomers') || 'View and manage all registered customers'}</p>
     </div>
 
-    {/* Debug Info */}
     <div className="alert alert-info" style={{ marginBottom: 20 }}>
-      <strong>Debug:</strong> Users: {adminData.users?.length || 0} |
-      Customers: {customers.length} |
-      Filtered: {filteredUsers.length}
+      <strong>{translate('debug') || 'Debug'}:</strong> {translate('users') || 'Users'}: {adminData.users?.length || 0} | {translate('customers') || 'Customers'}: {customers.length} | {translate('filtered') || 'Filtered'}: {filteredUsers.length}
     </div>
 
-    {/* Search */}
     <div style={{ marginBottom: 24, display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-      <input
-        type="text"
-        placeholder="Search by name or email..."
-        value={searchTerm}
-        onChange={e => setSearchTerm(e.target.value)}
-        style={{
-          flex: 1,
-          minWidth: 250,
-          padding: '12px 16px',
-          border: '1px solid var(--gray-300)',
-          borderRadius: 8,
-          fontSize: 14
-        }}
-      />
+      <input type="text" placeholder={translate('searchByNameOrEmail') || 'Search by name or email...'} value={searchTerm} onChange={e => setSearchTerm(e.target.value)} style={{ flex: 1, minWidth: 250, padding: '12px 16px', border: '1px solid var(--gray-300)', borderRadius: 8, fontSize: 14 }} />
     </div>
 
-    {/* Customer Table */}
     <div className="table-container">
       <table className="table">
         <thead>
           <tr>
-            <th>Customer</th>
-            <th>Email</th>
-            <th>Phone</th>
-            <th>Role</th>
-            <th>Status</th>
-            <th>Actions</th>
+            <th>{translate('customer') || 'Customer'}</th>
+            <th>{translate('email') || 'Email'}</th>
+            <th>{translate('phone') || 'Phone'}</th>
+            <th>{translate('role') || 'Role'}</th>
+            <th>{translate('status') || 'Status'}</th>
+            <th>{translate('actions') || 'Actions'}</th>
           </tr>
         </thead>
         <tbody>
@@ -5563,24 +5592,24 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               </div>
               <div className="cards-grid">
                 {accounts.map(a => <div key={a.id} className={`account-card ${a.status === 'frozen' ? 'frozen' : ''}`}>
-                  <div className="account-card-label">{a.status === 'frozen' ? '🔒 FROZEN' : 'Checking Account'}</div>
+                  <div className="account-card-label">{a.status === 'frozen' ? (translate('frozen') || '🔒 FROZEN') : (translate('checkingAccount') || 'Checking Account')}</div>
                   <div className="account-card-number">{a.account_number}</div>
                   <div className="account-card-balance">{fmt(a.balance, currency)}</div>
-                  <div className="account-card-balance-label">Available balance</div>
+                  <div className="account-card-balance-label">{translate('availableBalance') || 'Available balance'}</div>
                 </div>)}
                 {pendingApprovals.length > 0 && pendingApprovals.map(pa => (
                   <div key={pa.id} className="account-card" style={{ background: 'linear-gradient(135deg, var(--orange-warning) 0%, #d97706)', opacity: 0.8 }}>
-                    <div className="account-card-label">⏳ PENDING APPROVAL</div>
+                    <div className="account-card-label">⏳ {translate('pendingApproval') || 'PENDING APPROVAL'}</div>
                     <div className="account-card-number">{pa.account_number}</div>
-                    <div className="account-card-balance" style={{ fontSize: 18 }}>Waiting for admin</div>
-                    <div className="account-card-balance-label">Your account request is under review</div>
+                    <div className="account-card-balance" style={{ fontSize: 18 }}>{translate('waitingForAdmin') || 'Waiting for admin'}</div>
+                    <div className="account-card-balance-label">{translate('accountRequestUnderReview') || 'Your account request is under review'}</div>
                   </div>
                 ))}
                 {accounts.length === 0 && pendingApprovals.length === 0 && (
                   <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center' }}>
                     <div style={{ fontSize: 48, marginBottom: 16 }}>🏦</div>
-                    <h3 style={{ marginBottom: 8 }}>No accounts yet</h3>
-                    <p style={{ color: 'var(--gray-600)', marginBottom: 24 }}>Open your first account to start banking with CorpCommercial</p>
+                    <h3 style={{ marginBottom: 8 }}>{translate('noAccounts') || 'No accounts yet'}</h3>
+                    <p style={{ color: 'var(--gray-600)', marginBottom: 24 }}>{translate('openFirstAccount') || 'Open your first account to start banking with CorpCommercial'}</p>
                     <button className="btn btn-primary" onClick={async () => {
                       try {
                         const r = await fetch(`${API}/accounts/create-account`, {
@@ -5590,27 +5619,27 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                         const d = await r.json();
                         if (d.success) {
                           if (d.requiresApproval) {
-                            showToast('Account request submitted! Please wait for admin approval.');
+                            showToast(translate('accountRequestSubmitted') || 'Account request submitted! Please wait for admin approval.');
                             setPendingApprovals([d.approvalRequest]);
                           } else {
-                            showToast('Account opened successfully!');
+                            showToast(translate('accountOpenedSuccessfully') || 'Account opened successfully!');
                             loadData(auth.token, auth.user);
                           }
                         } else {
                           showToast(d.message, 'error');
                         }
                       } catch {
-                        showToast('Failed to open account', 'error');
+                        showToast(translate('failedToOpenAccount') || 'Failed to open account', 'error');
                       }
-                    }}>Open Account</button>
+                    }}>{translate('openAccount') || 'Open Account'}</button>
                   </div>
                 )}
                 {accounts.length === 0 && pendingApprovals.length > 0 && (
                   <div className="card" style={{ gridColumn: '1/-1', padding: 60, textAlign: 'center', background: 'var(--gray-50)' }}>
                     <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
-                    <h3 style={{ marginBottom: 8 }}>Account Request Pending</h3>
-                    <p style={{ color: 'var(--gray-600)', marginBottom: 8 }}>Your account request is waiting for admin approval</p>
-                    <p style={{ fontSize: 13, color: 'var(--gray-500)' }}>Account Number: {pendingApprovals[0]?.account_number}</p>
+                    <h3 style={{ marginBottom: 8 }}>{translate('accountRequestPending') || 'Account Request Pending'}</h3>
+                    <p style={{ color: 'var(--gray-600)', marginBottom: 8 }}>{translate('accountRequestWaiting') || 'Your account request is waiting for admin approval'}</p>
+                    <p style={{ fontSize: 13, color: 'var(--gray-500)' }}>{translate('accountNumber') || 'Account Number'}: {pendingApprovals[0]?.account_number}</p>
                   </div>
                 )}
               </div>
@@ -5622,10 +5651,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               </div>
               <div className="table-container">
                 <table className="table">
-                  <thead><tr><th>Transaction ID</th><th>Date</th><th>Type</th><th>Receiver</th><th>Account Number</th><th>Bank</th><th>Amount</th><th>Status</th><th>Receipt</th></tr></thead>
+                  <thead><tr><th>{translate('transactionId') || 'Transaction ID'}</th><th>{translate('date') || 'Date'}</th><th>{translate('type') || 'Type'}</th><th>{translate('receiver') || 'Receiver'}</th><th>{translate('accountNumber') || 'Account Number'}</th><th>{translate('bank') || 'Bank'}</th><th>{translate('amount') || 'Amount'}</th><th>{translate('status') || 'Status'}</th><th>{translate('receipt') || 'Receipt'}</th></tr></thead>
                   <tbody>
-                    {transactions.map(tx => { const c = tx.type === 'deposit' || tx.type === 'transfer_in'; return <tr key={tx.id}><td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--gray-500)' }}>TXN-#{tx.id}</td><td style={{ color: 'var(--gray-600)' }}>{fmtDate(tx.created_at)}</td><td style={{ textTransform: 'capitalize' }}>{tx.type?.replace('_', ' ')}</td><td style={{ fontWeight: 600 }}>{tx.receiver_name || 'N/A'}</td><td style={{ fontFamily: 'monospace', fontSize: 13 }}>{tx.receiver_account_number || '···' + tx.account_id}</td><td style={{ fontSize: 13, color: 'var(--gray-600)' }}>{tx.bank_name || 'N/A'}</td><td style={{ color: c ? 'var(--green-success)' : 'var(--red-error)', fontWeight: 600 }}>{c ? '+' : '-'}{fmt(tx.amount, currency)}</td><td><span className="badge badge-success">Completed</span></td><td><button className="btn btn-sm btn-outline" onClick={() => downloadReceipt(tx.id)} style={{ padding: '4px 10px', fontSize: 12 }}>Download</button></td></tr> })}
-                    {transactions.length === 0 && <tr><td colSpan="9" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>No transactions yet</td></tr>}
+                    {transactions.map(tx => { const c = tx.type === 'deposit' || tx.type === 'transfer_in'; return <tr key={tx.id}><td style={{ fontFamily: 'monospace', fontSize: 12, color: 'var(--gray-500)' }}>TXN-#{tx.id}</td><td style={{ color: 'var(--gray-600)' }}>{fmtDate(tx.created_at)}</td><td style={{ textTransform: 'capitalize' }}>{tx.type?.replace('_', ' ')}</td><td style={{ fontWeight: 600 }}>{tx.receiver_name || 'N/A'}</td><td style={{ fontFamily: 'monospace', fontSize: 13 }}>{tx.receiver_account_number || '···' + tx.account_id}</td><td style={{ fontSize: 13, color: 'var(--gray-600)' }}>{tx.bank_name || 'N/A'}</td><td style={{ color: c ? 'var(--green-success)' : 'var(--red-error)', fontWeight: 600 }}>{c ? '+' : '-'}{fmt(tx.amount, currency)}</td><td><span className="badge badge-success">{translate('completed') || 'Completed'}</span></td><td><button className="btn btn-sm btn-outline" onClick={() => downloadReceipt(tx.id)} style={{ padding: '4px 10px', fontSize: 12 }}>{translate('download') || 'Download'}</button></td></tr> })}
+                    {transactions.length === 0 && <tr><td colSpan="9" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>{translate('noTransactions') || 'No transactions yet'}</td></tr>}
                   </tbody>
                 </table>
               </div>
@@ -5637,197 +5666,102 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               </div>
               <div style={{ maxWidth: 700, margin: '0 auto' }}>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
-                  {/* Transfer Type Tabs */}
                   <div style={{ display: 'flex', gap: 12, marginBottom: 24, borderBottom: '2px solid var(--gray-200)', paddingBottom: 12 }}>
-                    <button
-                      type="button"
-                      onClick={() => setTransferType('domestic')}
-                      style={{
-                        flex: 1,
-                        padding: '12px 20px',
-                        border: 'none',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        fontSize: 14,
-                        background: transferType === 'domestic' ? 'var(--teal-primary)' : 'var(--gray-100)',
-                        color: transferType === 'domestic' ? 'var(--white)' : 'var(--gray-700)',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      🏠 Domestic Transfer
+                    <button type="button" onClick={() => setTransferType('domestic')} style={{ flex: 1, padding: '12px 20px', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14, background: transferType === 'domestic' ? 'var(--teal-primary)' : 'var(--gray-100)', color: transferType === 'domestic' ? 'var(--white)' : 'var(--gray-700)', transition: 'all 0.2s' }}>
+                      🏠 {translate('domestic') || 'Domestic'}
                     </button>
-                    <button
-                      type="button"
-                      onClick={() => setTransferType('international')}
-                      style={{
-                        flex: 1,
-                        padding: '12px 20px',
-                        border: 'none',
-                        borderRadius: 8,
-                        cursor: 'pointer',
-                        fontWeight: 600,
-                        fontSize: 14,
-                        background: transferType === 'international' ? 'var(--teal-primary)' : 'var(--gray-100)',
-                        color: transferType === 'international' ? 'var(--white)' : 'var(--gray-700)',
-                        transition: 'all 0.2s'
-                      }}
-                    >
-                      🌍 International Transfer
+                    <button type="button" onClick={() => setTransferType('international')} style={{ flex: 1, padding: '12px 20px', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 600, fontSize: 14, background: transferType === 'international' ? 'var(--teal-primary)' : 'var(--gray-100)', color: transferType === 'international' ? 'var(--white)' : 'var(--gray-700)', transition: 'all 0.2s' }}>
+                      🌍 {translate('international') || 'International'}
                     </button>
                   </div>
 
                   <form onSubmit={async e => {
                     e.preventDefault();
                     const fd = new FormData(e.target);
-
                     try {
-                      // Find destination account by account number using the new find endpoint
                       const toAccRes = await fetch(`${API}/accounts/find?accountNumber=${encodeURIComponent(fd.get('to'))}`, { headers: { Authorization: `Bearer ${auth.token}` } });
                       const toAccData = await toAccRes.json();
                       if (!toAccData.success) { showToast('Recipient account not found', 'error'); return; }
                       const toAcc = toAccData.account;
-
-                      // Prepare transfer data
-                      const transferData = {
-                        fromAccount: parseInt(fd.get('from')),
-                        toAccount: toAcc.id,
-                        amount: parseFloat(fd.get('amount')),
-                        bankName: fd.get('bankName'),
-                        transferType: transferType
-                      };
-
-                      // Add international transfer fields including PIN
+                      const transferData = { fromAccount: parseInt(fd.get('from')), toAccount: toAcc.id, amount: parseFloat(fd.get('amount')), bankName: fd.get('bankName'), transferType: transferType };
                       if (transferType === 'international') {
                         transferData.swiftCode = fd.get('swiftCode');
                         transferData.beneficiaryAddress = fd.get('beneficiaryAddress');
                         transferData.reasonForTransaction = fd.get('reason');
                         transferData.destinationCountry = fd.get('country');
-                        transferData.pin = fd.get('pin'); // Include PIN for verification
+                        transferData.pin = fd.get('pin');
                       }
-                      
-                      const r = await fetch(`${API}/accounts/transfer`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` },
-                        body: JSON.stringify(transferData)
-                      });
+                      const r = await fetch(`${API}/accounts/transfer`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` }, body: JSON.stringify(transferData) });
                       const d = await r.json();
-                      if (d.success) { showToast('Transfer successful!'); loadData(auth.token, auth.user); e.target.reset(); }
+                      if (d.success) { showToast(translate('transferSuccessful') || 'Transfer successful!'); loadData(auth.token, auth.user); e.target.reset(); }
                       else showToast(d.message, 'error');
-                    } catch (err) { console.error(err); showToast('Transfer failed', 'error'); }
+                    } catch (err) { console.error(err); showToast(translate('transferFailed') || 'Transfer failed', 'error'); }
                   }}>
                     <div className="form-group">
-                      <label className="form-label">From Account</label>
+                      <label className="form-label">{translate('fromAccount') || 'From Account'}</label>
                       <select name="from" className="form-select" required>
                         {accounts.filter(a => a.status !== 'frozen').map(a => <option key={a.id} value={a.id}>{a.account_number} — {fmt(a.balance, currency)}</option>)}
                       </select>
                     </div>
-                    
+
                     <div className="form-group">
-                      <label className="form-label">Bank Name</label>
-                      <input
-                        name="bankName"
-                        className="form-input"
-                        placeholder="Type or select your bank..."
-                        list="bank-list"
-                        required
-                      />
+                      <label className="form-label">{translate('bankName') || 'Bank Name'}</label>
+                      <input name="bankName" className="form-input" placeholder={translate('typeOrSelectBank') || 'Type or select your bank...'} list="bank-list" required />
                       <datalist id="bank-list">
-                        {/* 🇺🇸 USA Banks */}
-                        <option value="Chase" />
-                        <option value="Bank of America" />
-                        <option value="Wells Fargo" />
-                        <option value="Citibank" />
-                        <option value="U.S. Bank" />
-                        <option value="PNC Bank" />
-                        <option value="Truist" />
-                        <option value="Capital One" />
-                        <option value="TD Bank" />
-                        <option value="Fifth Third Bank" />
-                        <option value="Citizens Bank" />
-                        <option value="KeyBank" />
-                        <option value="Regions Bank" />
-                        <option value="M&T Bank" />
-                        <option value="Huntington National Bank" />
-                        <option value="Santander Bank" />
-                        <option value="BMO Harris Bank" />
-                        <option value="Ally Bank" />
-                        <option value="Marcus by Goldman Sachs" />
-                        <option value="American Express National Bank" />
-                        <option value="Discover Bank" />
-                        <option value="Charles Schwab Bank" />
-                        <option value="Navy Federal Credit Union" />
-                        <option value="State Employees Credit Union" />
-                        {/* 🇩🇪 German Banks */}
-                        <option value="Deutsche Bank" />
-                        <option value="Commerzbank" />
-                        <option value="KfW" />
-                        <option value="DZ Bank" />
-                        <option value="Bayerische Landesbank" />
-                        <option value="Landesbank Baden-Württemberg" />
-                        <option value="Norddeutsche Landesbank" />
-                        <option value="UniCredit Bank Austria" />
-                        <option value="ING-DiBa" />
-                        <option value="Comdirect" />
-                        <option value="Consorsbank" />
-                        <option value="DKB (Deutsche Kreditbank)" />
-                        <option value="Postbank" />
-                        <option value="Targobank" />
-                        <option value="Volksbank" />
-                        <option value="Sparkasse" />
-                        <option value="HypoVereinsbank" />
-                        <option value="Berliner Sparkasse" />
-                        <option value="Hamburger Sparkasse" />
-                        {/* 🇨🇦 Canadian Banks */}
-                        <option value="Royal Bank of Canada (RBC)" />
-                        <option value="Toronto-Dominion Bank (TD)" />
-                        <option value="Bank of Nova Scotia (Scotiabank)" />
-                        <option value="Bank of Montreal (BMO)" />
-                        <option value="Canadian Imperial Bank of Commerce (CIBC)" />
-                        <option value="National Bank of Canada" />
-                        <option value="Desjardins Group" />
-                        <option value="Laurentian Bank" />
-                        <option value="Canadian Western Bank" />
-                        <option value="ATB Financial" />
-                        <option value="HSBC Bank Canada" />
-                        <option value="Tangerine" />
-                        <option value="Simplii Financial" />
-                        <option value="EQ Bank" />
-                        <option value="Manulife Bank" />
-                        {/* 🇬🇧 UK Banks */}
-                        <option value="HSBC" />
-                        <option value="Barclays" />
-                        <option value="Lloyds Bank" />
-                        <option value="NatWest" />
-                        <option value="Royal Bank of Scotland" />
-                        <option value="Santander UK" />
-                        <option value="Standard Chartered" />
-                        <option value="Nationwide Building Society" />
-                        <option value="Metro Bank" />
-                        <option value="Virgin Money" />
-                        {/* 🇨🇭 Swiss Banks */}
-                        <option value="UBS" />
-                        <option value="Credit Suisse" />
-                        <option value="Julius Baer" />
-                        <option value="Pictet & Cie" />
-                        <option value="Lombard Odier" />
-                        {/* 🇫🇷 French Banks */}
-                        <option value="BNP Paribas" />
-                        <option value="Crédit Agricole" />
-                        <option value="Société Générale" />
-                        <option value="Crédit Mutuel" />
-                        <option value="Groupe BPCE" />
-                        {/* 🇳🇱 Dutch Banks */}
-                        <option value="ING Group" />
-                        <option value="Rabobank" />
-                        <option value="ABN AMRO" />
-                        {/* 🇮🇹 Italian Banks */}
-                        <option value="Intesa Sanpaolo" />
-                        <option value="UniCredit" />
-                        <option value="Banco BPM" />
-                        {/* 🇪🇸 Spanish Banks */}
-                        <option value="Banco Santander" />
-                        <option value="BBVA" />
+                        <option value="Chase" /><option value="Bank of America" /><option value="Wells Fargo" /><option value="Citibank" /><option value="Deutsche Bank" /><option value="Commerzbank" /><option value="HSBC" /><option value="Barclays" /><option value="Royal Bank of Canada" /><option value="TD Bank" />
+                      </datalist>
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">{translate('toAccount') || 'To Account'}</label>
+                      <input name="to" className="form-input" placeholder={translate('recipientAccountNumber') || 'Recipient account number'} required />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label">{translate('amount') || 'Amount'}</label>
+                      <input name="amount" type="number" step="0.01" min="0.01" className="form-input" placeholder="0.00" required />
+                    </div>
+
+                    {transferType === 'international' && <>
+                      <div className="form-group">
+                        <label className="form-label">{translate('swiftCode') || 'SWIFT/BIC Code'}</label>
+                        <input name="swiftCode" className="form-input" placeholder={translate('swiftCodePlaceholder') || 'Enter SWIFT code'} required />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">{translate('beneficiaryAddress') || 'Beneficiary Address'}</label>
+                        <textarea name="beneficiaryAddress" className="form-input" placeholder={translate('fullAddress') || 'Full address of recipient'} rows={3} required />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">{translate('destinationCountry') || 'Destination Country'}</label>
+                        <select name="country" className="form-select" required>
+                          <option value="">Select country...</option>
+                          <option value="US">🇺🇸 United States</option>
+                          <option value="DE">🇩🇪 Germany</option>
+                          <option value="GB">🇬🇧 United Kingdom</option>
+                          <option value="CA">🇨🇦 Canada</option>
+                          <option value="FR">🇫🇷 France</option>
+                          <option value="ES">🇪🇸 Spain</option>
+                          <option value="JP">🇯🇵 Japan</option>
+                          <option value="CN">🇨🇳 China</option>
+                        </select>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">{translate('reasonForTransfer') || 'Reason for Transfer'}</label>
+                        <textarea name="reason" className="form-input" placeholder={translate('purposeOfPayment') || 'Purpose of payment'} rows={2} required />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">{translate('transactionPin') || 'Transaction PIN'}</label>
+                        <input name="pin" type="password" maxLength="6" className="form-input" placeholder="6-digit PIN" required />
+                      </div>
+                    </>}
+
+                    <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>
+                      {translate('sendTransfer') || 'Send Transfer'}
+                    </button>
+                  </form>
+                </div>
+              </div>
+            </div>}
                         <option value="CaixaBank" />
                         {/* 🇯🇵 Japanese Banks */}
                         <option value="Mitsubishi UFJ Financial Group" />
@@ -5949,29 +5883,29 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                     try {
                       const r = await fetch(`${API}/accounts/withdraw`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` }, body: JSON.stringify({ accountId: parseInt(fd.get('accountId')), amount: parseFloat(fd.get('amount')) }) });
                       const d = await r.json();
-                      if (d.success) { showToast('Withdrawal successful!'); loadData(auth.token, auth.user); e.target.reset(); }
+                      if (d.success) { showToast(translate('withdrawalSuccessful') || 'Withdrawal successful!'); loadData(auth.token, auth.user); e.target.reset(); }
                       else showToast(d.message, 'error');
-                    } catch (err) { console.error(err); showToast('Withdrawal failed', 'error'); }
+                    } catch (err) { console.error(err); showToast(translate('withdrawalFailed') || 'Withdrawal failed', 'error'); }
                   }}>
                     <div className="form-group">
-                      <label className="form-label">Select Account</label>
+                      <label className="form-label">{translate('selectAccount') || 'Select Account'}</label>
                       <select name="accountId" className="form-select" required>
                         {accounts.filter(a => a.status !== 'frozen').map(a => <option key={a.id} value={a.id}>{a.account_number} — {fmt(a.balance, currency)}</option>)}
                       </select>
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Amount (USD)</label>
+                      <label className="form-label">{translate('amount') || 'Amount'}</label>
                       <input name="amount" type="number" step="0.01" min="0.01" className="form-input" placeholder="0.00" required />
                     </div>
                     <div className="form-group">
-                      <label className="form-label">Withdrawal Method</label>
+                      <label className="form-label">{translate('withdrawalMethod') || 'Withdrawal Method'}</label>
                       <select name="method" className="form-select" required>
-                        <option value="bank">Bank Transfer</option>
-                        <option value="check">Check</option>
-                        <option value="atm">ATM Withdrawal</option>
+                        <option value="bank">{translate('bankTransfer') || 'Bank Transfer'}</option>
+                        <option value="check">{translate('check') || 'Check'}</option>
+                        <option value="atm">{translate('atmWithdrawal') || 'ATM Withdrawal'}</option>
                       </select>
                     </div>
-                    <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Withdraw Funds</button>
+                    <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>{translate('withdrawFunds') || 'Withdraw Funds'}</button>
                   </form>
                 </div>
               </div>
@@ -6997,12 +6931,12 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         <footer className="footer">
           <div className="container">
             <div className="footer-grid">
-              <div><h4 className="footer-title">About Us</h4>{['About', 'Leadership', 'Careers', 'Contact'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
-              <div><h4 className="footer-title">Services</h4>{['Personal Banking', 'Business Banking', 'Investments', 'Insurance'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
-              <div><h4 className="footer-title">Support</h4>{['Help Center', 'Security', 'FAQs', 'Contact Support'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
-              <div><h4 className="footer-title">Legal</h4>{['Privacy Policy', 'Terms of Service', 'Compliance', 'Accessibility'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div><h4 className="footer-title">{translate('aboutUs') || 'About Us'}</h4>{[translate('about') || 'About', translate('leadership') || 'Leadership', translate('careers') || 'Careers', translate('contact') || 'Contact'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div><h4 className="footer-title">{translate('services') || 'Services'}</h4>{[translate('personalBanking') || 'Personal Banking', translate('businessBanking') || 'Business Banking', translate('investments') || 'Investments', translate('insurance') || 'Insurance'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div><h4 className="footer-title">{translate('support') || 'Support'}</h4>{[translate('helpCenter') || 'Help Center', translate('security') || 'Security', 'FAQs', translate('contactSupport') || 'Contact Support'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
+              <div><h4 className="footer-title">{translate('legal') || 'Legal'}</h4>{[translate('privacyPolicy') || 'Privacy Policy', translate('termsOfService') || 'Terms of Service', translate('compliance') || 'Compliance', translate('accessibility') || 'Accessibility'].map(l => <a key={l} href="#" className="footer-link">{l}</a>)}</div>
             </div>
-            <div className="footer-bottom">© 2026 CorpCommercial Bank Financial Services. All rights reserved.</div>
+            <div className="footer-bottom">© 2026 CorpCommercial Bank Financial Services. {translate('allRightsReserved') || 'All rights reserved.'}</div>
           </div>
         </footer>
       </div>
