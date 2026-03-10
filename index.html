@@ -5896,54 +5896,17 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
 
                           {/* Card Content */}
                           <div style={{ position: 'relative', zIndex: 10 }}>
-                            {/* Top Row: Chip & Contactless */}
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-                              {/* EMV Chip */}
-                              <div style={{
-                                width: '50px',
-                                height: '40px',
-                                background: 'linear-gradient(135deg, #f4d03f 0%, #d4ac0d 100%)',
-                                borderRadius: '6px',
-                                position: 'relative',
-                                boxShadow: 'inset 0 2px 4px rgba(0,0,0,0.2)'
-                              }}>
-                                <div style={{
-                                  position: 'absolute',
-                                  top: '50%',
-                                  left: '50%',
-                                  transform: 'translate(-50%, -50%)',
-                                  width: '30px',
-                                  height: '2px',
-                                  background: 'rgba(0,0,0,0.3)'
-                                }} />
-                                <div style={{
-                                  position: 'absolute',
-                                  top: '50%',
-                                  left: '50%',
-                                  transform: 'translate(-50%, -50%)',
-                                  width: '2px',
-                                  height: '30px',
-                                  background: 'rgba(0,0,0,0.3)'
-                                }} />
-                              </div>
-
-                              {/* Contactless Icon */}
-                              <div style={{ fontSize: '28px', opacity: 0.8 }}>
-                                📶
-                              </div>
-                            </div>
-
                             {/* Card Number with Show/Hide Button */}
-                            <div style={{ marginBottom: '24px' }}>
-                              <div style={{ 
-                                fontSize: '11px', 
-                                opacity: 0.7, 
+                            <div style={{ marginBottom: '24px', marginTop: '40px' }}>
+                              <div style={{
+                                fontSize: '11px',
+                                opacity: 0.7,
                                 marginBottom: '6px',
                                 textTransform: 'uppercase',
                                 letterSpacing: '1px'
                               }}>Card Number</div>
-                              <div style={{ 
-                                fontSize: '22px', 
+                              <div style={{
+                                fontSize: '22px',
                                 fontFamily: "'Courier New', monospace",
                                 letterSpacing: '3px',
                                 display: 'flex',
@@ -5983,32 +5946,34 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                               </div>
                             </div>
 
-                            {/* Middle Row: Card Holder & Network Logo */}
+                            {/* Middle Row: Card Holder & Network Name */}
                             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginBottom: '16px' }}>
                               <div>
-                                <div style={{ 
-                                  fontSize: '10px', 
+                                <div style={{
+                                  fontSize: '10px',
                                   opacity: 0.7,
                                   textTransform: 'uppercase',
                                   letterSpacing: '1px',
                                   marginBottom: '4px'
                                 }}>Card Holder</div>
-                                <div style={{ 
-                                  fontWeight: 600, 
+                                <div style={{
+                                  fontWeight: 600,
                                   fontSize: '15px',
                                   textTransform: 'uppercase',
                                   letterSpacing: '1px',
                                   textShadow: '0 2px 4px rgba(0,0,0,0.3)'
                                 }}>{card.card_holder_name || 'CARD HOLDER'}</div>
                               </div>
-                              
-                              {/* Card Network Logo */}
-                              <div style={{ fontSize: '32px', fontWeight: 'bold', fontStyle: 'italic' }}>
-                                {card.card_type === 'Visa' ? (
-                                  <span style={{ fontSize: '28px' }}>💙</span>
-                                ) : (
-                                  <span style={{ fontSize: '28px' }}>🟠</span>
-                                )}
+
+                              {/* Card Network Name */}
+                              <div style={{ 
+                                fontSize: '18px', 
+                                fontWeight: 'bold',
+                                textTransform: 'uppercase',
+                                letterSpacing: '1px',
+                                textShadow: '0 2px 4px rgba(0,0,0,0.3)'
+                              }}>
+                                {card.card_type === 'Visa' ? 'VISA' : 'MASTERCARD'}
                               </div>
                             </div>
 
@@ -6061,33 +6026,12 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                                 alignItems: 'center'
                               }}>
                                 <div style={{ fontSize: '11px', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '1px' }}>CVV</div>
-                                <div style={{ 
-                                  fontSize: '16px', 
+                                <div style={{
+                                  fontSize: '16px',
                                   fontFamily: "'Courier New', monospace",
                                   letterSpacing: '2px',
                                   fontWeight: 600
                                 }}>{details.cvv}</div>
-                              </div>
-                            )}
-
-                            {/* Security Warning (when visible) */}
-                            {isVisible && (
-                              <div style={{ 
-                                marginTop: '12px',
-                                fontSize: '10px',
-                                color: '#ffd700',
-                                textAlign: 'center',
-                                padding: '8px',
-                                background: 'rgba(255, 215, 0, 0.1)',
-                                borderRadius: '6px',
-                                border: '1px solid rgba(255, 215, 0, 0.3)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                gap: '6px'
-                              }}>
-                                <span>⚠️</span>
-                                <span>Never share card details with anyone</span>
                               </div>
                             )}
                           </div>
