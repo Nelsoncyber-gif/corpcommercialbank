@@ -220,10 +220,13 @@ exports.getMyCards = async (req, res) => {
     // Map cards to include last_four from encrypted card number
     const cards = result.rows.map((card, index) => {
       let last_four = '0000';
+      let cardNumberVisible = '****';
       try {
         // Decrypt card number to get last 4 digits
         const decryptedCardNumber = decrypt(card.card_number);
+        console.log('🃏 Decrypted card number:', decryptedCardNumber);
         last_four = decryptedCardNumber.slice(-4);
+        cardNumberVisible = decryptedCardNumber; // Store full visible number
         console.log(`🃏 Card ${index + 1} decrypted successfully, last_four: ${last_four}`);
       } catch (err) {
         console.error(`❌ Error decrypting card ${index + 1}:`, err.message);
@@ -232,7 +235,8 @@ exports.getMyCards = async (req, res) => {
 
       return {
         ...card,
-        last_four
+        last_four,
+        cardNumberVisible
       };
     });
 

@@ -4299,9 +4299,9 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               <div style={{ fontSize: 20, fontFamily: 'monospace', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
                 <span>
                   {showNumber ? (
-                    <span>**** **** **** {card.last_four || '****'}</span>
+                    <span>{card.cardNumberVisible || '**** **** **** ' + (card.last_four || '****')}</span>
                   ) : (
-                    <span>**** **** **** ****</span>
+                    <span>**** **** **** {card.last_four || '****'}</span>
                   )}
                 </span>
                 <button
