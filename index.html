@@ -4031,10 +4031,11 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       </div>;
     };
 
-    // PENDING CARD REQUESTS COMPONENT (ADMIN)
-    const PendingCardRequests = ({ adminData, auth, showToast, API }) => {
+    // ADMIN CARD MANAGEMENT COMPONENT (NEW - WITH APPROVE/REJECT)
+    const AdminCardManagement = ({ auth, showToast, API }) => {
       const [requests, setRequests] = useState([]);
       const [loading, setLoading] = useState(true);
+      const [processingId, setProcessingId] = useState(null);
 
       useEffect(() => {
         loadRequests();
@@ -4042,24 +4043,27 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
 
       const loadRequests = async () => {
         try {
-          const r = await fetch(`${API}/admin/pending-card-requests`, {
+          const res = await fetch(`${API}/cards/admin/requests`, {
             headers: { Authorization: `Bearer ${auth.token}` }
           });
-          const d = await r.json();
-          if (d.success) {
-            setRequests(d.pendingCardRequests || []);
+          const data = await res.json();
+          if (data.success) {
+            setRequests(data.requests);
           }
-        } catch (err) {
-          console.error('Load card requests error:', err);
+        } catch (error) {
+          console.error('Load requests error:', error);
+          showToast('Failed to load card requests', 'error');
         } finally {
           setLoading(false);
         }
       };
 
       const handleApprove = async (requestId) => {
-        if (!confirm('Are you sure you want to approve and generate this card?')) return;
+        if (!confirm('Approve this card request? A new card will be generated.')) return;
+        
+        setProcessingId(requestId);
         try {
-          const r = await fetch(`${API}/cards/approve`, {
+          const res = await fetch(`${API}/cards/admin/requests/approve`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -4067,16 +4071,49 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             },
             body: JSON.stringify({ requestId })
           });
-          const d = await r.json();
-          if (d.success) {
-            showToast(`Card generated successfully! Last 4 digits: ${d.card.last_four}`);
+          const data = await res.json();
+          
+          if (data.success) {
+            showToast(`✅ Card approved! Last 4 digits: ${data.card.cardNumber}`);
             loadRequests();
           } else {
-            showToast(d.message, 'error');
+            showToast(data.message || 'Approval failed', 'error');
           }
-        } catch (err) {
-          console.error('Approve card error:', err);
-          showToast('Failed to approve card request', 'error');
+        } catch (error) {
+          console.error('Approve error:', error);
+          showToast('Failed to approve request', 'error');
+        } finally {
+          setProcessingId(null);
+        }
+      };
+
+      const handleReject = async (requestId) => {
+        const reason = prompt('Enter rejection reason (optional):');
+        if (reason === null) return; // User cancelled
+        
+        setProcessingId(requestId);
+        try {
+          const res = await fetch(`${API}/cards/admin/requests/reject`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${auth.token}`
+            },
+            body: JSON.stringify({ requestId, reason: reason || 'Request rejected' })
+          });
+          const data = await res.json();
+          
+          if (data.success) {
+            showToast('Card request rejected');
+            loadRequests();
+          } else {
+            showToast(data.message || 'Rejection failed', 'error');
+          }
+        } catch (error) {
+          console.error('Reject error:', error);
+          showToast('Failed to reject request', 'error');
+        } finally {
+          setProcessingId(null);
         }
       };
 
@@ -4084,45 +4121,72 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         return <div className="loader-container"><div className="loader" /></div>;
       }
 
-      return <div>
-        <div className="table-container">
-          <table className="table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Email</th>
-                <th>Phone</th>
-                <th>Card Type</th>
-                <th>Requested Date</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {requests.map(request => (
-                <tr key={request.id}>
-                  <td style={{ fontWeight: 600 }}>{request.first_name} {request.last_name}</td>
-                  <td style={{ color: 'var(--gray-600)' }}>{request.email}</td>
-                  <td style={{ color: 'var(--gray-600)' }}>{request.phone || 'N/A'}</td>
-                  <td><span className="badge badge-info">{request.card_type}</span></td>
-                  <td style={{ color: 'var(--gray-600)' }}>{fmtDate(request.requested_at)}</td>
-                  <td>
-                    <button className="btn btn-sm btn-primary" onClick={() => handleApprove(request.id)} style={{ marginRight: 8 }}>Approve & Generate Card</button>
-                  </td>
-                </tr>
-              ))}
-              {requests.length === 0 && (
+      return (
+        <div>
+          <div className="section-header">
+            <h2 className="section-title">Card Requests</h2>
+            <p className="section-subtitle">Approve or reject customer card requests</p>
+          </div>
+
+          <div className="table-container">
+            <table className="table">
+              <thead>
                 <tr>
-                  <td colSpan="6" style={{ textAlign: 'center', color: 'var(--gray-500)', padding: 40 }}>
-                    <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
-                    <div>No pending card requests</div>
-                    <div style={{ fontSize: 13, marginTop: 8 }}>All card requests have been processed</div>
-                  </td>
+                  <th>Customer</th>
+                  <th>Email</th>
+                  <th>Phone</th>
+                  <th>Card Type</th>
+                  <th>Requested Date</th>
+                  <th>Actions</th>
                 </tr>
-              )}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {requests.map(req => (
+                  <tr key={req.id}>
+                    <td style={{ fontWeight: 600 }}>
+                      {req.first_name} {req.last_name}
+                    </td>
+                    <td>{req.email}</td>
+                    <td>{req.phone || 'N/A'}</td>
+                    <td>
+                      <span className="badge badge-info">{req.card_type}</span>
+                    </td>
+                    <td>{fmtDate(req.requested_at)}</td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 8 }}>
+                        <button
+                          className="btn btn-sm"
+                          style={{ background: 'var(--green-success)', color: 'white' }}
+                          onClick={() => handleApprove(req.id)}
+                          disabled={processingId === req.id}
+                        >
+                          {processingId === req.id ? '⏳' : '✓ Approve'}
+                        </button>
+                        <button
+                          className="btn btn-sm"
+                          style={{ background: 'var(--red-error)', color: 'white' }}
+                          onClick={() => handleReject(req.id)}
+                          disabled={processingId === req.id}
+                        >
+                          ✕ Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+                {requests.length === 0 && (
+                  <tr>
+                    <td colSpan="6" style={{ textAlign: 'center', padding: 40 }}>
+                      <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
+                      <div>No pending card requests</div>
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
-      </div>;
+      );
     };
     // MAIN APP
     const App = () => {
@@ -5810,10 +5874,10 @@ if (!auth) {
             </div>}
             {view === 'card-requests' && auth.user.role === 'admin' && <div>
               <div className="section-header">
-                <h2 className="section-title">Pending Card Requests</h2>
-                <p className="section-subtitle">Approve and generate customer debit cards</p>
+                <h2 className="section-title">Card Requests</h2>
+                <p className="section-subtitle">Approve or reject customer card requests</p>
               </div>
-              <PendingCardRequests adminData={adminData} auth={auth} showToast={showToast} API={API} />
+              <AdminCardManagement auth={auth} showToast={showToast} API={API} />
             </div>}
             {view === 'deposit' && auth.user.role === 'admin' && <div>
               <div className="section-header">
