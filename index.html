@@ -4247,6 +4247,114 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         </div>
       );
     };
+    // Card Component with Show/Hide
+    const CardDisplay = ({ card, auth }) => {
+      const [showNumber, setShowNumber] = React.useState(false);
+      
+      return (
+        <div style={{
+          background: 'linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%)',
+          borderRadius: 16,
+          padding: 24,
+          color: 'white',
+          position: 'relative',
+          overflow: 'hidden',
+          minHeight: 200,
+          boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+        }}>
+          {/* Card Background Pattern */}
+          <div style={{
+            position: 'absolute',
+            top: -50,
+            right: -50,
+            width: 200,
+            height: 200,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.1)'
+          }} />
+          <div style={{
+            position: 'absolute',
+            bottom: -30,
+            left: -30,
+            width: 150,
+            height: 150,
+            borderRadius: '50%',
+            background: 'rgba(255,255,255,0.05)'
+          }} />
+
+          {/* Card Content */}
+          <div style={{ position: 'relative', zIndex: 1 }}>
+            {/* Card Header */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <div>
+                <div style={{ fontSize: 12, opacity: 0.8, textTransform: 'uppercase', letterSpacing: 1 }}>{card.card_type}</div>
+                <div style={{ fontSize: 14, fontWeight: 600 }}>Debit Card</div>
+              </div>
+              <div style={{ fontSize: 24 }}>🏦</div>
+            </div>
+
+            {/* Card Number with Show/Hide */}
+            <div style={{ marginBottom: 20 }}>
+              <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>Card Number</div>
+              <div style={{ fontSize: 20, fontFamily: 'monospace', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span>
+                  {showNumber ? (
+                    <span>**** **** **** {card.last_four || '****'}</span>
+                  ) : (
+                    <span>**** **** **** ****</span>
+                  )}
+                </span>
+                <button
+                  onClick={() => setShowNumber(!showNumber)}
+                  style={{
+                    background: 'rgba(255,255,255,0.2)',
+                    border: 'none',
+                    color: 'white',
+                    padding: '4px 8px',
+                    borderRadius: 4,
+                    fontSize: 11,
+                    cursor: 'pointer'
+                  }}
+                >
+                  {showNumber ? '🙈 Hide' : '👁️ Show'}
+                </button>
+              </div>
+            </div>
+
+            {/* Card Holder & Expiry */}
+            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+              <div>
+                <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Card Holder</div>
+                <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase' }}>
+                  {card.card_holder_name || `${auth.user.first_name || ''} ${auth.user.last_name || ''}`.toUpperCase()}
+                </div>
+              </div>
+              <div>
+                <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Expires</div>
+                <div style={{ fontSize: 13, fontWeight: 500 }}>{card.expiry_date || 'MM/YY'}</div>
+              </div>
+            </div>
+
+            {/* Card Status Badge */}
+            <div style={{
+              position: 'absolute',
+              top: 24,
+              right: 24,
+              background: card.status === 'active' ? '#10B981' : '#6B7280',
+              color: 'white',
+              padding: '4px 12px',
+              borderRadius: 12,
+              fontSize: 11,
+              fontWeight: 600,
+              textTransform: 'uppercase'
+            }}>
+              {card.status || 'Active'}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     // MAIN APP
     const App = () => {
       const [auth, setAuth] = useState(null);
@@ -5260,112 +5368,9 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                       </div>
                     ) : (
                       <div style={{ display: 'grid', gap: 20, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
-                        {userCards.map((card, cardIndex) => {
-                          const [showNumber, setShowNumber] = React.useState(false);
-                          
-                          return (
-                            <div key={card.id} style={{
-                              background: 'linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%)',
-                              borderRadius: 16,
-                              padding: 24,
-                              color: 'white',
-                              position: 'relative',
-                              overflow: 'hidden',
-                              minHeight: 200,
-                              boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
-                            }}>
-                              {/* Card Background Pattern */}
-                              <div style={{
-                                position: 'absolute',
-                                top: -50,
-                                right: -50,
-                                width: 200,
-                                height: 200,
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.1)'
-                              }} />
-                              <div style={{
-                                position: 'absolute',
-                                bottom: -30,
-                                left: -30,
-                                width: 150,
-                                height: 150,
-                                borderRadius: '50%',
-                                background: 'rgba(255,255,255,0.05)'
-                              }} />
-
-                              {/* Card Content */}
-                              <div style={{ position: 'relative', zIndex: 1 }}>
-                                {/* Card Header */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
-                                  <div>
-                                    <div style={{ fontSize: 12, opacity: 0.8, textTransform: 'uppercase', letterSpacing: 1 }}>{card.card_type}</div>
-                                    <div style={{ fontSize: 14, fontWeight: 600 }}>Debit Card</div>
-                                  </div>
-                                  <div style={{ fontSize: 24 }}>🏦</div>
-                                </div>
-
-                                {/* Card Number with Show/Hide */}
-                                <div style={{ marginBottom: 20 }}>
-                                  <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>Card Number</div>
-                                  <div style={{ fontSize: 20, fontFamily: 'monospace', letterSpacing: 2, display: 'flex', alignItems: 'center', gap: 8 }}>
-                                    <span>
-                                      {showNumber ? (
-                                        <span>**** **** **** {card.last_four || '****'}</span>
-                                      ) : (
-                                        <span>**** **** **** ****</span>
-                                      )}
-                                    </span>
-                                    <button
-                                      onClick={() => setShowNumber(!showNumber)}
-                                      style={{
-                                        background: 'rgba(255,255,255,0.2)',
-                                        border: 'none',
-                                        color: 'white',
-                                        padding: '4px 8px',
-                                        borderRadius: 4,
-                                        fontSize: 11,
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      {showNumber ? '🙈 Hide' : '👁️ Show'}
-                                    </button>
-                                  </div>
-                                </div>
-
-                                {/* Card Holder & Expiry */}
-                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                  <div>
-                                    <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Card Holder</div>
-                                    <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase' }}>
-                                      {card.card_holder_name || `${auth.user.first_name || ''} ${auth.user.last_name || ''}`.toUpperCase()}
-                                    </div>
-                                  </div>
-                                  <div>
-                                    <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Expires</div>
-                                    <div style={{ fontSize: 13, fontWeight: 500 }}>{card.expiry_date || 'MM/YY'}</div>
-                                  </div>
-                                </div>
-
-                                {/* Card Status Badge */}
-                                <div style={{
-                                  position: 'absolute',
-                                  top: 24,
-                                  right: 24,
-                                  background: card.status === 'active' ? '#10B981' : '#6B7280',
-                                  color: 'white',
-                                  padding: '4px 12px',
-                                  borderRadius: 12,
-                                  fontSize: 11,
-                                  fontWeight: 600,
-                                  textTransform: 'uppercase'
-                                }}>
-                                  {card.status || 'Active'}
-                                </div>
-                              </div>
-                            </div>
-                          );
-                        })}
+                        {userCards.map(card => (
+                          <CardDisplay key={card.id} card={card} auth={auth} />
+                        ))}
                       </div>
                     )}
                   </div>
