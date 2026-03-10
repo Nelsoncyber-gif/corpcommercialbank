@@ -5306,21 +5306,25 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                               <div style={{ marginBottom: 20 }}>
                                 <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>Card Number</div>
                                 <div style={{ fontSize: 20, fontFamily: 'monospace', letterSpacing: 2 }}>
-                                  **** **** **** {card.last_four || card.card_number?.slice(-4) || '0000'}
+                                  {card.last_four ? (
+                                    <span>**** **** **** {card.last_four}</span>
+                                  ) : (
+                                    <span>**** **** **** ****</span>
+                                  )}
                                 </div>
                               </div>
-                              
+
                               {/* Card Holder & Expiry */}
                               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                 <div>
                                   <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Card Holder</div>
                                   <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase' }}>
-                                    {card.card_holder_name || `${auth.user.first_name} ${auth.user.last_name}`.toUpperCase()}
+                                    {card.card_holder_name || `${auth.user.first_name || ''} ${auth.user.last_name || ''}`.toUpperCase()}
                                   </div>
                                 </div>
                                 <div>
                                   <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Expires</div>
-                                  <div style={{ fontSize: 13, fontWeight: 500 }}>{card.expiry_date || '12/30'}</div>
+                                  <div style={{ fontSize: 13, fontWeight: 500 }}>{card.expiry_date || 'MM/YY'}</div>
                                 </div>
                               </div>
                               

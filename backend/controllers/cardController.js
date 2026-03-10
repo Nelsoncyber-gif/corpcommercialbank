@@ -208,31 +208,38 @@ exports.getMyCards = async (req, res) => {
   try {
     const userId = req.user.id;
 
+    console.log('🃏 Fetching cards for user:', userId);
+
     const result = await pool.query(
       'SELECT id, card_holder_name, expiry_date, card_type, status, balance, daily_limit, created_at, card_number FROM cards WHERE user_id = $1',
       [userId]
     );
 
+    console.log('🃏 Raw cards from DB:', result.rows.length);
+
     // Map cards to include last_four from encrypted card number
-    const cards = result.rows.map(card => {
+    const cards = result.rows.map((card, index) => {
       let last_four = '0000';
       try {
         // Decrypt card number to get last 4 digits
         const decryptedCardNumber = decrypt(card.card_number);
         last_four = decryptedCardNumber.slice(-4);
+        console.log(`🃏 Card ${index + 1} decrypted successfully, last_four: ${last_four}`);
       } catch (err) {
-        console.error('Error decrypting card number:', err.message);
+        console.error(`❌ Error decrypting card ${index + 1}:`, err.message);
+        console.error('🃏 Encrypted card_number:', card.card_number?.substring(0, 50) + '...');
       }
-      
+
       return {
         ...card,
         last_four
       };
     });
 
+    console.log('🃏 Sending cards:', cards);
     res.json({ success: true, cards });
   } catch (error) {
-    console.error('Get cards error:', error);
+    console.error('❌ Get cards error:', error);
     res.status(500).json({ success: false, message: 'Failed to fetch cards' });
   }
 };
