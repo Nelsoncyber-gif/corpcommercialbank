@@ -2811,6 +2811,242 @@
   } finally {
     setLoading(false);
   }
+
+  // OTP VERIFICATION COMPONENT
+const OTPVerification = ({ email, userId, onVerified, onCancel }) => {
+  const [otp, setOtp] = useState(['', '', '', '', '', '']);
+  const [loading, setLoading] = useState(false);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [timer, setTimer] = useState(60);
+  const [canResend, setCanResend] = useState(false);
+  const inputRefs = useRef([]);
+
+  // Countdown timer for resend
+  useEffect(() => {
+    let interval;
+    if (timer > 0 && !canResend) {
+      interval = setInterval(() => {
+        setTimer((prev) => {
+          if (prev <= 1) {
+            setCanResend(true);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [timer, canResend]);
+
+  const handleOtpChange = (index, value) => {
+    if (value.length > 1) {
+      // Handle paste
+      const pastedOtp = value.slice(0, 6).split('');
+      const newOtp = [...otp];
+      pastedOtp.forEach((digit, i) => {
+        if (i < 6) newOtp[i] = digit;
+      });
+      setOtp(newOtp);
+      
+      // Focus last filled input
+      const lastFilledIndex = Math.min(pastedOtp.length - 1, 5);
+      if (inputRefs.current[lastFilledIndex]) {
+        inputRefs.current[lastFilledIndex].focus();
+      }
+    } else if (/^\d*$/.test(value)) {
+      const newOtp = [...otp];
+      newOtp[index] = value;
+      setOtp(newOtp);
+      
+      // Auto-focus next input
+      if (value && index < 5 && inputRefs.current[index + 1]) {
+        inputRefs.current[index + 1].focus();
+      }
+    }
+  };
+
+  const handleKeyDown = (index, e) => {
+    if (e.key === 'Backspace' && !otp[index] && index > 0) {
+      // Focus previous input on backspace
+      inputRefs.current[index - 1].focus();
+    }
+  };
+
+  const handleSubmit = async () => {
+    const otpCode = otp.join('');
+    if (otpCode.length !== 6) {
+      alert('Please enter all 6 digits');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await fetch(`${API}/auth/verify-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: otpCode })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        onVerified(data.user, data.token);
+      } else {
+        alert(data.message || 'Verification failed');
+      }
+    } catch (error) {
+      console.error('Verification error:', error);
+      alert('Verification failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setResendLoading(true);
+    try {
+      const response = await fetch(`${API}/auth/resend-otp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email })
+      });
+      
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('New OTP sent to your email');
+        setTimer(60);
+        setCanResend(false);
+        // Clear OTP inputs
+        setOtp(['', '', '', '', '', '']);
+        if (inputRefs.current[0]) {
+          inputRefs.current[0].focus();
+        }
+      } else {
+        alert(data.message || 'Failed to resend OTP');
+      }
+    } catch (error) {
+      console.error('Resend error:', error);
+      alert('Failed to resend OTP');
+    } finally {
+      setResendLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-page">
+      <div className="auth-background" />
+      <div className="hero" style={{ height: '300px' }}>
+        <div className="container">
+          <div className="hero-content">
+            <div className="hero-label">Email Verification</div>
+            <h1 className="hero-title">Verify Your Email</h1>
+            <p className="hero-subtitle">We've sent a 6-digit code to {email}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="section">
+        <div className="container">
+          <div style={{ maxWidth: 500, margin: '0 auto' }}>
+            <div className="form-container" style={{ 
+              background: 'var(--white)', 
+              border: '1px solid var(--gray-200)', 
+              borderRadius: 12, 
+              padding: 32, 
+              boxShadow: 'var(--shadow-lg)',
+              textAlign: 'center'
+            }}>
+              <div style={{ marginBottom: 32 }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>📧</div>
+                <h2 style={{ fontSize: 24, marginBottom: 8, color: 'var(--teal-primary)' }}>
+                  Enter Verification Code
+                </h2>
+                <p style={{ color: 'var(--gray-600)', fontSize: 14 }}>
+                  Enter the 6-digit code sent to your email
+                </p>
+              </div>
+
+              {/* OTP Input Boxes */}
+              <div style={{ 
+                display: 'flex', 
+                gap: 12, 
+                justifyContent: 'center', 
+                marginBottom: 24 
+              }}>
+                {otp.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => (inputRefs.current[index] = el)}
+                    type="text"
+                    maxLength={6}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    style={{
+                      width: 50,
+                      height: 60,
+                      textAlign: 'center',
+                      fontSize: 24,
+                      fontWeight: 'bold',
+                      border: '2px solid var(--gray-300)',
+                      borderRadius: 8,
+                      outline: 'none',
+                      transition: 'all 0.2s',
+                      ...(digit && {
+                        borderColor: 'var(--teal-primary)',
+                        boxShadow: '0 0 0 3px var(--teal-pale)'
+                      })
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Submit Button */}
+              <button
+                className="btn btn-primary btn-lg"
+                onClick={handleSubmit}
+                disabled={loading || otp.join('').length !== 6}
+                style={{ width: '100%', marginBottom: 16 }}
+              >
+                {loading ? 'Verifying...' : 'Verify Email'}
+              </button>
+
+              {/* Resend Section */}
+              <div style={{ marginTop: 20 }}>
+                {!canResend ? (
+                  <p style={{ color: 'var(--gray-500)', fontSize: 13 }}>
+                    Resend code in {timer} seconds
+                  </p>
+                ) : (
+                  <button
+                    className="btn btn-outline"
+                    onClick={handleResend}
+                    disabled={resendLoading}
+                    style={{ width: '100%' }}
+                  >
+                    {resendLoading ? 'Sending...' : 'Resend Code'}
+                  </button>
+                )}
+              </div>
+
+              {/* Cancel Button */}
+              <button
+                className="btn btn-ghost"
+                onClick={onCancel}
+                style={{ marginTop: 16, width: '100%' }}
+              >
+                ← Back to Login
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
 };
       // Auto-rotate testimonials
       useEffect(() => {
@@ -3897,27 +4133,257 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
       const [accounts, setAccounts] = useState([]);
       const [transactions, setTransactions] = useState([]);
+      const [userCards, setUserCards] = useState([]);
       const [adminData, setAdminData] = useState({ users: [], allTransactions: [], accounts: [] });
       const [pendingApprovals, setPendingApprovals] = useState([]);
       const [loading, setLoading] = useState(true);
       const [toast, setToast] = useState(null);
       const [currency, setCurrency] = useState('USD');
       const [userProfile, setUserProfile] = useState(null);
+      const [language, setLanguage] = useState(() => localStorage.getItem('language') || 'en');
+      
+      // Translation helper
+      const translate = (key) => {
+        const translations = {
+          en: {
+            home: 'Home', overview: 'Overview', accounts: 'Accounts', cards: 'Cards',
+            transfers: 'Transfers', profile: 'Profile', admin: 'Admin', logout: 'Logout',
+            myAccounts: 'My Accounts', openNew: 'Open New Account', accountNumber: 'Account Number',
+            balance: 'Balance', status: 'Status', active: 'Active', frozen: 'Frozen',
+            yourCards: 'Your Cards', requestNew: 'Request New Card', viewRequests: 'View Requests',
+            cardNumber: 'Card Number', cardHolder: 'Card Holder', expires: 'Expires',
+            sendMoney: 'Send Money', fromAccount: 'From Account', toAccount: 'To Account',
+            amount: 'Amount', transferType: 'Transfer Type', domestic: 'Domestic',
+            international: 'International', sendTransfer: 'Send Transfer', transactionPin: 'Transaction PIN',
+            myProfile: 'My Profile', firstName: 'First Name', lastName: 'Last Name',
+            email: 'Email', phone: 'Phone', address: 'Address', setPin: 'Set PIN',
+            login: 'Login', register: 'Register', password: 'Password',
+            loading: 'Loading...', save: 'Save', cancel: 'Cancel', success: 'Success',
+            error: 'Error', language: 'Language', selectLanguage: 'Select Language'
+          },
+          es: {
+            home: 'Inicio', overview: 'Resumen', accounts: 'Cuentas', cards: 'Tarjetas',
+            transfers: 'Transferencias', profile: 'Perfil', admin: 'Administrador', logout: 'Cerrar Sesión',
+            myAccounts: 'Mis Cuentas', openNew: 'Abrir Nueva Cuenta', accountNumber: 'Número de Cuenta',
+            balance: 'Saldo', status: 'Estado', active: 'Activa', frozen: 'Congelada',
+            yourCards: 'Tus Tarjetas', requestNew: 'Solicitar Nueva Tarjeta', viewRequests: 'Ver Solicitudes',
+            cardNumber: 'Número de Tarjeta', cardHolder: 'Titular', expires: 'Vence',
+            sendMoney: 'Enviar Dinero', fromAccount: 'Desde Cuenta', toAccount: 'A Cuenta',
+            amount: 'Monto', transferType: 'Tipo de Transferencia', domestic: 'Nacional',
+            international: 'Internacional', sendTransfer: 'Enviar Transferencia', transactionPin: 'PIN de Transacción',
+            myProfile: 'Mi Perfil', firstName: 'Nombre', lastName: 'Apellido',
+            email: 'Correo', phone: 'Teléfono', address: 'Dirección', setPin: 'Establecer PIN',
+            login: 'Iniciar Sesión', register: 'Registrarse', password: 'Contraseña',
+            loading: 'Cargando...', save: 'Guardar', cancel: 'Cancelar', success: 'Éxito',
+            error: 'Error', language: 'Idioma', selectLanguage: 'Seleccionar Idioma'
+          },
+          fr: {
+            home: 'Accueil', overview: 'Aperçu', accounts: 'Comptes', cards: 'Cartes',
+            transfers: 'Virements', profile: 'Profil', admin: 'Administrateur', logout: 'Déconnexion',
+            myAccounts: 'Mes Comptes', openNew: 'Ouvrir Nouveau Compte', accountNumber: 'Numéro de Compte',
+            balance: 'Solde', status: 'Statut', active: 'Actif', frozen: 'Gelé',
+            yourCards: 'Vos Cartes', requestNew: 'Demander Nouvelle Carte', viewRequests: 'Voir Demandes',
+            cardNumber: 'Numéro de Carte', cardHolder: 'Titulaire', expires: 'Expire',
+            sendMoney: 'Envoyer Argent', fromAccount: 'Depuis Compte', toAccount: 'Vers Compte',
+            amount: 'Montant', transferType: 'Type de Virement', domestic: 'National',
+            international: 'International', sendTransfer: 'Envoyer Virement', transactionPin: 'NIP de Transaction',
+            myProfile: 'Mon Profil', firstName: 'Prénom', lastName: 'Nom',
+            email: 'Email', phone: 'Téléphone', address: 'Adresse', setPin: 'Définir NIP',
+            login: 'Connexion', register: "S'inscrire", password: 'Mot de passe',
+            loading: 'Chargement...', save: 'Enregistrer', cancel: 'Annuler', success: 'Succès',
+            error: 'Erreur', language: 'Langue', selectLanguage: 'Choisir Langue'
+          },
+          de: {
+            home: 'Startseite', overview: 'Übersicht', accounts: 'Konten', cards: 'Karten',
+            transfers: 'Überweisungen', profile: 'Profil', admin: 'Administrator', logout: 'Abmelden',
+            myAccounts: 'Meine Konten', openNew: 'Neues Konto Eröffnen', accountNumber: 'Kontonummer',
+            balance: 'Saldo', status: 'Status', active: 'Aktiv', frozen: 'Eingefroren',
+            yourCards: 'Ihre Karten', requestNew: 'Neue Karte Beantragen', viewRequests: 'Anträge Ansehen',
+            cardNumber: 'Kartennummer', cardHolder: 'Karteninhaber', expires: 'Läuft Ab',
+            sendMoney: 'Geld Senden', fromAccount: 'Von Konto', toAccount: 'An Konto',
+            amount: 'Betrag', transferType: 'Überweisungsart', domestic: 'Inländisch',
+            international: 'International', sendTransfer: 'Überweisung Senden', transactionPin: 'Transaktions-PIN',
+            myProfile: 'Mein Profil', firstName: 'Vorname', lastName: 'Nachname',
+            email: 'E-Mail', phone: 'Telefon', address: 'Adresse', setPin: 'PIN Festlegen',
+            login: 'Anmelden', register: 'Registrieren', password: 'Passwort',
+            loading: 'Laden...', save: 'Speichern', cancel: 'Abbrechen', success: 'Erfolg',
+            error: 'Fehler', language: 'Sprache', selectLanguage: 'Sprache Wählen'
+          },
+          zh: {
+            home: '首页', overview: '概览', accounts: '账户', cards: '卡片',
+            transfers: '转账', profile: '个人资料', admin: '管理员', logout: '退出',
+            myAccounts: '我的账户', openNew: '开立新账户', accountNumber: '账号',
+            balance: '余额', status: '状态', active: '活跃', frozen: '冻结',
+            yourCards: '我的卡片', requestNew: '申请新卡', viewRequests: '查看申请',
+            cardNumber: '卡号', cardHolder: '持卡人', expires: '到期',
+            sendMoney: '发送款项', fromAccount: '从账户', toAccount: '到账户',
+            amount: '金额', transferType: '转账类型', domestic: '国内',
+            international: '国际', sendTransfer: '发送转账', transactionPin: '交易密码',
+            myProfile: '我的资料', firstName: '名字', lastName: '姓氏',
+            email: '邮箱', phone: '电话', address: '地址', setPin: '设置密码',
+            login: '登录', register: '注册', password: '密码',
+            loading: '加载中...', save: '保存', cancel: '取消', success: '成功',
+            error: '错误', language: '语言', selectLanguage: '选择语言'
+          },
+          ar: {
+            home: 'الرئيسية', overview: 'نظرة عامة', accounts: 'الحسابات', cards: 'البطاقات',
+            transfers: 'التحويلات', profile: 'الملف الشخصي', admin: 'المسؤول', logout: 'تسجيل خروج',
+            myAccounts: 'حساباتي', openNew: 'فتح حساب جديد', accountNumber: 'رقم الحساب',
+            balance: 'الرصيد', status: 'الحالة', active: 'نشط', frozen: 'مجمد',
+            yourCards: 'بطاقاتي', requestNew: 'طلب بطاقة جديدة', viewRequests: 'عرض الطلبات',
+            cardNumber: 'رقم البطاقة', cardHolder: 'صاحب البطاقة', expires: 'تنتهي',
+            sendMoney: 'إرسال أموال', fromAccount: 'من حساب', toAccount: 'إلى حساب',
+            amount: 'المبلغ', transferType: 'نوع التحويل', domestic: 'محلي',
+            international: 'دولي', sendTransfer: 'إرسال التحويل', transactionPin: 'رقم PIN',
+            myProfile: 'ملفي الشخصي', firstName: 'الاسم الأول', lastName: 'اسم العائلة',
+            email: 'البريد الإلكتروني', phone: 'الهاتف', address: 'العنوان', setPin: 'تعيين PIN',
+            login: 'تسجيل الدخول', register: 'تسجيل جديد', password: 'كلمة المرور',
+            loading: 'جاري التحميل...', save: 'حفظ', cancel: 'إلغاء', success: 'نجاح',
+            error: 'خطأ', language: 'اللغة', selectLanguage: 'اختر اللغة'
+          },
+          ja: {
+            home: 'ホーム', overview: '概要', accounts: '口座', cards: 'カード',
+            transfers: '送金', profile: 'プロフィール', admin: '管理者', logout: 'ログアウト',
+            myAccounts: 'マイ口座', openNew: '新規口座開設', accountNumber: '口座番号',
+            balance: '残高', status: 'ステータス', active: '有効', frozen: '凍結',
+            yourCards: 'マイカード', requestNew: 'カードを申請', viewRequests: '申請を確認',
+            cardNumber: 'カード番号', cardHolder: 'カード名義', expires: '有効期限',
+            sendMoney: '送金する', fromAccount: '元口座', toAccount: '宛先口座',
+            amount: '金額', transferType: '送金タイプ', domestic: '国内',
+            international: '国際', sendTransfer: '送金する', transactionPin: '取引 PIN',
+            myProfile: 'マイプロフィール', firstName: '名', lastName: '姓',
+            email: 'メール', phone: '電話', address: '住所', setPin: 'PIN を設定',
+            login: 'ログイン', register: '登録', password: 'パスワード',
+            loading: '読み込み中...', save: '保存', cancel: 'キャンセル', success: '成功',
+            error: 'エラー', language: '言語', selectLanguage: '言語を選択'
+          },
+          pt: {
+            home: 'Início', overview: 'Visão Geral', accounts: 'Contas', cards: 'Cartões',
+            transfers: 'Transferências', profile: 'Perfil', admin: 'Administrador', logout: 'Sair',
+            myAccounts: 'Minhas Contas', openNew: 'Abrir Nova Conta', accountNumber: 'Número da Conta',
+            balance: 'Saldo', status: 'Status', active: 'Ativa', frozen: 'Congelada',
+            yourCards: 'Seus Cartões', requestNew: 'Solicitar Novo Cartão', viewRequests: 'Ver Solicitações',
+            cardNumber: 'Número do Cartão', cardHolder: 'Titular', expires: 'Vence',
+            sendMoney: 'Enviar Dinheiro', fromAccount: 'Da Conta', toAccount: 'Para Conta',
+            amount: 'Valor', transferType: 'Tipo de Transferência', domestic: 'Nacional',
+            international: 'Internacional', sendTransfer: 'Enviar Transferência', transactionPin: 'PIN de Transação',
+            myProfile: 'Meu Perfil', firstName: 'Nome', lastName: 'Sobrenome',
+            email: 'Email', phone: 'Telefone', address: 'Endereço', setPin: 'Definir PIN',
+            login: 'Entrar', register: 'Cadastrar', password: 'Senha',
+            loading: 'Carregando...', save: 'Salvar', cancel: 'Cancelar', success: 'Sucesso',
+            error: 'Erro', language: 'Idioma', selectLanguage: 'Selecionar Idioma'
+          },
+          ru: {
+            home: 'Главная', overview: 'Обзор', accounts: 'Счета', cards: 'Карты',
+            transfers: 'Переводы', profile: 'Профиль', admin: 'Администратор', logout: 'Выйти',
+            myAccounts: 'Мои Счета', openNew: 'Открыть Новый Счет', accountNumber: 'Номер Счета',
+            balance: 'Баланс', status: 'Статус', active: 'Активен', frozen: 'Заморожен',
+            yourCards: 'Мои Карты', requestNew: 'Заказать Карту', viewRequests: 'Просмотр Запросов',
+            cardNumber: 'Номер Карты', cardHolder: 'Владелец', expires: 'Истекает',
+            sendMoney: 'Отправить Деньги', fromAccount: 'Со Счета', toAccount: 'На Счет',
+            amount: 'Сумма', transferType: 'Тип Перевода', domestic: 'Внутренний',
+            international: 'Международный', sendTransfer: 'Отправить Перевод', transactionPin: 'PIN Транзакции',
+            myProfile: 'Мой Профиль', firstName: 'Имя', lastName: 'Фамилия',
+            email: 'Email', phone: 'Телефон', address: 'Адрес', setPin: 'Установить PIN',
+            login: 'Войти', register: 'Регистрация', password: 'Пароль',
+            loading: 'Загрузка...', save: 'Сохранить', cancel: 'Отмена', success: 'Успех',
+            error: 'Ошибка', language: 'Язык', selectLanguage: 'Выбрать Язык'
+          },
+          hi: {
+            home: 'होम', overview: 'अवलोकन', accounts: 'खाते', cards: 'कार्ड',
+            transfers: 'स्थानांतरण', profile: 'प्रोफ़ाइल', admin: 'व्यवस्थापक', logout: 'लॉग आउट',
+            myAccounts: 'मेरे खाते', openNew: 'नया खाता खोलें', accountNumber: 'खाता संख्या',
+            balance: 'शेष', status: 'स्थिति', active: 'सक्रिय', frozen: 'स्थिर',
+            yourCards: 'आपके कार्ड', requestNew: 'नया कार्ड अनुरोध करें', viewRequests: 'अनुरोध देखें',
+            cardNumber: 'कार्ड नंबर', cardHolder: 'धारक', expires: 'समाप्त',
+            sendMoney: 'पैसे भेजें', fromAccount: 'से खाता', toAccount: 'को खाता',
+            amount: 'राशि', transferType: 'स्थानांतरण प्रकार', domestic: 'घरेलू',
+            international: 'अंतर्राष्ट्रीय', sendTransfer: 'स्थानांतरण भेजें', transactionPin: 'लेनदेन PIN',
+            myProfile: 'मेरी प्रोफ़ाइल', firstName: 'पहला नाम', lastName: 'उपनाम',
+            email: 'ईमेल', phone: 'फोन', address: 'पता', setPin: 'PIN सेट करें',
+            login: 'लॉग इन', register: 'पंजीकरण', password: 'पासवर्ड',
+            loading: 'लोड हो रहा है...', save: 'सहेजें', cancel: 'रद्द करें', success: 'सफलता',
+            error: 'त्रुटि', language: 'भाषा', selectLanguage: 'भाषा चुनें'
+          }
+        };
+        return translations[language]?.[key] || translations.en?.[key] || key;
+      };
+      
+      // Language change handler
+      const changeLanguage = (newLang) => {
+        setLanguage(newLang);
+        localStorage.setItem('language', newLang);
+        document.documentElement.dir = ['ar', 'he'].includes(newLang) ? 'rtl' : 'ltr';
+      };
       useEffect(() => { const t = localStorage.getItem('token'), u = localStorage.getItem('user'); if (t && u) { const userObj = JSON.parse(u); setAuth({ user: userObj, token: t }); loadData(t, userObj); } }, []);
       const loadData = async (token, userObj) => {
         console.log('Loading data for user:', userObj);
         try {
-          const [ar, tr] = await Promise.all([
+          const [ar, tr, cr] = await Promise.all([
             fetch(`${API}/accounts/get-accounts`, { headers: { Authorization: `Bearer ${token}` } }),
-            fetch(`${API}/accounts/transactions`, { headers: { Authorization: `Bearer ${token}` } })
+            fetch(`${API}/accounts/transactions`, { headers: { Authorization: `Bearer ${token}` } }),
+            fetch(`${API}/cards/my-cards`, { headers: { Authorization: `Bearer ${token}` } })
           ]);
-          const [ad, td] = await Promise.all([ar.json(), tr.json()]);
+          const [ad, td, cd] = await Promise.all([ar.json(), tr.json(), cr.json()]);
 
           if (ad.success) {
             setAccounts(ad.accounts || []);
             setPendingApprovals(ad.pendingApprovals || []);
           }
           if (td.success) setTransactions(td.transactions || []);
+          if (cd.success) setUserCards(cd.cards || []);
+
+          // In your App component, add state for verification
+const [verificationData, setVerificationData] = useState(null);
+
+// Update the part where you handle registration response
+const handleAuth = (user, token) => {
+  setAuth({ user, token });
+  loadData(token, user);
+};
+
+const handleRegistration = async (formData) => {
+  try {
+    const response = await fetch(`${API}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(formData)
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      if (data.requiresVerification) {
+        // Show OTP verification screen
+        setVerificationData({
+          email: data.email,
+          userId: data.userId
+        });
+      } else {
+        handleAuth(data.user, data.token);
+      }
+    } else {
+      setToast({ message: data.message, type: 'error' });
+    }
+  } catch (error) {
+    setToast({ message: 'Registration failed', type: 'error' });
+  }
+};
+
+// Update the render logic
+if (!auth) {
+  if (verificationData) {
+    return (
+      <OTPVerification
+        email={verificationData.email}
+        userId={verificationData.userId}
+        onVerified={handleAuth}
+        onCancel={() => setVerificationData(null)}
+      />
+    );
+  }
+  return <AuthPage isLogin={showLogin} onAuth={handleAuth} onSwitch={() => setShowLogin(!showLogin)} />;
+}
 
           // Load admin data if admin
           if (userObj?.role === 'admin') {
@@ -4026,6 +4492,21 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               <button className={`nav-link ${view === 'branches' ? 'active' : ''}`} onClick={() => setView('branches')}>Branches</button>
             </div>
             <div className="nav-actions">
+              {/* Language Selector */}
+              <select value={language} onChange={(e) => changeLanguage(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 14, background: 'var(--white)', cursor: 'pointer', marginRight: 12 }}>
+                <option value="en">🇬🇧 English</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="pt">🇧🇷 Português</option>
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="hi">🇮🇳 हिंदी</option>
+              </select>
+              
+              {/* Currency Selector */}
               <select value={currency} onChange={e => setCurrency(e.target.value)} style={{ padding: '8px 12px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 14, background: 'var(--white)', cursor: 'pointer', marginRight: 12 }}>
                 {Object.entries(CURRENCY_RATES).map(([code, { name, symbol }]) =>
                   <option key={code} value={code}>{symbol} - {code} ({name})</option>
@@ -4044,6 +4525,23 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             <button className="mobile-menu-close" onClick={()=>setMobileMenuOpen(false)}>✕</button>
           </div>
           <div className="mobile-menu-items">
+            {/* Language Selector in Mobile Menu */}
+            <div className="mobile-currency-selector">
+              <label>🌐 Language / Idioma / 语言</label>
+              <select value={language} onChange={(e) => changeLanguage(e.target.value)}>
+                <option value="en">🇬🇧 English</option>
+                <option value="es">🇪🇸 Español</option>
+                <option value="fr">🇫🇷 Français</option>
+                <option value="de">🇩🇪 Deutsch</option>
+                <option value="zh">🇨🇳 中文</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="ar">🇸🇦 العربية</option>
+                <option value="pt">🇧🇷 Português</option>
+                <option value="ru">🇷🇺 Русский</option>
+                <option value="hi">🇮🇳 हिंदी</option>
+              </select>
+            </div>
+            
             {/* Currency Selector in Mobile Menu */}
             <div className="mobile-currency-selector">
               <label>Currency</label>
@@ -4301,39 +4799,14 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                   <form onSubmit={async e => {
                     e.preventDefault();
                     const fd = new FormData(e.target);
-                    
-                    // Validate PIN for international transfers
-                    if (transferType === 'international') {
-                      const pin = fd.get('pin');
-                      if (!pin) {
-                        showToast('PIN is required for international transfers', 'error');
-                        return;
-                      }
-                      // Verify PIN
-                      try {
-                        const pinRes = await fetch(`${API}/otp/verify-pin`, {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` },
-                          body: JSON.stringify({ pin })
-                        });
-                        const pinData = await pinRes.json();
-                        if (!pinData.success) {
-                          showToast(pinData.message || 'Invalid PIN', 'error');
-                          return;
-                        }
-                      } catch (err) {
-                        showToast('PIN verification failed', 'error');
-                        return;
-                      }
-                    }
-                    
+
                     try {
                       // Find destination account by account number using the new find endpoint
                       const toAccRes = await fetch(`${API}/accounts/find?accountNumber=${encodeURIComponent(fd.get('to'))}`, { headers: { Authorization: `Bearer ${auth.token}` } });
                       const toAccData = await toAccRes.json();
                       if (!toAccData.success) { showToast('Recipient account not found', 'error'); return; }
                       const toAcc = toAccData.account;
-                      
+
                       // Prepare transfer data
                       const transferData = {
                         fromAccount: parseInt(fd.get('from')),
@@ -4342,13 +4815,14 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                         bankName: fd.get('bankName'),
                         transferType: transferType
                       };
-                      
-                      // Add international transfer fields
+
+                      // Add international transfer fields including PIN
                       if (transferType === 'international') {
                         transferData.swiftCode = fd.get('swiftCode');
                         transferData.beneficiaryAddress = fd.get('beneficiaryAddress');
                         transferData.reasonForTransaction = fd.get('reason');
                         transferData.destinationCountry = fd.get('country');
+                        transferData.pin = fd.get('pin'); // Include PIN for verification
                       }
                       
                       const r = await fetch(`${API}/accounts/transfer`, {
@@ -4639,11 +5113,104 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                     <div style={{ textAlign: 'center', fontSize: 13, color: 'var(--gray-500)', marginTop: 4 }}>Check request status</div>
                   </div>
                 </div>
-                <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--teal-primary)' }}>Your Active Cards</h3>
-                <div id="cards-list" style={{ textAlign: 'center', padding: 40, color: 'var(--gray-500)' }}>
-                  <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
-                  <div>No cards yet. Request your first card above.</div>
-                  <div style={{ fontSize: 13, marginTop: 8 }}>Card requests are processed within 5-7 business days</div>
+                
+                {/* User's Active Cards */}
+                <div id="user-cards-container">
+                  <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--teal-primary)' }}>Your Active Cards</h3>
+                  <div id="cards-list">
+                    {userCards.length === 0 ? (
+                      <div style={{ textAlign: 'center', padding: 40, color: 'var(--gray-500)' }}>
+                        <div style={{ fontSize: 48, marginBottom: 16 }}>💳</div>
+                        <div>No cards yet. Request your first card above.</div>
+                        <div style={{ fontSize: 13, marginTop: 8 }}>Card requests are processed within 5-7 business days</div>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'grid', gap: 20, gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+                        {userCards.map(card => (
+                          <div key={card.id} style={{
+                            background: 'linear-gradient(135deg, #1e3a5f 0%, #0d2137 100%)',
+                            borderRadius: 16,
+                            padding: 24,
+                            color: 'white',
+                            position: 'relative',
+                            overflow: 'hidden',
+                            minHeight: 200,
+                            boxShadow: '0 10px 30px rgba(0,0,0,0.3)'
+                          }}>
+                            {/* Card Background Pattern */}
+                            <div style={{
+                              position: 'absolute',
+                              top: -50,
+                              right: -50,
+                              width: 200,
+                              height: 200,
+                              borderRadius: '50%',
+                              background: 'rgba(255,255,255,0.1)'
+                            }} />
+                            <div style={{
+                              position: 'absolute',
+                              bottom: -30,
+                              left: -30,
+                              width: 150,
+                              height: 150,
+                              borderRadius: '50%',
+                              background: 'rgba(255,255,255,0.05)'
+                            }} />
+                            
+                            {/* Card Content */}
+                            <div style={{ position: 'relative', zIndex: 1 }}>
+                              {/* Card Header */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+                                <div>
+                                  <div style={{ fontSize: 12, opacity: 0.8, textTransform: 'uppercase', letterSpacing: 1 }}>{card.card_type}</div>
+                                  <div style={{ fontSize: 14, fontWeight: 600 }}>Debit Card</div>
+                                </div>
+                                <div style={{ fontSize: 24 }}>🏦</div>
+                              </div>
+                              
+                              {/* Card Number */}
+                              <div style={{ marginBottom: 20 }}>
+                                <div style={{ fontSize: 11, opacity: 0.7, marginBottom: 4 }}>Card Number</div>
+                                <div style={{ fontSize: 20, fontFamily: 'monospace', letterSpacing: 2 }}>
+                                  **** **** **** {card.last_four || card.card_number?.slice(-4) || '0000'}
+                                </div>
+                              </div>
+                              
+                              {/* Card Holder & Expiry */}
+                              <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <div>
+                                  <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Card Holder</div>
+                                  <div style={{ fontSize: 13, fontWeight: 500, textTransform: 'uppercase' }}>
+                                    {card.card_holder_name || `${auth.user.first_name} ${auth.user.last_name}`.toUpperCase()}
+                                  </div>
+                                </div>
+                                <div>
+                                  <div style={{ fontSize: 10, opacity: 0.7, marginBottom: 2 }}>Expires</div>
+                                  <div style={{ fontSize: 13, fontWeight: 500 }}>{card.expiry_date || '12/30'}</div>
+                                </div>
+                              </div>
+                              
+                              {/* Card Status Badge */}
+                              <div style={{
+                                position: 'absolute',
+                                top: 24,
+                                right: 24,
+                                background: card.status === 'active' ? '#10B981' : '#6B7280',
+                                color: 'white',
+                                padding: '4px 12px',
+                                borderRadius: 12,
+                                fontSize: 11,
+                                fontWeight: 600,
+                                textTransform: 'uppercase'
+                              }}>
+                                {card.status || 'Active'}
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>}
@@ -5356,6 +5923,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               </div>
             </div>}
             <LiveChat user={auth.user} />
+            
           </div>
         </div>}
 

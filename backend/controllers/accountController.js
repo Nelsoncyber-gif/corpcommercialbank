@@ -1,4 +1,5 @@
 const pool = require('../config/db');
+const bcrypt = require('bcrypt');
 
 // ==================== CREATE ACCOUNT ====================
 // Create account request - requires admin approval
@@ -275,16 +276,17 @@ exports.withdraw = async (req, res) => {
 // ==================== TRANSFER ====================
 exports.transfer = async (req, res) => {
   try {
-    const { 
-      fromAccount, 
-      toAccount, 
-      amount, 
+    const {
+      fromAccount,
+      toAccount,
+      amount,
       bankName,
       transferType = 'domestic',
       swiftCode,
       beneficiaryAddress,
       reasonForTransaction,
-      destinationCountry
+      destinationCountry,
+      pin  // PIN for international transfer verification
     } = req.body;
     const userId = req.user.id;
 
@@ -307,6 +309,45 @@ exports.transfer = async (req, res) => {
         success: false,
         message: "Amount must be a positive number"
       });
+    }
+
+    // Verify PIN for international transfers
+    if (transferType === 'international') {
+      if (!pin || !/^\d{6}$/.test(pin)) {
+        return res.status(400).json({
+          success: false,
+          message: "Valid 6-digit PIN is required for international transfers"
+        });
+      }
+
+      // Get user's transaction PIN
+      const userResult = await pool.query('SELECT transaction_pin FROM users WHERE id = $1', [userId]);
+      
+      if (userResult.rows.length === 0) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found"
+        });
+      }
+
+      if (!userResult.rows[0].transaction_pin) {
+        return res.status(400).json({
+          success: false,
+          message: "Transaction PIN not set. Please set a PIN in your profile first."
+        });
+      }
+
+      // Verify the PIN
+      const isValidPIN = await bcrypt.compare(pin, userResult.rows[0].transaction_pin);
+      
+      if (!isValidPIN) {
+        return res.status(401).json({
+          success: false,
+          message: "Invalid transaction PIN"
+        });
+      }
+
+      console.log('✅ International transfer PIN verified for user:', userId);
     }
 
     // Query by account ID

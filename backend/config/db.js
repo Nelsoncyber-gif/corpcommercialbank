@@ -1,12 +1,13 @@
 // backend/config/db.js
-require('dotenv').config();
+const path = require('path');
+require('dotenv').config({ path: path.join(__dirname, '../../.env'), override: true });
 const { Pool } = require('pg');
 
-const pool = new Pool({ 
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: process.env.DATABASE_URL && process.env.DATABASE_URL.includes('localhost') 
+    ? false 
+    : { rejectUnauthorized: false }
 });
 
 // Test connection

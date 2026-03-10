@@ -7,8 +7,9 @@
     "start": "node backend/server.js",
     "dev": "nodemon backend/server.js",
     "migrate": "node backend/scripts/migrate-add-columns.js",
-    "migrate:user-columns": "node backend/scripts/add-user-columns.js",
-    "build": "echo 'Build complete'"
+    "migrate:user-columns": "node backend/scripts/migrate-add-columns.js",
+    "build": "echo 'Build complete'",
+    "postdeploy": "npm run migrate"
   },
   "engines": {
     "node": ">=18.0.0"

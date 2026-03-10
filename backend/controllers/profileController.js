@@ -83,29 +83,47 @@ exports.setTransactionPIN = async (req, res) => {
     const userId = req.user.id;
     const { pin, currentPassword } = req.body;
 
+    console.log('🔵 Set PIN endpoint called for user:', userId);
+    console.log('PIN length:', pin ? pin.length : 0);
+
     // Validate PIN format (6 digits)
-    if (!/^\d{6}$/.test(pin)) {
+    if (!pin || !/^\d{6}$/.test(pin)) {
+      console.log('❌ Invalid PIN format');
       return res.status(400).json({ success: false, message: 'PIN must be exactly 6 digits' });
+    }
+
+    if (!currentPassword) {
+      console.log('❌ Current password required');
+      return res.status(400).json({ success: false, message: 'Current password is required' });
     }
 
     // Verify current password
     const userResult = await pool.query('SELECT password FROM users WHERE id = $1', [userId]);
-    const isValidPassword = await bcrypt.compare(currentPassword, userResult.rows[0].password);
     
+    if (userResult.rows.length === 0) {
+      console.log('❌ User not found');
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    const isValidPassword = await bcrypt.compare(currentPassword, userResult.rows[0].password);
+
     if (!isValidPassword) {
+      console.log('❌ Invalid password');
       return res.status(401).json({ success: false, message: 'Invalid password' });
     }
 
     // Hash the PIN
     const hashedPIN = await bcrypt.hash(pin, 10);
 
-    // Update PIN
+    console.log('💾 Updating transaction_pin for user:', userId);
+    // Update PIN - use transaction_pin column
     await pool.query('UPDATE users SET transaction_pin = $1 WHERE id = $2', [hashedPIN, userId]);
 
+    console.log('✅ PIN set successfully');
     res.json({ success: true, message: 'Transaction PIN set successfully' });
   } catch (error) {
-    console.error('Set PIN error:', error);
-    res.status(500).json({ success: false, message: 'Failed to set PIN' });
+    console.error('❌ Set PIN error:', error);
+    res.status(500).json({ success: false, message: 'Failed to set PIN', error: error.message });
   }
 };
 
@@ -115,22 +133,37 @@ exports.verifyPIN = async (req, res) => {
     const userId = req.user.id;
     const { pin } = req.body;
 
+    console.log('🔵 Verify PIN endpoint called for user:', userId);
+
+    if (!pin || !/^\d{6}$/.test(pin)) {
+      console.log('❌ Invalid PIN format');
+      return res.status(400).json({ success: false, message: 'PIN must be exactly 6 digits' });
+    }
+
     const result = await pool.query('SELECT transaction_pin FROM users WHERE id = $1', [userId]);
-    
+
+    if (result.rows.length === 0) {
+      console.log('❌ User not found');
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
     if (!result.rows[0].transaction_pin) {
-      return res.status(400).json({ success: false, message: 'Transaction PIN not set' });
+      console.log('❌ Transaction PIN not set');
+      return res.status(400).json({ success: false, message: 'Transaction PIN not set. Please set one first.' });
     }
 
     const isValidPIN = await bcrypt.compare(pin, result.rows[0].transaction_pin);
-    
+
     if (!isValidPIN) {
+      console.log('❌ Invalid PIN');
       return res.status(401).json({ success: false, message: 'Invalid PIN' });
     }
 
+    console.log('✅ PIN verified successfully');
     res.json({ success: true, message: 'PIN verified' });
   } catch (error) {
-    console.error('Verify PIN error:', error);
-    res.status(500).json({ success: false, message: 'Failed to verify PIN' });
+    console.error('❌ Verify PIN error:', error);
+    res.status(500).json({ success: false, message: 'Failed to verify PIN', error: error.message });
   }
 };
 
