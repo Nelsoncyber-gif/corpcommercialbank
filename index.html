@@ -2806,52 +2806,49 @@
     /* ========================================
        FIX: Admin Dashboard Navigation - Ensure Sign Out is Visible
        ======================================== */
-    @media (max-width: 1024px) {
+    @media (max-width: 1023px) {
       .top-nav-inner {
-        position: relative;
         flex-wrap: wrap;
         height: auto;
         min-height: 70px;
-        padding: 10px 20px;
+        padding: 10px 16px;
       }
-      
+
       .nav-links {
-        position: static !important;
-        display: flex !important;
+        order: 3;
+        width: 100%;
+        margin: 10px 0 0 0;
+        padding: 8px 0;
         overflow-x: auto;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: thin;
-        margin: 10px 0;
-        padding: 8px 0;
-        width: 100%;
-        order: 2;
       }
-      
+
       .nav-links::-webkit-scrollbar {
         height: 4px;
       }
-      
+
       .nav-links::-webkit-scrollbar-track {
         background: var(--gray-200);
         border-radius: 10px;
       }
-      
+
       .nav-links::-webkit-scrollbar-thumb {
         background: var(--teal-primary);
         border-radius: 10px;
       }
-      
+
       .nav-actions {
-        order: 1;
+        order: 2;
         margin-left: auto;
         flex-shrink: 0;
       }
-      
+
       .logo-box {
-        order: 0;
+        order: 1;
         flex-shrink: 0;
       }
-      
+
       .mobile-menu-btn {
         display: flex !important;
       }
@@ -2864,29 +2861,28 @@
         align-items: center;
         justify-content: space-between;
         flex-wrap: nowrap !important;
-        gap: 20px;
       }
-      
+
       .nav-links {
         display: flex !important;
-        flex: 1;
-        justify-content: center;
         overflow-x: auto;
         white-space: nowrap;
         scrollbar-width: thin;
-        max-width: none !important;
+        flex-shrink: 0;
+        max-width: calc(100% - 350px) !important;
       }
-      
+
       .nav-links .nav-link {
         white-space: nowrap;
         flex-shrink: 0;
       }
-      
+
       .nav-actions {
         display: flex !important;
         align-items: center;
         gap: 12px;
         flex-shrink: 0;
+        margin-left: auto;
       }
     }
 
