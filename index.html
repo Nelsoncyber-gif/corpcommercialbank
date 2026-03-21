@@ -2802,6 +2802,140 @@
         max-width: 280px;
       }
     }
+
+    /* ========================================
+       FIX: Admin Dashboard Navigation - Ensure Sign Out is Visible
+       ======================================== */
+    @media (max-width: 1024px) {
+      .top-nav-inner {
+        position: relative;
+        flex-wrap: wrap;
+        height: auto;
+        min-height: 70px;
+        padding: 10px 20px;
+      }
+      
+      .nav-links {
+        position: static !important;
+        display: flex !important;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: thin;
+        margin: 10px 0;
+        padding: 8px 0;
+        width: 100%;
+        order: 2;
+      }
+      
+      .nav-links::-webkit-scrollbar {
+        height: 4px;
+      }
+      
+      .nav-links::-webkit-scrollbar-track {
+        background: var(--gray-200);
+        border-radius: 10px;
+      }
+      
+      .nav-links::-webkit-scrollbar-thumb {
+        background: var(--teal-primary);
+        border-radius: 10px;
+      }
+      
+      .nav-actions {
+        order: 1;
+        margin-left: auto;
+        flex-shrink: 0;
+      }
+      
+      .logo-box {
+        order: 0;
+        flex-shrink: 0;
+      }
+      
+      .mobile-menu-btn {
+        display: flex !important;
+      }
+    }
+
+    /* FIX: For larger screens where sign out might be hidden */
+    @media (min-width: 1024px) {
+      .top-nav-inner {
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: nowrap !important;
+        gap: 20px;
+      }
+      
+      .nav-links {
+        display: flex !important;
+        flex: 1;
+        justify-content: center;
+        overflow-x: auto;
+        white-space: nowrap;
+        scrollbar-width: thin;
+        max-width: none !important;
+      }
+      
+      .nav-links .nav-link {
+        white-space: nowrap;
+        flex-shrink: 0;
+      }
+      
+      .nav-actions {
+        display: flex !important;
+        align-items: center;
+        gap: 12px;
+        flex-shrink: 0;
+      }
+    }
+
+    /* FIX: Ensure the sign out button is always visible */
+    .nav-actions .btn-outline.btn-sm {
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* FIX: For very wide admin menu on desktop */
+    @media (min-width: 1280px) {
+      .nav-links {
+        gap: 24px;
+      }
+      
+      .nav-links .nav-link {
+        font-size: 14px;
+      }
+    }
+
+    /* FIX: Add a scroll container for admin nav items */
+    .admin-nav-container {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+      scrollbar-width: thin;
+    }
+
+    /* Ensure the top nav doesn't overflow on mobile */
+    @media (max-width: 768px) {
+      .top-nav-inner {
+        flex-wrap: wrap !important;
+        padding: 10px 16px;
+      }
+      
+      .logo-box {
+        margin-bottom: 8px;
+      }
+      
+      .nav-actions {
+        margin-left: auto;
+      }
+      
+      .nav-links {
+        width: 100% !important;
+        order: 3;
+        margin-top: 8px;
+        padding-bottom: 8px;
+      }
+    }
   </style>
 </head>
 
