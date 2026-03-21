@@ -2809,44 +2809,25 @@
     @media (max-width: 1023px) {
       .top-nav-inner {
         flex-wrap: wrap;
-        height: auto;
-        min-height: 70px;
+        height: 70px;
         padding: 10px 16px;
       }
 
       .logo-box {
-        width: 100%;
-        margin-bottom: 8px;
-      }
-
-      .nav-actions {
-        order: 2;
-        margin-left: auto;
         flex-shrink: 0;
       }
 
+      .nav-actions {
+        margin-left: auto;
+        flex-shrink: 0;
+        display: flex !important;
+        align-items: center;
+        gap: 8px;
+      }
+
+      /* Hide nav-links on mobile - use hamburger menu instead */
       .nav-links {
-        order: 3;
-        width: 100%;
-        margin: 10px 0 0 0;
-        padding: 8px 0;
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: thin;
-      }
-
-      .nav-links::-webkit-scrollbar {
-        height: 4px;
-      }
-
-      .nav-links::-webkit-scrollbar-track {
-        background: var(--gray-200);
-        border-radius: 10px;
-      }
-
-      .nav-links::-webkit-scrollbar-thumb {
-        background: var(--teal-primary);
-        border-radius: 10px;
+        display: none !important;
       }
 
       .mobile-menu-btn {
