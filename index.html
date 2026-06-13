@@ -5263,6 +5263,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       };
 
       useEffect(() => { const t = localStorage.getItem('token'), u = localStorage.getItem('user'); if (t && u && u !== 'undefined' && u !== 'null') { try { const userObj = JSON.parse(u); if (userObj) { setAuth({ user: userObj, token: t }); loadData(t, userObj); } } catch(e) { console.error('Invalid user data in localStorage:', e); localStorage.removeItem('token'); localStorage.removeItem('user'); } } }, []);
+         const loadData = async (token, userObj) => {
         console.log('📊 loadData started for user:', userObj);
         
         try {
