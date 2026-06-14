@@ -5449,7 +5449,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             
             <div className="nav-links">
               <button className={`nav-link ${view === 'overview' ? 'active' : ''}`} onClick={() => setView('overview')}>{translate('overview')}</button>
-              {auth.user.role !== 'admin' && <>
+              {auth.user?.role !== 'admin' && <>
                 <button className={`nav-link ${view === 'accounts' ? 'active' : ''}`} onClick={() => setView('accounts')}>{translate('accounts')}</button>
                 <button className={`nav-link ${view === 'transactions' ? 'active' : ''}`} onClick={() => setView('transactions')}>{translate('transactions')}</button>
                 <button className={`nav-link ${view === 'transfer' ? 'active' : ''}`} onClick={() => setView('transfer')}>{translate('transfers')}</button>
@@ -5457,7 +5457,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 <button className={`nav-link ${view === 'cards' ? 'active' : ''}`} onClick={() => setView('cards')}>{translate('cards')}</button>
                 <button className={`nav-link ${view === 'profile' ? 'active' : ''}`} onClick={() => setView('profile')}>{translate('profile')}</button>
               </>}
-              {auth.user.role === 'admin' && <>
+             {auth.user?.role === 'admin' && <>
                 <button className={`nav-link ${view === 'customers' ? 'active' : ''}`} onClick={() => setView('customers')}>{translate('customers')}</button>
                 <button className={`nav-link ${view === 'approvals' ? 'active' : ''}`} onClick={() => setView('approvals')}>{translate('pendingApprovals')}</button>
                 <button className={`nav-link ${view === 'card-requests' ? 'active' : ''}`} onClick={() => setView('card-requests')}>{translate('cardRequests')}</button>
@@ -5496,7 +5496,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             </div>
 
             <button className={`mobile-menu-item ${view==='overview'?'active':''}`} onClick={()=>{setView('overview');setMobileMenuOpen(false);}}>{translate('overview') || '📊 Overview'}</button>
-            {auth.user.role!=='admin'&&<>
+           {auth.user?.role!=='admin'&&<>
               <button className={`mobile-menu-item ${view==='accounts'?'active':''}`} onClick={()=>{setView('accounts');setMobileMenuOpen(false);}}>💳 {translate('accounts') || 'Accounts'}</button>
               <button className={`mobile-menu-item ${view==='transactions'?'active':''}`} onClick={()=>{setView('transactions');setMobileMenuOpen(false);}}>📋 {translate('transactions') || 'Transactions'}</button>
               <button className={`mobile-menu-item ${view==='transfer'?'active':''}`} onClick={()=>{setView('transfer');setMobileMenuOpen(false);}}>💸 {translate('transfers') || 'Transfer'}</button>
@@ -5504,7 +5504,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               <button className={`mobile-menu-item ${view==='cards'?'active':''}`} onClick={()=>{setView('cards');setMobileMenuOpen(false);}}>💳 {translate('cards') || 'Cards'}</button>
               <button className={`mobile-menu-item ${view==='profile'?'active':''}`} onClick={()=>{setView('profile');setMobileMenuOpen(false);}}>👤 {translate('profile') || 'Profile'}</button>
             </>}
-            {auth.user.role==='admin'&&<>
+           {auth.user?.role==='admin'&&<>
               <button className={`mobile-menu-item ${view==='customers'?'active':''}`} onClick={()=>{setView('customers');setMobileMenuOpen(false);}}>👥 {translate('customers') || 'Customers'}</button>
               <button className={`mobile-menu-item ${view==='approvals'?'active':''}`} onClick={()=>{setView('approvals');setMobileMenuOpen(false);}}>⏳ {translate('pendingApprovals') || 'Pending Approvals'}</button>
               <button className={`mobile-menu-item ${view==='deposit'?'active':''}`} onClick={()=>{setView('deposit');setMobileMenuOpen(false);}}>💰 {translate('processDeposit') || 'Process Deposit'}</button>
@@ -5519,9 +5519,9 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         <div className="hero">
           <div className="container">
             <div className="hero-content">
-              <div className="hero-label">{auth.user.role === 'admin' ? (translate('adminDashboard') || 'Admin Dashboard') : (view === 'overview' ? (translate('dashboard') || 'Dashboard') : translate(view) || view.charAt(0).toUpperCase() + view.slice(1))}</div>
+              <div className="hero-label">{auth.user?.role === 'admin' ? (translate('adminDashboard') || 'Admin Dashboard') : (view === 'overview' ? (translate('dashboard') || 'Dashboard') : translate(view) || view.charAt(0).toUpperCase() + view.slice(1))}</div>
               <h1 className="hero-title">{translate('welcomeBack') || 'Welcome back'}, {auth.user.first_name}</h1>
-              <p className="hero-subtitle">{auth.user.role === 'admin' ? (translate('adminDashboardSubtitle') || 'Manage customers, process deposits, and oversee all banking operations') : (translate('userDashboardSubtitle') || 'Your complete banking solution at your fingertips')}</p>
+              <p className="hero-subtitle">{auth.user?.role === 'admin' ? (translate('adminDashboardSubtitle') || 'Manage customers, process deposits, and oversee all banking operations') : (translate('userDashboardSubtitle') || 'Your complete banking solution at your fingertips')}</p>
             </div>
           </div>
         </div>
@@ -5529,8 +5529,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         {loading ? <div className="loader-container"><div className="loader" /></div> : <div className="section">
           <div className="container">
             {frozenCount > 0 && <div className="alert alert-warning">⚠️ <div><strong>{translate('accountFrozen') || 'Account Frozen'}:</strong> {translate('contactSupportToResolve') || 'Please contact support to resolve this issue.'}</div></div>}
-            {view === 'overview' && <div>
-              {auth.user.role === 'admin' ? <>
+            {auth.user?.role === 'admin' ? <>
                 <div className="stats-grid mb-6">
                   <div className="stat-card"><div className="stat-value">{adminData.users.length}</div><div className="stat-label">{translate('totalCustomers') || 'Total Customers'}</div></div>
                   <div className="stat-card"><div className="stat-value">{adminData.allTransactions.length}</div><div className="stat-label">{translate('allTransactions') || 'All Transactions'}</div></div>
@@ -6709,22 +6708,22 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </div>)}
               </div>
             </div>}
-            {view === 'customers' && auth.user.role === 'admin' && <CustomerManagement adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} currency={currency} />}
-            {view === 'approvals' && auth.user.role === 'admin' && <div>
+            {view === 'customers' &&auth.user?.role === 'admin' && <CustomerManagement adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} currency={currency} />}
+            {view === 'approvals' && auth.user?.role === 'admin' && <div>
               <div className="section-header">
                 <h2 className="section-title">Pending Account Approvals</h2>
                 <p className="section-subtitle">Review and approve customer account requests</p>
               </div>
               <PendingApprovals adminData={adminData} auth={auth} showToast={showToast} loadData={loadData} API={API} />
             </div>}
-            {view === 'card-requests' && auth.user.role === 'admin' && <div>
+            {view === 'card-requests' &&auth.user?.role === 'admin' && <div>
               <div className="section-header">
                 <h2 className="section-title">Card Requests</h2>
                 <p className="section-subtitle">Approve or reject customer card requests</p>
               </div>
               <AdminCardManagement auth={auth} showToast={showToast} API={API} />
             </div>}
-            {view === 'deposit' && auth.user.role === 'admin' && <div>
+            {view === 'deposit' &&auth.user?.role === 'admin' && <div>
               <div className="section-header">
                 <h2 className="section-title">Process Customer Deposit</h2>
                 <p className="section-subtitle">Process deposits on behalf of customers from verified sources</p>
@@ -6732,7 +6731,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               <div style={{ maxWidth: 600, margin: '0 auto' }}>
                 <div className="alert alert-info">💡 <strong>Admin Action:</strong> Process deposits from cash, checks, wires, ATM, or mobile deposits</div>
                 <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
-                  <form onSubmit={async e => {
+                  <form onSubmit={async e =>  {
                     e.preventDefault();
                     const fd = new FormData(e.target);
                     const userId = fd.get('user');
@@ -6780,7 +6779,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </div>
               </div>
             </div>}
-            {view === 'admin-transactions' && auth.user.role === 'admin' && <div>
+            {view === 'admin-transactions' &&auth.user?.role === 'admin' && <div>
               <div className="section-header">
                 <h2 className="section-title">All System Transactions</h2>
                 <p className="section-subtitle">Complete transaction history across all accounts</p>
@@ -6795,7 +6794,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </table>
               </div>
             </div>}
-            {view === 'backdate' && auth.user.role === 'admin' && <div>
+            {view === 'backdate' && auth.user?.role === 'admin' && <div>
               <div className="section-header">
                 <h2 className="section-title">Backdate Transaction</h2>
                 <p className="section-subtitle">Update the date of an existing transaction</p>
