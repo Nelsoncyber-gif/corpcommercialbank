@@ -5430,7 +5430,15 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       
       // Render Auth page if not logged in
       if (!auth) {
-        return <AuthPage isLogin={showLogin} onAuth={(u, t) => { setAuth({ user: u, token: t }); loadData(t, u); }} onSwitch={() => setShowLogin(!showLogin)} />;
+       return <AuthPage isLogin={showLogin} onAuth={(u, t) => { 
+  console.log('Setting auth with user:', u);
+  if (u && u.id) {
+    setAuth({ user: u, token: t }); 
+    loadData(t, u);
+  } else {
+    console.error('Invalid user object in onAuth:', u);
+  }
+}} onSwitch={() => setShowLogin(!showLogin)} />;
       }
       
       const totalBalance = accounts.reduce((s, a) => s + parseFloat(a.balance || 0), 0);
@@ -5489,7 +5497,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         <div className={`mobile-menu-overlay ${mobileMenuOpen?'open':''}`} onClick={()=>setMobileMenuOpen(false)}/>
         <div className={`mobile-menu ${mobileMenuOpen?'open':''}`}>
           <div className="mobile-menu-header">
-            <div style={{fontWeight:700,fontSize:16}}>{auth.user.first_name} {auth.user.last_name}</div>
+           <div style={{fontWeight:700,fontSize:16}}>{auth?.user?.first_name || ''} {auth?.user?.last_name || ''}</div>
             <button className="mobile-menu-close" onClick={()=>setMobileMenuOpen(false)}>✕</button>
           </div>
           <div className="mobile-menu-items">
@@ -5536,7 +5544,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
           <div className="container">
             <div className="hero-content">
               <div className="hero-label">{auth.user?.role === 'admin' ? (translate('adminDashboard') || 'Admin Dashboard') : (view === 'overview' ? (translate('dashboard') || 'Dashboard') : translate(view) || view.charAt(0).toUpperCase() + view.slice(1))}</div>
-              <h1 className="hero-title">{translate('welcomeBack') || 'Welcome back'}, {auth.user.first_name}</h1>
+            <h1 className="hero-title">{translate('welcomeBack') || 'Welcome back'}, {auth?.user?.first_name || 'Customer'}</h1>
               <p className="hero-subtitle">{auth.user?.role === 'admin' ? (translate('adminDashboardSubtitle') || 'Manage customers, process deposits, and oversee all banking operations') : (translate('userDashboardSubtitle') || 'Your complete banking solution at your fingertips')}</p>
             </div>
           </div>
