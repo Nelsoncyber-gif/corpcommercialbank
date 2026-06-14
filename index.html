@@ -5528,7 +5528,8 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         {/* CONTENT */}
         {loading ? <div className="loader-container"><div className="loader" /></div> : <div className="section">
           <div className="container">
-            {frozenCount > 0 && <div className="alert alert-warning">⚠️ <div><strong>{translate('accountFrozen') || 'Account Frozen'}:</strong> {translate('contactSupportToResolve') || 'Please contact support to resolve this issue.'}</div></div>}
+           {frozenCount > 0 && <div className="alert alert-warning">⚠️ <div><strong>{translate('accountFrozen') || 'Account Frozen'}:</strong> {translate('contactSupportToResolve') || 'Please contact support to resolve this issue.'}</div></div>}
+            {view === 'overview' && <div>
             {auth.user?.role === 'admin' ? <>
                 <div className="stats-grid mb-6">
                   <div className="stat-card"><div className="stat-value">{adminData.users.length}</div><div className="stat-label">{translate('totalCustomers') || 'Total Customers'}</div></div>
