@@ -3772,11 +3772,11 @@
           profilePicture: ''
         });
       }, [showLogin]);
-      const submit = async e => {
+     const submit = async e => {
   e.preventDefault();
 
   // Validation
-  if (!showLogin && form.password !== form.confirmPassword) {  // ✅ Use showLogin
+  if (!showLogin && form.password !== form.confirmPassword) {
     setToast({ message: 'Passwords do not match', type: 'error' });
     return;
   }
@@ -3786,29 +3786,45 @@
   try {
     console.log('Attempting login/register:', {
       email: form.email,
-      isRegistering: !showLogin,  // ✅ Log what we're actually doing
-      endpoint: `${API}/auth/${showLogin ? 'login' : 'register'}`  // ✅ Use showLogin
+      isRegistering: !showLogin,
+      endpoint: `${API}/auth/${showLogin ? 'login' : 'register'}`
     });
 
-    const response = await fetch(`${API}/auth/${showLogin ? 'login' : 'register'}`, {  // ✅ Use showLogin
+    const response = await fetch(`${API}/auth/${showLogin ? 'login' : 'register'}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(form)
     });
 
     console.log('Response status:', response.status);
-    console.log('Response headers:', response.headers);
-
     const data = await response.json();
     console.log('Response data:', data);
 
     if (data.success) {
+      // CRITICAL FIX: Ensure user object has required fields
+      const userData = data.user;
+      
+      // Add fallback values if fields are missing
+      if (!userData.first_name) userData.first_name = 'Customer';
+      if (!userData.last_name) userData.last_name = '';
+      if (!userData.id) {
+        console.error('User ID is missing from response!');
+        setToast({ message: 'Invalid user data received', type: 'error' });
+        setLoading(false);
+        return;
+      }
+      
+      console.log('Processed user data:', userData);
+      console.log('User first_name:', userData.first_name);
+      
       localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data.user));
-      onAuth(data.user, data.token);
+      localStorage.setItem('user', JSON.stringify(userData));
+      
+      // Call onAuth with the processed user data
+      onAuth(userData, data.token);
     } else {
       setToast({
-        message: data.message || `${showLogin ? 'Login' : 'Registration'} failed`,  // ✅ Use showLogin
+        message: data.message || `${showLogin ? 'Login' : 'Registration'} failed`,
         type: 'error'
       });
     }
