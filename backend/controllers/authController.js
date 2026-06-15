@@ -82,11 +82,26 @@ exports.register = async (req, res) => {
     const newUser = result.rows[0];
     console.log('✅ User created:', newUser.id);
 
+    const token = jwt.sign(
+      { id: newUser.id, email: newUser.email, role: 'customer' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
+
     console.log('✅ Registration successful for:', email);
 
     res.status(201).json({
       success: true,
       message: 'Registration successful! You can now login.',
+      token,
+      user: {
+        id: newUser.id,
+        first_name: newUser.first_name,
+        last_name: newUser.last_name,
+        email: newUser.email,
+        phone: newUser.phone || '',
+        role: 'customer'
+      },
       userId: newUser.id,
       email: newUser.email,
       requiresVerification: false

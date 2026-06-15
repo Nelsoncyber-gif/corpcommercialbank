@@ -3722,55 +3722,38 @@
     };
 
     // AUTH PAGES
+    const createEmptyForm = (loginMode) => loginMode ? { email: '', password: '' } : {
+      first_name: '',
+      last_name: '',
+      email: '',
+      password: '',
+      confirmPassword: '',
+      phone: '',
+      address: '',
+      city: '',
+      state: '',
+      zip: '',
+      country: '',
+      dob: '',
+      occupation: '',
+      taxId: '',
+      nextOfKinName: '',
+      nextOfKinPhone: '',
+      nextOfKinRelation: '',
+      profilePicture: ''
+    };
+
     const AuthPage = ({ isLogin, onAuth, onSwitch }) => {
       const { t } = useTranslation();
       const [showLogin, setShowLogin] = useState(isLogin);
-      const [form, setForm] = useState(showLogin ? { email: '', password: '' } : {
-        first_name: '',
-        last_name: '',
-        email: '',
-        password: '',
-        confirmPassword: '',
-        phone: '',
-        address: '',
-        city: '',
-        state: '',
-        zip: '',
-        country: '',
-        dob: '',
-        occupation: '',
-        taxId: '',
-        nextOfKinName: '',
-        nextOfKinPhone: '',
-        nextOfKinRelation: '',
-        profilePicture: ''
-      });
+      const [form, setForm] = useState(() => createEmptyForm(isLogin));
       const [loading, setLoading] = useState(false);
       const [toast, setToast] = useState(null);
       const [activeTestimonial, setActiveTestimonial] = useState(0);
 
       // Reset form when switching between login/register
       useEffect(() => {
-        setForm(showLogin ? { email: '', password: '' } : {
-          first_name: '',
-          last_name: '',
-          email: '',
-          password: '',
-          confirmPassword: '',
-          phone: '',
-          address: '',
-          city: '',
-          state: '',
-          zip: '',
-          country: '',
-          dob: '',
-          occupation: '',
-          taxId: '',
-          nextOfKinName: '',
-          nextOfKinPhone: '',
-          nextOfKinRelation: '',
-          profilePicture: ''
-        });
+        setForm(createEmptyForm(showLogin));
       }, [showLogin]);
      const submit = async e => {
   e.preventDefault();
@@ -3801,27 +3784,37 @@
     console.log('Response data:', data);
 
     if (data.success) {
-      // CRITICAL FIX: Ensure user object has required fields
-      const userData = data.user;
-      
-      // Add fallback values if fields are missing
-      if (!userData.first_name) userData.first_name = 'Customer';
-      if (!userData.last_name) userData.last_name = '';
-      if (!userData.id) {
+      const userData = data.user || {
+        id: data.userId || form.email,
+        first_name: form.first_name || 'Customer',
+        last_name: form.last_name || '',
+        email: data.email || form.email,
+        phone: form.phone || '',
+        role: 'customer'
+      };
+
+      const normalizedUser = {
+        ...userData,
+        first_name: userData.first_name || form.first_name || 'Customer',
+        last_name: userData.last_name || form.last_name || '',
+        email: userData.email || data.email || form.email,
+        phone: userData.phone || form.phone || ''
+      };
+
+      if (!normalizedUser.id && !data.userId) {
         console.error('User ID is missing from response!');
         setToast({ message: 'Invalid user data received', type: 'error' });
         setLoading(false);
         return;
       }
-      
-      console.log('Processed user data:', userData);
-      console.log('User first_name:', userData.first_name);
-      
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(userData));
-      
-      // Call onAuth with the processed user data
-      onAuth(userData, data.token);
+
+      const token = data.token || '';
+      console.log('Processed user data:', normalizedUser);
+
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(normalizedUser));
+
+      onAuth(normalizedUser, token);
     } else {
       setToast({
         message: data.message || `${showLogin ? 'Login' : 'Registration'} failed`,
