@@ -5278,10 +5278,40 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         return translations[language]?.[key] || translations.en?.[key] || key;
       };
 
-      useEffect(() => { const t = localStorage.getItem('token'), u = localStorage.getItem('user'); if (t && u && u !== 'undefined' && u !== 'null') { try { const userObj = JSON.parse(u); if (userObj) { setAuth({ user: userObj, token: t }); loadData(t, userObj); } } catch(e) { console.error('Invalid user data in localStorage:', e); localStorage.removeItem('token'); localStorage.removeItem('user'); } } }, []);
-         const loadData = async (token, userObj) => {
-        console.log('📊 loadData started for user:', userObj);
-        
+      useEffect(() => {
+        const token = localStorage.getItem('token');
+        const userStr = localStorage.getItem('user');
+
+        console.log('Loading auth from localStorage - token:', token ? 'present' : 'missing');
+        console.log('Loading auth from localStorage - userStr:', userStr);
+
+        if (token && userStr && userStr !== 'undefined' && userStr !== 'null') {
+          try {
+            const userObj = JSON.parse(userStr);
+            console.log('Parsed user object:', userObj);
+            console.log('User has first_name:', userObj?.first_name);
+
+            if (userObj && userObj.id) {
+              // Make sure user has required fields
+              if (!userObj.first_name) userObj.first_name = 'Customer';
+              if (!userObj.last_name) userObj.last_name = '';
+
+              setAuth({ user: userObj, token: token });
+              loadData(token, userObj);
+            } else {
+              console.error('Invalid user object - missing id');
+              localStorage.removeItem('token');
+              localStorage.removeItem('user');
+            }
+          } catch (e) {
+            console.error('Invalid user data in localStorage:', e);
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+          }
+        }
+      }, []);
+
+      const loadData = async (token, userObj) => {
         try {
           // Test API connection first
           try {
@@ -5444,7 +5474,8 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
       const totalBalance = accounts.reduce((s, a) => s + parseFloat(a.balance || 0), 0);
       const frozenCount = accounts.filter(a => a.status === 'frozen').length;
       
-      return <div>
+      return (
+        <div>
         {toast && <Toast {...toast} onClose={() => setToast(null)} />}
         {/* TOP NAV */}
         <nav className="top-nav">
@@ -6819,44 +6850,45 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </table>
               </div>
             </div>}
-            {view === 'backdate' && auth.user?.role === 'admin' && <div>
-              <div className="section-header">
-                <h2 className="section-title">Backdate Transaction</h2>
-                <p className="section-subtitle">Update the date of an existing transaction</p>
-              </div>
-              <div style={{ maxWidth: 600, margin: '0 auto' }}>
-                <div className="alert alert-info">💡 <strong>Admin Action:</strong> Change the transaction date for corrections or adjustments</div>
-                <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
-                  <div className="alert alert-info" style={{ marginBottom: 20 }}>
-                    <strong>📋 How to find Transaction ID:</strong> Go to "All Transactions" view and look for the TXN-# number in the first column. Enter only the number (e.g., if TXN-#5, enter 5).
+            {view === 'backdate' && auth.user?.role === 'admin' && (
+              <div>
+                <div className="section-header">
+                  <h2 className="section-title">Backdate Transaction</h2>
+                  <p className="section-subtitle">Update the date of an existing transaction</p>
+                </div>
+                <div style={{ maxWidth: 600, margin: '0 auto' }}>
+                  <div className="alert alert-info">💡 <strong>Admin Action:</strong> Change the transaction date for corrections or adjustments</div>
+                  <div style={{ background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, padding: 32 }}>
+                    <div className="alert alert-info" style={{ marginBottom: 20 }}>
+                      <strong>📋 How to find Transaction ID:</strong> Go to "All Transactions" view and look for the TXN-# number in the first column. Enter only the number (e.g., if TXN-#5, enter 5).
+                    </div>
+                    <form onSubmit={async e => {
+                      e.preventDefault();
+                      const fd = new FormData(e.target);
+                      try {
+                        const r = await fetch(`${API}/admin/backdate-transaction`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` }, body: JSON.stringify({ transactionId: parseInt(fd.get('transactionId')), newDate: fd.get('newDate') }) });
+                        const d = await r.json();
+                        if (d.success) { showToast('Transaction backdated successfully!'); loadData(auth.token, auth.user); e.target.reset(); }
+                        else showToast(d.message, 'error');
+                      } catch (err) { console.error(err); showToast('Failed to backdate transaction', 'error'); }
+                    }}>
+                      <div className="form-group">
+                        <label className="form-label">Transaction ID</label>
+                        <input name="transactionId" type="number" className="form-input" placeholder="e.g., 1, 2, 3" required />
+                        <div className="form-hint">Enter only the number from TXN-# (e.g., if TXN-#5, enter 5)</div>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">New Date/Time</label>
+                        <input name="newDate" type="datetime-local" className="form-input" required />
+                        <div className="form-hint">Select the date and time to assign to this transaction</div>
+                      </div>
+                      <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Backdate Transaction</button>
+                    </form>
                   </div>
-                  <form onSubmit={async e => {
-                    e.preventDefault();
-                    const fd = new FormData(e.target);
-                    try {
-                      const r = await fetch(`${API}/admin/backdate-transaction`, { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${auth.token}` }, body: JSON.stringify({ transactionId: parseInt(fd.get('transactionId')), newDate: fd.get('newDate') }) });
-                      const d = await r.json();
-                      if (d.success) { showToast('Transaction backdated successfully!'); loadData(auth.token, auth.user); e.target.reset(); }
-                      else showToast(d.message, 'error');
-                    } catch (err) { console.error(err); showToast('Failed to backdate transaction', 'error'); }
-                  }}>
-                    <div className="form-group">
-                      <label className="form-label">Transaction ID</label>
-                      <input name="transactionId" type="number" className="form-input" placeholder="e.g., 1, 2, 3" required />
-                      <div className="form-hint">Enter only the number from TXN-# (e.g., if TXN-#5, enter 5)</div>
-                    </div>
-                    <div className="form-group">
-                      <label className="form-label">New Date/Time</label>
-                      <input name="newDate" type="datetime-local" className="form-input" required />
-                      <div className="form-hint">Select the date and time to assign to this transaction</div>
-                    </div>
-                    <button type="submit" className="btn btn-primary btn-lg" style={{ width: '100%' }}>Backdate Transaction</button>
-                  </form>
                 </div>
               </div>
-            </div>}
+            )}
             <LiveChat user={auth.user} />
-            
           </div>
         </div>}
 
@@ -6873,8 +6905,10 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
           </div>
         </footer>
       </div>
-    }
-    ReactDOM.createRoot(document.getElementById('root')).render(
+    );
+  };
+
+  ReactDOM.createRoot(document.getElementById('root')).render(
       <ErrorBoundary>
         <LanguageProvider>
           <App />
