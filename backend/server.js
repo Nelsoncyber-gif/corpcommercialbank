@@ -6,7 +6,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const pool = require('./config/db');
-
+zzz
 
 const app = express();
 const server = http.createServer(app);
@@ -56,32 +56,6 @@ app.use('/api/chat', chatRoutes);
 app.use('/api/profile', profileRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/cards/admin', adminCardRoutes);
-
-// Block browser access to backend/server-side source and sensitive root files
-const blockedStaticPaths = [
-  '/backend',
-  '/config',
-  '/controllers',
-  '/middleware',
-  '/routes',
-  '/scripts',
-  '/logs',
-  '/.git',
-  '/package.json',
-  '/package-lock.json',
-  '/README.md',
-  '/Procfile',
-  '/.env',
-  '/.env.example'
-];
-
-app.use((req, res, next) => {
-  const normalizedPath = path.posix.normalize(req.path);
-  if (blockedStaticPaths.some(blocked => normalizedPath === blocked || normalizedPath.startsWith(`${blocked}/`))) {
-    return res.status(404).send('Not found');
-  }
-  next();
-});
 
 // Serve static files from root directory
 app.use(express.static(path.join(__dirname, '..')));
