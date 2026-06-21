@@ -6,7 +6,6 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const pool = require('./config/db');
-zzz
 
 const app = express();
 const server = http.createServer(app);
