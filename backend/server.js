@@ -57,6 +57,14 @@ app.use('/api/profile', profileRoutes);
 app.use('/api/cards', cardRoutes);
 app.use('/api/cards/admin', adminCardRoutes);
 
+// Prevent serving backend source files as browser assets
+app.use((req, res, next) => {
+  if (req.path.startsWith('/backend/') && req.path.match(/\.(js|jsx|ts|tsx)$/i)) {
+    return res.status(404).send('Not found');
+  }
+  next();
+});
+
 // Serve static files from root directory
 app.use(express.static(path.join(__dirname, '..')));
 
