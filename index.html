@@ -4160,8 +4160,236 @@
         </div>
       </div>;
     };
+    // ADMIN SUPPORT CHAT PANEL
+    const AdminChatPanel = ({ user, token }) => {
+      const [activeChats, setActiveChats] = useState([]);
+      const [selectedChat, setSelectedChat] = useState(null);
+      const [messages, setMessages] = useState([]);
+      const [inputMessage, setInputMessage] = useState('');
+      const [socket, setSocket] = useState(null);
+      const [isAdminConnected, setIsAdminConnected] = useState(false);
+      const messagesEndRef = useRef(null);
+
+      useEffect(() => {
+        if (!user || user.role !== 'admin') return;
+        const newSocket = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
+          reconnection: true,
+          reconnectionAttempts: 5,
+          reconnectionDelay: 1000
+        });
+
+        newSocket.on('connect', () => {
+          console.log('🔌 Admin socket connected:', newSocket.id);
+          setIsAdminConnected(true);
+          newSocket.emit('join-chat', { userId: user.id, userRole: 'admin', targetUserId: user.id });
+          newSocket.emit('get-active-chats');
+        });
+
+        newSocket.on('disconnect', () => {
+          setIsAdminConnected(false);
+          console.log('🔌 Admin socket disconnected');
+        });
+
+        newSocket.on('active-chats', (chats) => {
+          console.log('📋 Active chats:', chats.length);
+          setActiveChats(chats);
+        });
+
+        newSocket.on('new-user-message', ({ userId, message }) => {
+          console.log('📩 Admin received new-user-message from user:', userId, message);
+          if (selectedChat && selectedChat.user_id === userId) {
+            setMessages(prev => [...prev, message]);
+          }
+          newSocket.emit('get-active-chats');
+        });
+
+        newSocket.on('new-message', (msg) => {
+          if (selectedChat && selectedChat.user_id === msg.user_id) {
+            setMessages(prev => [...prev, msg]);
+          }
+        });
+
+        setSocket(newSocket);
+
+        return () => {
+          console.log('🔌 Admin socket disconnecting');
+          newSocket.disconnect();
+        };
+      }, [user?.id]);
+
+      useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      }, [messages, selectedChat]);
+
+      const selectChat = async (chat) => {
+        setSelectedChat(chat);
+        setMessages([]);
+
+        if (!socket) return;
+
+        socket.emit('join-chat', {
+          userId: user.id,
+          userRole: 'admin',
+          targetUserId: chat.user_id
+        });
+
+        try {
+          const response = await fetch(`${API}/admin/chat-history/${chat.user_id}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          const data = await response.json();
+          if (data.success) setMessages(data.messages || []);
+        } catch (error) {
+          console.error('Error fetching chat history:', error);
+        }
+      };
+
+      const sendMessage = (e) => {
+        e.preventDefault();
+        if (!inputMessage.trim() || !selectedChat || !socket) return;
+
+        socket.emit('send-message', {
+          userId: selectedChat.user_id,
+          message: inputMessage.trim(),
+          senderType: 'admin'
+        });
+
+        setInputMessage('');
+      };
+
+      return (
+        <div className="glass-card mx-4 mt-4 p-6 animate-fade-in" style={{ maxWidth: 1100, margin: '16px auto 0', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 16 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+            <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>💬 Support Chat</h2>
+            <span style={{ fontSize: 13, color: isAdminConnected ? '#16a34a' : '#dc2626' }}>
+              {isAdminConnected ? '● Connected' : '● Connecting...'}
+            </span>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 320px) minmax(0, 1fr)', gap: 16, maxHeight: 520 }}>
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, overflowY: 'auto' }}>
+              <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Active Chats</h3>
+              {activeChats.length === 0 ? (
+                <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>No active chats</p>
+              ) : (
+                <div style={{ display: 'grid', gap: 8 }}>
+                  {activeChats.map((chat) => (
+                    <div
+                      key={chat.user_id}
+                      onClick={() => selectChat(chat)}
+                      style={{
+                        padding: '10px 12px',
+                        borderRadius: 10,
+                        cursor: 'pointer',
+                        border: selectedChat?.user_id === chat.user_id ? '1px solid #14b8a6' : '1px solid transparent',
+                        background: selectedChat?.user_id === chat.user_id ? '#ecfeff' : '#f3f4f6',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      <p style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>{chat.first_name} {chat.last_name}</p>
+                      <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>{chat.email}</p>
+                      {chat.last_message && (
+                        <p style={{ margin: '6px 0 0', fontSize: 12, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {chat.last_message}
+                        </p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {selectedChat ? (
+                <>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 14, borderBottom: '1px solid #e5e7eb' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedChat(null);
+                          setMessages([]);
+                        }}
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: '50%',
+                          border: 'none',
+                          background: '#e5e7eb',
+                          color: '#111827',
+                          cursor: 'pointer',
+                          fontSize: 18,
+                          lineHeight: 1
+                        }}
+                        title="Back to chat list"
+                        aria-label="Back to chat list"
+                      >
+                        ←
+                      </button>
+                      <div style={{ minWidth: 0 }}>
+                        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {selectedChat.first_name} {selectedChat.last_name}
+                        </h3>
+                        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                          {selectedChat.email}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setSelectedChat(null)}
+                      style={{ background: 'transparent', border: 'none', color: '#6b7280', fontSize: 22, cursor: 'pointer' }}
+                      title="Close chat"
+                      aria-label="Close chat"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div style={{ flex: 1, overflowY: 'auto', padding: 16, background: '#f9fafb' }}>
+                    {messages.map((msg, index) => (
+                      <div key={index} style={{ display: 'flex', justifyContent: msg.sender_type === 'admin' ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
+                        <div style={{ maxWidth: '75%', background: msg.sender_type === 'admin' ? '#0f766e' : '#fff', color: msg.sender_type === 'admin' ? '#fff' : '#111827', border: msg.sender_type === 'admin' ? 'none' : '1px solid #e5e7eb', borderRadius: 12, padding: '10px 12px' }}>
+                          <div>{msg.message}</div>
+                          <div style={{ fontSize: 10, opacity: 0.75, marginTop: 4 }}>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        </div>
+                      </div>
+                    ))}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  <form onSubmit={sendMessage} style={{ display: 'flex', gap: 8, padding: 12, borderTop: '1px solid #e5e7eb' }}>
+                    <input
+                      type="text"
+                      value={inputMessage}
+                      onChange={(e) => setInputMessage(e.target.value)}
+                      placeholder="Type your reply..."
+                      style={{ flex: 1, minWidth: 0, border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }}
+                    />
+                    <button type="submit" style={{ background: '#0f766e', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontWeight: 700, cursor: 'pointer' }}>
+                      Send
+                    </button>
+                  </form>
+                </>
+              ) : (
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', textAlign: 'center' }}>
+                  <div>
+                    <div style={{ fontSize: 36, marginBottom: 8 }}>💬</div>
+                    <div>Select a chat to start messaging</div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    };
+
     // LIVE CHAT
     const LiveChat = ({ user }) => {
+      if (!user || user.role === 'admin') return null;
+
       const [open, setOpen] = useState(false);
       const [messages, setMessages] = useState([]);
       const [input, setInput] = useState('');
@@ -6907,7 +7135,11 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </div>
               </div>
             )}
-            <LiveChat user={auth.user} />
+            {auth.user?.role === 'admin' ? (
+              <AdminChatPanel user={auth.user} token={auth.token} />
+            ) : (
+              <LiveChat user={auth.user} />
+            )}
           </div>
         </div>}
 
