@@ -1912,8 +1912,8 @@
         max-width: none;
         right: 12px;
         left: 12px;
-        bottom: 80px;
-        height: min(60vh, 500px);
+        bottom: 12px;
+        height: min(62vh, 480px);
       }
 
       /* Chat FAB positioning */
@@ -2805,6 +2805,11 @@
         left: 12px;
         width: auto;
         max-width: none;
+      }
+
+      .chat-input-bar {
+        gap: 6px;
+        padding: 12px 14px;
       }
     }
 
@@ -4207,7 +4212,7 @@
         <button className="chat-fab" onClick={() => setOpen(!open)} style={{ position: 'fixed', bottom: 24, right: 24, width: 60, height: 60, borderRadius: '50%', background: 'var(--teal-primary)', color: 'var(--white)', fontSize: 24, border: 'none', cursor: 'pointer', boxShadow: 'var(--shadow-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900 }}>
           💬{!connected && <span style={{ position: 'absolute', top: -4, right: -4, width: 12, height: 12, background: 'var(--red-error)', borderRadius: '50%', border: '2px solid var(--white)' }} />}
         </button>
-        {open && <div className="chat-panel" style={{ position: 'fixed', bottom: 100, right: 24, width: '90%', maxWidth: 380, height: 500, background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', zIndex: 900 }}>
+        {open && <div className="chat-panel" style={{ position: 'fixed', bottom: 20, right: 20, width: 'min(360px, calc(100vw - 24px))', maxWidth: '360px', height: 'min(520px, calc(100vh - 120px))', background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', zIndex: 900 }}>
           <div className="chat-header" style={{ background: 'var(--teal-primary)', color: 'var(--white)', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
             <div>
               <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -4220,12 +4225,12 @@
           </div>
           <div className="chat-messages" style={{ flex: 1, overflowY: 'auto', padding: '16px', background: 'var(--gray-50)' }}>
             {messages.length === 0 ? <div style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '40px 20px' }}><div style={{ fontSize: 40, marginBottom: 12 }}>👋</div><div style={{ fontSize: 15, fontWeight: 600, color: 'var(--gray-700)' }}>How can we help?</div><div style={{ fontSize: 13, marginTop: 6 }}>Send us a message and we'll get back to you</div></div>
-              : messages.map((m, i) => <div key={i} className={`chat-message ${m.sender_type}`} style={{ display: 'flex', flexDirection: m.sender_type === 'user' ? 'column' : 'column', alignItems: m.sender_type === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 }}><div className="chat-bubble" style={{ padding: '10px 14px', borderRadius: 12, maxWidth: '75%', wordWrap: 'break-word', background: m.sender_type === 'user' ? 'var(--teal-primary)' : 'var(--white)', color: m.sender_type === 'user' ? 'var(--white)' : 'var(--gray-900)', border: m.sender_type === 'admin' ? '1px solid var(--gray-200)' : 'none' }}>{m.message}</div><div className="chat-time" style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4, padding: '0 4px' }}>{fmtTime(m.created_at)}</div></div>)}
+              : messages.map((m, i) => <div key={i} className={`chat-message ${m.sender_type}`} style={{ display: 'flex', flexDirection: 'column', alignItems: m.sender_type === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 }}><div className="chat-bubble" style={{ padding: '10px 14px', borderRadius: 12, maxWidth: '75%', wordWrap: 'break-word', background: m.sender_type === 'user' ? 'var(--teal-primary)' : 'var(--white)', color: m.sender_type === 'user' ? 'var(--white)' : 'var(--gray-900)', border: m.sender_type === 'admin' ? '1px solid var(--gray-200)' : 'none' }}>{m.message}</div><div className="chat-time" style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4, padding: '0 4px' }}>{fmtTime(m.created_at)}</div></div>)}
             {typing && <div style={{ fontSize: 12, color: 'var(--gray-500)', fontStyle: 'italic', padding: '8px 16px' }}>Support is typing...</div>}
             <div ref={bottomRef} />
           </div>
-          <form onSubmit={send} className="chat-input-bar" style={{ padding: '16px', borderTop: '1px solid var(--gray-200)', display: 'flex', gap: 8 }}>
-            <input className="chat-input" placeholder="Type your message..." value={input} onChange={e => setInput(e.target.value)} style={{ flex: 1, padding: '10px 14px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 14, fontFamily: 'inherit' }} />
+          <form onSubmit={send} className="chat-input-bar" style={{ padding: '16px', borderTop: '1px solid var(--gray-200)', display: 'flex', gap: 8, alignItems: 'center' }}>
+            <input className="chat-input" placeholder="Type your message..." value={input} onChange={e => setInput(e.target.value)} style={{ flex: 1, minWidth: 0, padding: '10px 14px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 14, fontFamily: 'inherit' }} />
             <button type="submit" className="btn btn-primary" disabled={!connected || !input.trim()}>Send</button>
           </form>
         </div>}
