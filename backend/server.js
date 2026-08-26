@@ -11,14 +11,21 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
-    methods: ['GET', 'POST']
+    origin: [
+      'http://localhost:3000',
+      'http://127.0.0.1:3000',
+      'http://localhost:5000',
+      'http://127.0.0.1:5000',
+      'file://'
+    ],
+    methods: ['GET', 'POST'],
+    credentials: true
   }
 });
 
 // Middleware
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'file://'],
+  origin: ['http://localhost:3000', 'http://127.0.0.1:3000', 'http://localhost:5000', 'http://127.0.0.1:5000', 'file://'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -69,23 +76,32 @@ const activeAdmins = new Map(); // Map<adminUserId, socketId>
 const userSockets = new Map();  // Map<userId, socketId>
 const adminSocketIds = new Set(); // Set of all admin socket IDs
 
+const getChatRoom = (userId) => `chat-${userId}`;
+
 io.on('connection', (socket) => {
   console.log('💬 User connected:', socket.id);
 
   // User joins chat
-  socket.on('join-chat', async ({ userId, userRole }) => {
-    socket.join(`user-${userId}`);
-    userSockets.set(userId, socket.id);
+  socket.on('join-chat', async ({ userId, userRole, targetUserId }) => {
+    const chatUserId = targetUserId ?? userId;
+    const roomName = getChatRoom(chatUserId);
+
+    socket.join(roomName);
+    socket.data.chatUserId = chatUserId;
+    socket.data.userRole = userRole;
 
     if (userRole === 'admin') {
       activeAdmins.set(userId, socket.id);
       adminSocketIds.add(socket.id);
+      socket.join('admin-chat');
       io.emit('admin-online', { adminCount: activeAdmins.size });
-      console.log('👨‍💼 Admin joined chat. Active admins:', activeAdmins.size);
-      console.log('👨‍💼 Admin socket IDs:', Array.from(adminSocketIds));
+      console.log('👨‍💼 Admin joined chat room:', roomName);
+      console.log('👨‍💼 Admin joined admin queue. Active admins:', activeAdmins.size);
+    } else {
+      userSockets.set(userId, socket.id);
     }
 
-    // Send chat history
+    // Send chat history for this specific user conversation
     try {
       const messages = await pool.query(
         `SELECT cm.*, u.first_name, u.last_name
@@ -93,7 +109,7 @@ io.on('connection', (socket) => {
          JOIN users u ON cm.user_id = u.id
          WHERE cm.user_id = $1
          ORDER BY cm.created_at ASC`,
-        [userId]
+        [chatUserId]
       );
       socket.emit('chat-history', messages.rows);
     } catch (error) {
@@ -111,26 +127,21 @@ io.on('connection', (socket) => {
       );
 
       const newMessage = result.rows[0];
+      const roomName = getChatRoom(userId);
       console.log('💾 Message saved to DB:', newMessage);
 
-      // Send to user's room
-      io.to(`user-${userId}`).emit('new-message', newMessage);
+      // Send to the exact chat room for this conversation
+      io.to(roomName).emit('new-message', newMessage);
 
-      // Broadcast to ALL admins (including sender if admin)
       if (senderType === 'user') {
-        console.log('📢 Broadcasting user message to all admins');
-        io.emit('new-user-message', {
+        console.log('📢 Broadcasting user message to admins for chat room:', roomName);
+        io.to('admin-chat').emit('new-user-message', {
           userId,
           message: newMessage
         });
-        // Also send via new-message event to all admins for the selected chat
-        io.to(`user-${userId}`).emit('new-message', newMessage);
       } else if (senderType === 'admin') {
         console.log('📢 Admin sent message to user', userId);
-        // Send to the specific user
-        io.to(`user-${userId}`).emit('new-message', newMessage);
-        // Also notify other admins about this admin's message
-        io.emit('new-message', newMessage);
+        io.to('admin-chat').emit('new-message', newMessage);
       }
 
       console.log(`📨 Message from ${senderType}:`, message.substring(0, 50));

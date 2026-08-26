@@ -25,7 +25,8 @@ const LiveChat = ({ user, token }) => {
     // Join chat room
     newSocket.emit('join-chat', { 
       userId: user.id, 
-      userRole: user.role 
+      userRole: user.role,
+      targetUserId: user.id 
     });
 
     // Listen for chat history
@@ -213,6 +214,13 @@ const AdminChatPanel = ({ token }) => {
 
   const selectChat = async (chat) => {
     setSelectedChat(chat);
+    if (socket) {
+      socket.emit('join-chat', {
+        userId: JSON.parse(localStorage.getItem('user'))?.id,
+        userRole: 'admin',
+        targetUserId: chat.user_id
+      });
+    }
     
     // Fetch chat history for this user
     try {

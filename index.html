@@ -3917,7 +3917,8 @@
                 </ul>
                 <div className="emergency-box">
                   <div className="emergency-label">{t('emergency247') || 'Emergency 24/7'}</div>
-                  <div className="emergency-phone">+1 (903) 517-0151, (903) 551-1183</div>
+                  <div className="emergency-phone">+1 (903) 517-0151, 
+                    (903) 551-1183</div>
                 </div>
               </div>
               <div style={{ position: 'relative' }}>
@@ -4155,7 +4156,7 @@
         s.on('connect', () => {
           console.log('Chat connected:', s.id);
           setConnected(true);
-          s.emit('join-chat', { userId: user.id, userRole: user.role });
+          s.emit('join-chat', { userId: user.id, userRole: user.role, targetUserId: user.id });
         });
         s.on('disconnect', () => { setConnected(false); console.log('Chat disconnected'); });
         s.on('connect_error', (err) => { console.error('Chat connection error:', err); });

@@ -815,7 +815,7 @@ const LiveChat = ({ user, token }) => {
     const newSocket = io('http://localhost:5000');
     setSocket(newSocket);
 
-    newSocket.emit('join-chat', { userId: user.id, userRole: user.role });
+    newSocket.emit('join-chat', { userId: user.id, userRole: user.role, targetUserId: user.id });
 
     newSocket.on('chat-history', (history) => {
       setMessages(history);
@@ -985,6 +985,13 @@ const AdminChatPanel = ({ token }) => {
 
   const selectChat = async (chat) => {
     setSelectedChat(chat);
+    if (socket) {
+      socket.emit('join-chat', {
+        userId: user?.id,
+        userRole: 'admin',
+        targetUserId: chat.user_id
+      });
+    }
     try {
       const response = await fetch(`${API_URL}/admin/chat-history/${chat.user_id}`, {
         headers: { 'Authorization': `Bearer ${token}` }
