@@ -86,8 +86,13 @@ io.on('connection', (socket) => {
     const chatUserId = targetUserId ?? userId;
     const roomName = getChatRoom(chatUserId);
 
+    if (socket.data.chatRoomName && socket.data.chatRoomName !== roomName) {
+      socket.leave(socket.data.chatRoomName);
+    }
+
     socket.join(roomName);
     socket.data.chatUserId = chatUserId;
+    socket.data.chatRoomName = roomName;
     socket.data.userRole = userRole;
 
     if (userRole === 'admin') {
@@ -130,7 +135,8 @@ io.on('connection', (socket) => {
       const roomName = getChatRoom(userId);
       console.log('💾 Message saved to DB:', newMessage);
 
-      // Send to the exact chat room for this conversation
+      // Always send to the exact conversation room so the customer and any admin
+      // currently viewing that thread receive the message on the same channel.
       io.to(roomName).emit('new-message', newMessage);
 
       if (senderType === 'user') {
@@ -141,7 +147,6 @@ io.on('connection', (socket) => {
         });
       } else if (senderType === 'admin') {
         console.log('📢 Admin sent message to user', userId);
-        io.to('admin-chat').emit('new-message', newMessage);
       }
 
       console.log(`📨 Message from ${senderType}:`, message.substring(0, 50));

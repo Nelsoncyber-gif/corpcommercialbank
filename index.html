@@ -2952,9 +2952,44 @@
     const CURRENCY_RATES = {
       USD: { rate: 1, symbol: '$', name: 'US Dollar' },
       EUR: { rate: 0.92, symbol: '€', name: 'Euro' },
-      GBP: { rate: 0.79, symbol: '£', name: 'British Pound' },
-      JPY: { rate: 151.5, symbol: '¥', name: 'Japanese Yen' },
+      GBP: { rate: 0.79, symbol: '£', name: 'British Pound Sterling' },
+      CHF: { rate: 0.88, symbol: 'CHF', name: 'Swiss Franc' },
+      SEK: { rate: 10.45, symbol: 'kr', name: 'Swedish Krona' },
+      NOK: { rate: 10.55, symbol: 'kr', name: 'Norwegian Krone' },
+      DKK: { rate: 6.86, symbol: 'kr', name: 'Danish Krone' },
+      PLN: { rate: 3.92, symbol: 'zł', name: 'Polish Zloty' },
+      CZK: { rate: 22.4, symbol: 'Kč', name: 'Czech Koruna' },
+      HUF: { rate: 359, symbol: 'Ft', name: 'Hungarian Forint' },
+      RON: { rate: 4.58, symbol: 'lei', name: 'Romanian Leu' },
+      BGN: { rate: 1.8, symbol: 'лв', name: 'Bulgarian Lev' },
+      TRY: { rate: 32.3, symbol: '₺', name: 'Turkish Lira' },
+      AED: { rate: 3.67, symbol: 'د.إ', name: 'UAE Dirham' },
+      SAR: { rate: 3.75, symbol: '﷼', name: 'Saudi Riyal' },
+      EGP: { rate: 48.5, symbol: 'E£', name: 'Egyptian Pound' },
+      NGN: { rate: 1520, symbol: '₦', name: 'Nigerian Naira' },
+      GHS: { rate: 15.8, symbol: 'GH₵', name: 'Ghanaian Cedi' },
+      ZAR: { rate: 18.3, symbol: 'R', name: 'South African Rand' },
+      MAD: { rate: 9.95, symbol: 'DH', name: 'Moroccan Dirham' },
+      TND: { rate: 3.16, symbol: 'د.ت', name: 'Tunisian Dinar' },
+      KES: { rate: 128, symbol: 'KSh', name: 'Kenyan Shilling' },
+      UGX: { rate: 3780, symbol: 'USh', name: 'Ugandan Shilling' },
+      TZS: { rate: 2540, symbol: 'TSh', name: 'Tanzanian Shilling' },
+      INR: { rate: 83.4, symbol: '₹', name: 'Indian Rupee' },
+      PKR: { rate: 278, symbol: '₨', name: 'Pakistani Rupee' },
+      BDT: { rate: 108, symbol: '৳', name: 'Bangladeshi Taka' },
+      LKR: { rate: 323, symbol: 'Rs', name: 'Sri Lankan Rupee' },
+      IDR: { rate: 16050, symbol: 'Rp', name: 'Indonesian Rupiah' },
+      SGD: { rate: 1.35, symbol: 'S$', name: 'Singapore Dollar' },
+      MYR: { rate: 4.69, symbol: 'RM', name: 'Malaysian Ringgit' },
+      THB: { rate: 35.5, symbol: '฿', name: 'Thai Baht' },
+      PHP: { rate: 58.4, symbol: '₱', name: 'Philippine Peso' },
+      VND: { rate: 25000, symbol: '₫', name: 'Vietnamese Dong' },
+      KRW: { rate: 1360, symbol: '₩', name: 'South Korean Won' },
+      HKD: { rate: 7.8, symbol: 'HK$', name: 'Hong Kong Dollar' },
       CNY: { rate: 7.23, symbol: '¥', name: 'Chinese Yuan' },
+      JPY: { rate: 151.5, symbol: '¥', name: 'Japanese Yen' },
+      AUD: { rate: 1.5, symbol: 'A$', name: 'Australian Dollar' },
+      NZD: { rate: 1.62, symbol: 'NZ$', name: 'New Zealand Dollar' },
       CAD: { rate: 1.36, symbol: 'C$', name: 'Canadian Dollar' }
     };
     const fmt = (n, currency = 'USD') => {
@@ -4169,6 +4204,11 @@
       const [socket, setSocket] = useState(null);
       const [isAdminConnected, setIsAdminConnected] = useState(false);
       const messagesEndRef = useRef(null);
+      const selectedChatRef = useRef(null);
+
+      useEffect(() => {
+        selectedChatRef.current = selectedChat;
+      }, [selectedChat]);
 
       useEffect(() => {
         if (!user || user.role !== 'admin') return;
@@ -4197,14 +4237,14 @@
 
         newSocket.on('new-user-message', ({ userId, message }) => {
           console.log('📩 Admin received new-user-message from user:', userId, message);
-          if (selectedChat && selectedChat.user_id === userId) {
+          if (selectedChatRef.current && selectedChatRef.current.user_id === userId) {
             setMessages(prev => [...prev, message]);
           }
           newSocket.emit('get-active-chats');
         });
 
         newSocket.on('new-message', (msg) => {
-          if (selectedChat && selectedChat.user_id === msg.user_id) {
+          if (selectedChatRef.current && selectedChatRef.current.user_id === msg.user_id) {
             setMessages(prev => [...prev, msg]);
           }
         });
