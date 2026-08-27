@@ -31,6 +31,23 @@ CREATE TABLE IF NOT EXISTS users (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Repair existing users and enforce valid roles.
+UPDATE users
+SET role = 'user'
+WHERE role IS NULL;
+
+UPDATE users
+SET role = 'admin'
+WHERE LOWER(email) = 'admin@corpcommercialbank.com';
+
+ALTER TABLE users
+    ALTER COLUMN role SET DEFAULT 'user',
+    ALTER COLUMN role SET NOT NULL;
+
+ALTER TABLE users
+    DROP CONSTRAINT IF EXISTS users_role_check,
+    ADD CONSTRAINT users_role_check CHECK (role IN ('admin', 'user', 'customer'));
+
 -- Create accounts table
 CREATE TABLE IF NOT EXISTS accounts (
     id SERIAL PRIMARY KEY,
