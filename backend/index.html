@@ -911,14 +911,20 @@ const AdminChatPanel = ({ token }) => {
   const messagesEndRef = React.useRef(null);
   const selectedChatRef = React.useRef(null);
   const [isAdminConnected, setIsAdminConnected] = useState(false);
+  const [currentUser, setCurrentUser] = useState(null);
 
-  const user = JSON.parse(localStorage.getItem('user'));
+  React.useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) setCurrentUser(JSON.parse(storedUser));
+  }, []);
 
   React.useEffect(() => {
     selectedChatRef.current = selectedChat;
   }, [selectedChat]);
 
   useEffect(() => {
+    if (!currentUser) return;
+
     const newSocket = io('http://localhost:5000');
     setSocket(newSocket);
 
@@ -928,7 +934,7 @@ const AdminChatPanel = ({ token }) => {
 
       // Emit join-chat with admin credentials
       newSocket.emit('join-chat', {
-        userId: user?.id,
+        userId: currentUser.id,
         userRole: 'admin'
       });
 
@@ -953,7 +959,7 @@ const AdminChatPanel = ({ token }) => {
       }, 100);
 
       // If this is the selected chat, add the message
-      if (selectedChatRef.current && selectedChatRef.current.user_id === userId) {
+      if (selectedChatRef.current && String(selectedChatRef.current.user_id) === String(userId)) {
         setMessages(prev => [...prev, message]);
       }
     });
@@ -961,7 +967,7 @@ const AdminChatPanel = ({ token }) => {
     // Also listen for general new-message events
     newSocket.on('new-message', (message) => {
       console.log('📩 Admin received new-message:', message);
-      if (selectedChatRef.current && message.user_id === selectedChatRef.current.user_id) {
+      if (selectedChatRef.current && String(message.user_id) === String(selectedChatRef.current.user_id)) {
         setMessages(prev => [...prev, message]);
       }
     });
@@ -977,7 +983,7 @@ const AdminChatPanel = ({ token }) => {
       newSocket.off('new-message');
       newSocket.disconnect();
     };
-  }, []);
+  }, [currentUser]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -987,7 +993,7 @@ const AdminChatPanel = ({ token }) => {
     setSelectedChat(chat);
     if (socket) {
       socket.emit('join-chat', {
-        userId: user?.id,
+        userId: currentUser?.id,
         userRole: 'admin',
         targetUserId: chat.user_id
       });

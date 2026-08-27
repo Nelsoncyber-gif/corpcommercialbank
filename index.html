@@ -4237,14 +4237,14 @@
 
         newSocket.on('new-user-message', ({ userId, message }) => {
           console.log('📩 Admin received new-user-message from user:', userId, message);
-          if (selectedChatRef.current && selectedChatRef.current.user_id === userId) {
+          if (selectedChatRef.current && String(selectedChatRef.current.user_id) === String(userId)) {
             setMessages(prev => [...prev, message]);
           }
           newSocket.emit('get-active-chats');
         });
 
         newSocket.on('new-message', (msg) => {
-          if (selectedChatRef.current && selectedChatRef.current.user_id === msg.user_id) {
+          if (selectedChatRef.current && String(selectedChatRef.current.user_id) === String(msg.user_id)) {
             setMessages(prev => [...prev, msg]);
           }
         });

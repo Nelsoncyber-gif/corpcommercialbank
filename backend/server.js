@@ -72,41 +72,37 @@ app.get('/*path', (req, res) => {
 });
 
 // Socket.io for real-time chat
-const activeAdmins = new Map(); // Map<adminUserId, socketId>
-const userSockets = new Map();  // Map<userId, socketId>
-const adminSocketIds = new Set(); // Set of all admin socket IDs
+const activeAdmins = new Map();
+const userSockets = new Map();
+const adminQueueRoom = 'support-admins';
 
-const getChatRoom = (userId) => `chat-${userId}`;
+const getSupportRoom = (userId) => `support-${userId}`;
 
 io.on('connection', (socket) => {
-  console.log('💬 User connected:', socket.id);
+  console.log('💬 Socket connected:', socket.id);
 
-  // User joins chat
   socket.on('join-chat', async ({ userId, userRole, targetUserId }) => {
-    const chatUserId = targetUserId ?? userId;
-    const roomName = getChatRoom(chatUserId);
+    const targetId = Number(targetUserId ?? userId);
+    const roomName = getSupportRoom(targetId);
 
-    if (socket.data.chatRoomName && socket.data.chatRoomName !== roomName) {
-      socket.leave(socket.data.chatRoomName);
+    if (socket.data.currentRoom && socket.data.currentRoom !== roomName) {
+      socket.leave(socket.data.currentRoom);
     }
 
     socket.join(roomName);
-    socket.data.chatUserId = chatUserId;
-    socket.data.chatRoomName = roomName;
+    socket.data.currentRoom = roomName;
     socket.data.userRole = userRole;
+    socket.data.userId = Number(userId);
 
     if (userRole === 'admin') {
-      activeAdmins.set(userId, socket.id);
-      adminSocketIds.add(socket.id);
-      socket.join('admin-chat');
-      io.emit('admin-online', { adminCount: activeAdmins.size });
-      console.log('👨‍💼 Admin joined chat room:', roomName);
-      console.log('👨‍💼 Admin joined admin queue. Active admins:', activeAdmins.size);
+      activeAdmins.set(Number(userId), socket.id);
+      socket.join(adminQueueRoom);
+      io.to(adminQueueRoom).emit('admin-online', { adminCount: activeAdmins.size });
+      console.log('👨‍💼 Admin joined support room:', roomName);
     } else {
-      userSockets.set(userId, socket.id);
+      userSockets.set(Number(userId), socket.id);
     }
 
-    // Send chat history for this specific user conversation
     try {
       const messages = await pool.query(
         `SELECT cm.*, u.first_name, u.last_name
@@ -114,7 +110,7 @@ io.on('connection', (socket) => {
          JOIN users u ON cm.user_id = u.id
          WHERE cm.user_id = $1
          ORDER BY cm.created_at ASC`,
-        [chatUserId]
+        [targetId]
       );
       socket.emit('chat-history', messages.rows);
     } catch (error) {
@@ -122,50 +118,56 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Send message
   socket.on('send-message', async ({ userId, message, senderType }) => {
+    console.log('📩 [DEBUG] send-message payload:', { userId, message, senderType });
+
     try {
+      const cleanMessage = String(message || '').trim();
+      const targetId = Number(userId);
+
+      if (!targetId || isNaN(targetId) || !cleanMessage) {
+        console.error('❌ [DEBUG] Invalid payload, dropping message');
+        return;
+      }
+
       const result = await pool.query(
         `INSERT INTO chat_messages (user_id, sender_type, message)
-         VALUES ($1, $2, $3) RETURNING *`,
-        [userId, senderType, message]
+         VALUES ($1, $2, $3)
+         RETURNING *`,
+        [targetId, senderType, cleanMessage]
       );
 
       const newMessage = result.rows[0];
-      const roomName = getChatRoom(userId);
-      console.log('💾 Message saved to DB:', newMessage);
+      const roomName = getSupportRoom(targetId);
+      console.log('💾 Saved message:', newMessage);
 
-      // Always send to the exact conversation room so the customer and any admin
-      // currently viewing that thread receive the message on the same channel.
       io.to(roomName).emit('new-message', newMessage);
 
       if (senderType === 'user') {
-        console.log('📢 Broadcasting user message to admins for chat room:', roomName);
-        io.to('admin-chat').emit('new-user-message', {
-          userId,
+        io.to(adminQueueRoom).emit('new-user-message', {
+          userId: targetId,
           message: newMessage
         });
-      } else if (senderType === 'admin') {
-        console.log('📢 Admin sent message to user', userId);
       }
-
-      console.log(`📨 Message from ${senderType}:`, message.substring(0, 50));
     } catch (error) {
       console.error('Error sending message:', error);
     }
   });
 
-  // Admin requests all active chats
   socket.on('get-active-chats', async () => {
     try {
       const chats = await pool.query(
-        `SELECT DISTINCT cm.user_id, u.first_name, u.last_name, u.email,
-         (SELECT message FROM chat_messages WHERE user_id = cm.user_id ORDER BY created_at DESC LIMIT 1) as last_message,
-         (SELECT created_at FROM chat_messages WHERE user_id = cm.user_id ORDER BY created_at DESC LIMIT 1) as last_message_time
+        `SELECT DISTINCT ON (cm.user_id)
+                cm.user_id,
+                u.first_name,
+                u.last_name,
+                u.email,
+                cm.message AS last_message,
+                cm.created_at AS last_message_time
          FROM chat_messages cm
          JOIN users u ON cm.user_id = u.id
          WHERE u.role != 'admin'
-         ORDER BY last_message_time DESC`
+         ORDER BY cm.user_id, cm.created_at DESC`
       );
       socket.emit('active-chats', chats.rows);
     } catch (error) {
@@ -173,20 +175,18 @@ io.on('connection', (socket) => {
     }
   });
 
-  // Disconnect
   socket.on('disconnect', () => {
-    console.log('User disconnected:', socket.id);
+    console.log('Socket disconnected:', socket.id);
 
-    for (let [userId, socketId] of activeAdmins.entries()) {
+    for (const [adminId, socketId] of activeAdmins.entries()) {
       if (socketId === socket.id) {
-        activeAdmins.delete(userId);
-        adminSocketIds.delete(socketId);
-        io.emit('admin-online', { adminCount: activeAdmins.size });
+        activeAdmins.delete(adminId);
+        io.to(adminQueueRoom).emit('admin-online', { adminCount: activeAdmins.size });
         break;
       }
     }
 
-    for (let [userId, socketId] of userSockets.entries()) {
+    for (const [userId, socketId] of userSockets.entries()) {
       if (socketId === socket.id) {
         userSockets.delete(userId);
         break;
