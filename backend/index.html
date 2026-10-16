@@ -812,7 +812,9 @@ const LiveChat = ({ user, token }) => {
   }, [messages]);
 
   useEffect(() => {
-    const newSocket = io('http://localhost:5000', { auth: { token } });
+    const chatToken = token || localStorage.getItem('token');
+    if (!chatToken || chatToken === 'null' || chatToken === 'undefined') return;
+    const newSocket = io('http://localhost:5000', { auth: { token: chatToken } });
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
@@ -832,7 +834,7 @@ const LiveChat = ({ user, token }) => {
     });
 
     return () => newSocket.disconnect();
-  }, [user.id, user.role]);
+  }, [user.id, user.role, token]);
 
   const sendMessage = (e) => {
     e.preventDefault();
@@ -933,7 +935,9 @@ const AdminChatPanel = ({ token }) => {
   useEffect(() => {
     if (!currentUser) return;
 
-    const newSocket = io('http://localhost:5000', { auth: { token } });
+    const chatToken = token || localStorage.getItem('token');
+    if (!chatToken || chatToken === 'null' || chatToken === 'undefined') return;
+    const newSocket = io('http://localhost:5000', { auth: { token: chatToken } });
     setSocket(newSocket);
 
     newSocket.on('connect', () => {
@@ -986,7 +990,7 @@ const AdminChatPanel = ({ token }) => {
       newSocket.off('new-message');
       newSocket.disconnect();
     };
-  }, [currentUser]);
+  }, [currentUser, token]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });

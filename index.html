@@ -3961,6 +3961,11 @@
     console.log('Response data:', data);
 
     if (data.success) {
+      if (typeof data.token !== 'string' || !data.token.trim()) {
+        setToast({ message: 'Authentication token missing. Please try again or contact support.', type: 'error' });
+        return;
+      }
+
       const userData = data.user || {
         id: data.userId || form.email,
         first_name: form.first_name || 'Customer',
@@ -3985,7 +3990,7 @@
         return;
       }
 
-      const token = data.token || '';
+      const token = data.token;
       console.log('Processed user data:', normalizedUser);
 
       localStorage.setItem('token', token);
@@ -4338,8 +4343,13 @@
 
       useEffect(() => {
         if (!user || user.role !== 'admin') return;
+        const chatToken = token || localStorage.getItem('token');
+        if (!chatToken || chatToken === 'null' || chatToken === 'undefined') {
+          setChatError('Your session token is missing. Please sign in again.');
+          return;
+        }
         const newSocket = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
-          auth: { token },
+          auth: { token: chatToken },
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000
@@ -4384,7 +4394,7 @@
           console.log('🔌 Admin socket disconnecting');
           newSocket.disconnect();
         };
-      }, [user?.id]);
+      }, [user?.id, token]);
 
       useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -4585,8 +4595,13 @@
       const chatEndRef = useRef(null);
       useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, open]);
       useEffect(() => {
+        const chatToken = token || localStorage.getItem('token');
+        if (!chatToken || chatToken === 'null' || chatToken === 'undefined') {
+          setChatError('Your session token is missing. Please sign in again.');
+          return;
+        }
         const s = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
-          auth: { token },
+          auth: { token: chatToken },
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000
@@ -4622,7 +4637,7 @@
           console.log('Disconnecting chat...');
           s.disconnect();
         };
-      }, [user.id]);
+      }, [user.id, token]);
       const send = e => {
         e.preventDefault();
         if (!input.trim() || !socket) return;
