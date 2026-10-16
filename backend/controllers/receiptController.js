@@ -23,6 +23,8 @@ exports.generateReceipt = async (req, res) => {
         t.reason_for_transaction,
         t.destination_country,
         a.account_number,
+        a.currency,
+        a.country,
         a.user_id,
         u.first_name,
         u.last_name,
@@ -168,7 +170,7 @@ exports.generateReceipt = async (req, res) => {
     // Amount - large and prominent
     doc.fontSize(10)
        .fillColor('#000000')
-       .text('Amount: ');
+       .text('Amount (USD): ');
     
     doc.fontSize(16)
        .fillColor(transactionTypeColor)

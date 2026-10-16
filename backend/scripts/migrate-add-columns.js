@@ -117,6 +117,21 @@ async function runMigration() {
       }
     }
 
+    // Keep account country and currency with each account and approval request.
+    const accountColumns = [
+      "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS country VARCHAR(2) NOT NULL DEFAULT 'US'",
+      "ALTER TABLE accounts ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'USD'",
+      'ALTER TABLE accounts ADD COLUMN IF NOT EXISTS phone VARCHAR(20)',
+      "ALTER TABLE account_approvals ADD COLUMN IF NOT EXISTS country VARCHAR(2) NOT NULL DEFAULT 'US'",
+      "ALTER TABLE account_approvals ADD COLUMN IF NOT EXISTS currency VARCHAR(3) NOT NULL DEFAULT 'USD'",
+      'ALTER TABLE account_approvals ADD COLUMN IF NOT EXISTS phone VARCHAR(20)'
+    ];
+
+    for (const sql of accountColumns) {
+      await client.query(sql);
+      console.log('✅ Executed:', sql.substring(0, 60).replace(/\n/g, ' ') + '...');
+    }
+
     console.log('✅ Migration completed successfully!');
 
   } catch (err) {

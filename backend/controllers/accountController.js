@@ -1,35 +1,60 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
+const { countries, countriesByCode } = require('../config/countries');
+
+exports.getCountries = (req, res) => {
+  res.status(200).json({ success: true, countries });
+};
 
 // ==================== CREATE ACCOUNT ====================
 // Create account request - requires admin approval
 exports.createAccount = async (req, res) => {
   try {
     const userId = req.user.id;
+    const { country: countryCode, phone } = req.body;
+    const country = countriesByCode.get(String(countryCode || '').toUpperCase());
+    const normalizedPhone = String(phone || '').replace(/[\s().-]/g, '');
 
-    // Check if user already has an account or pending request
+    if (!country) {
+      return res.status(400).json({ success: false, message: 'Select a valid country.' });
+    }
+
+    if (!/^\+[1-9]\d{6,14}$/.test(normalizedPhone)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Enter a valid phone number in international format, including the + country calling code.'
+      });
+    }
+    if (country.dialCode && !normalizedPhone.startsWith(`+${country.dialCode}`)) {
+      return res.status(400).json({
+        success: false,
+        message: `The phone number must use the +${country.dialCode} calling code for ${country.name}.`
+      });
+    }
+
+    // Customers can hold one account per country.
     const existingAccounts = await pool.query(
-      'SELECT id FROM accounts WHERE user_id = $1',
-      [userId]
+      'SELECT id FROM accounts WHERE user_id = $1 AND country = $2',
+      [userId, country.code]
     );
 
     if (existingAccounts.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'You already have an account. Each user is limited to one account.'
+        message: `You already have an account in ${country.name}.`
       });
     }
 
     // Check for pending approval requests
     const pendingRequest = await pool.query(
-      'SELECT id FROM account_approvals WHERE user_id = $1 AND status = $2',
-      [userId, 'pending']
+      'SELECT id FROM account_approvals WHERE user_id = $1 AND country = $2 AND status = $3',
+      [userId, country.code, 'pending']
     );
 
     if (pendingRequest.rows.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'You already have a pending account request. Please wait for admin approval.'
+        message: `You already have a pending account request for ${country.name}.`
       });
     }
 
@@ -38,10 +63,10 @@ exports.createAccount = async (req, res) => {
 
     // Create pending account approval request (account not active yet)
     const result = await pool.query(
-      `INSERT INTO account_approvals (user_id, account_number, status, requested_at)
-       VALUES ($1, $2, $3, NOW())
+      `INSERT INTO account_approvals (user_id, account_number, country, currency, phone, status, requested_at)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())
        RETURNING *`,
-      [userId, accountNumber, 'pending']
+      [userId, accountNumber, country.code, country.currency, normalizedPhone, 'pending']
     );
 
     res.json({
@@ -65,13 +90,15 @@ exports.getAccounts = async (req, res) => {
     const userId = req.user.id;
 
     const result = await pool.query(
-      `SELECT id, account_number, balance, status, created_at FROM accounts WHERE user_id = $1`,
+      `SELECT id, account_number, balance, status, country, currency, phone, created_at
+       FROM accounts WHERE user_id = $1`,
       [userId]
     );
 
     // Also check for pending account approval requests
     const pendingResult = await pool.query(
-      `SELECT id, account_number, status, requested_at FROM account_approvals WHERE user_id = $1 AND status = 'pending'`,
+      `SELECT id, account_number, country, currency, phone, status, requested_at
+       FROM account_approvals WHERE user_id = $1 AND status = 'pending'`,
       [userId]
     );
 
@@ -104,7 +131,8 @@ exports.findAccountByNumber = async (req, res) => {
     }
 
     const result = await pool.query(
-      `SELECT a.id, a.account_number, a.balance, a.status, u.id as user_id, u.first_name, u.last_name
+      `SELECT a.id, a.account_number, a.balance, a.status, a.country, a.currency,
+              u.id as user_id, u.first_name, u.last_name
        FROM accounts a
        JOIN users u ON a.user_id = u.id
        WHERE a.account_number = $1`,
@@ -378,6 +406,22 @@ exports.transfer = async (req, res) => {
     const sender = fromAcc.rows[0];
     const receiver = toAcc.rows[0];
 
+    if (transferType === 'international') {
+      const destination = countriesByCode.get(String(destinationCountry || '').toUpperCase());
+      if (!destination) {
+        return res.status(400).json({
+          success: false,
+          message: 'Select a valid destination country.'
+        });
+      }
+      if (receiver.country !== destination.code) {
+        return res.status(400).json({
+          success: false,
+          message: 'The selected destination country does not match the recipient account.'
+        });
+      }
+    }
+
     if (sender.user_id != userId) {
       return res.status(403).json({
         success: false,
@@ -533,7 +577,8 @@ exports.transactions = async (req, res) => {
     const accountIds = userAccounts.rows.map(row => row.id);
 
     const result = await pool.query(
-      `SELECT t.* FROM transactions t
+      `SELECT t.*, a.currency, a.country FROM transactions t
+       JOIN accounts a ON a.id = t.account_id
        WHERE t.account_id = ANY($1::int[])
        ORDER BY t.created_at DESC`,
       [accountIds]

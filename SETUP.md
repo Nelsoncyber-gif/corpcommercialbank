@@ -30,6 +30,8 @@ Option B - Manual:
 npm run migrate:user-columns
 ```
 
+The migration also adds country, currency, and phone fields to account records and account requests. Customers can open one account per country; account balances are stored in USD and displayed in the selected account's local currency. Transfer amounts are entered in USD.
+
 ### Step 3: Start the Server
 
 ```bash

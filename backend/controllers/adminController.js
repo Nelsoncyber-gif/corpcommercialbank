@@ -59,7 +59,7 @@ exports.getPendingApprovals = async (req, res) => {
     }
 
     const result = await pool.query(
-      `SELECT aa.*, u.first_name, u.last_name, u.email, u.phone
+      `SELECT aa.*, u.first_name, u.last_name, u.email
        FROM account_approvals aa
        JOIN users u ON aa.user_id = u.id
        WHERE aa.status = 'pending'
@@ -153,10 +153,19 @@ exports.approveAccount = async (req, res) => {
 
       // Create the actual account
       const accountResult = await client.query(
-        `INSERT INTO accounts (user_id, account_number, balance, status, created_at)
-         VALUES ($1, $2, $3, $4, $5)
+        `INSERT INTO accounts (user_id, account_number, balance, status, country, currency, phone, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
          RETURNING *`,
-        [approval.user_id, approval.account_number, 0.00, 'active', approval.requested_at]
+        [
+          approval.user_id,
+          approval.account_number,
+          0.00,
+          'active',
+          approval.country,
+          approval.currency,
+          approval.phone,
+          approval.requested_at
+        ]
       );
 
       // Update the approval status
@@ -250,7 +259,10 @@ exports.rejectAccount = async (req, res) => {
 exports.getAllTransactions = async (req, res) => {
   try {
     const result = await pool.query(
-      "SELECT * FROM transactions ORDER BY created_at DESC"
+      `SELECT t.*, a.currency, a.country
+       FROM transactions t
+       JOIN accounts a ON a.id = t.account_id
+       ORDER BY t.created_at DESC`
     );
 
     res.json({
@@ -365,13 +377,13 @@ exports.getUserDetails = async (req, res) => {
 
     // Get user's account
     const accountResult = await pool.query(
-      "SELECT id, account_number, balance, status, created_at FROM accounts WHERE user_id = $1",
+      "SELECT id, account_number, balance, status, country, currency, phone, created_at FROM accounts WHERE user_id = $1",
       [parsedUserId]
     );
 
     // Get user's transactions
     const transactionsResult = await pool.query(
-      `SELECT t.* FROM transactions t
+      `SELECT t.*, a.currency, a.country FROM transactions t
        INNER JOIN accounts a ON t.account_id = a.id
        WHERE a.user_id = $1
        ORDER BY t.created_at DESC
@@ -417,7 +429,7 @@ exports.getUserAccounts = async (req, res) => {
     }
 
     const accounts = await pool.query(
-      "SELECT id, account_number, balance, status, created_at, user_id FROM accounts WHERE user_id = $1 ORDER BY created_at DESC",
+      "SELECT id, account_number, balance, status, country, currency, phone, created_at, user_id FROM accounts WHERE user_id = $1 ORDER BY created_at DESC",
       [parsedUserId]  // FIX #2: Use parsed integer
     );
 

@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
+const { countries, countriesByCode } = require('../config/countries');
 
 // ==================== AUTH CONTROLLERS ====================
 
@@ -38,6 +39,16 @@ exports.register = async (req, res) => {
     });
   }
 
+  const selectedCountry = String(country || '').trim();
+  const normalizedCountry = countriesByCode.get(selectedCountry.toUpperCase()) ||
+    countries.find(item => item.name.toLowerCase() === selectedCountry.toLowerCase());
+  if (!normalizedCountry) {
+    return res.status(400).json({
+      success: false,
+      message: 'Select a valid country.'
+    });
+  }
+
   try {
     console.log('📊 Checking if email exists:', email);
 
@@ -69,10 +80,10 @@ exports.register = async (req, res) => {
         next_of_kin_name, next_of_kin_phone, next_of_kin_relationship,
         profile_picture, is_verified
       ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
-       RETURNING id, first_name, last_name, email, phone`,
+       RETURNING id, first_name, last_name, email, phone, country`,
       [
         first_name, last_name, email, hashed, phone,
-        address, city, state, zip, country,
+        address, city, state, zip, normalizedCountry.name,
         dob, occupation, taxId,
         nextOfKinName, nextOfKinPhone, nextOfKinRelation,
         profilePicture, true
@@ -100,6 +111,7 @@ exports.register = async (req, res) => {
         last_name: newUser.last_name,
         email: newUser.email,
         phone: newUser.phone || '',
+        country: newUser.country,
         role: 'customer'
       },
       userId: newUser.id,

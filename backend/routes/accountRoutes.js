@@ -4,6 +4,7 @@ const router = express.Router();
 const { validate } = require('../middleware/validation');
 const { protect } = require('../middleware/auth');
 const {
+  getCountries,
   createAccount,
   getAccounts,
   deposit,
@@ -18,6 +19,8 @@ const { generateReceipt } = require('../controllers/receiptController');
 console.log("Account routes file loaded");
 
 // ==================== ACCOUNT MANAGEMENT ====================
+
+router.get('/countries', getCountries);
 
 /**
  * Create a new bank account for the authenticated user

@@ -50,6 +50,9 @@ async function runMigrations() {
         account_number VARCHAR(50) UNIQUE NOT NULL,
         balance DECIMAL(15, 2) DEFAULT 0.00,
         status VARCHAR(20) DEFAULT 'active',
+        country VARCHAR(2) NOT NULL DEFAULT 'US',
+        currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+        phone VARCHAR(20),
         created_at TIMESTAMPTZ DEFAULT NOW(),
         updated_at TIMESTAMPTZ DEFAULT NOW()
       );
@@ -108,6 +111,9 @@ async function runMigrations() {
         id SERIAL PRIMARY KEY,
         user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
         account_number VARCHAR(50) UNIQUE NOT NULL,
+        country VARCHAR(2) NOT NULL DEFAULT 'US',
+        currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+        phone VARCHAR(20),
         status VARCHAR(20) DEFAULT 'pending',
         requested_at TIMESTAMPTZ DEFAULT NOW(),
         reviewed_at TIMESTAMPTZ,

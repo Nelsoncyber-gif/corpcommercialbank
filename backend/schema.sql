@@ -55,6 +55,9 @@ CREATE TABLE IF NOT EXISTS accounts (
     account_number VARCHAR(20) UNIQUE,
     balance DECIMAL(15, 2) DEFAULT 0.00,
     status VARCHAR(20) DEFAULT 'active',
+    country VARCHAR(2) NOT NULL DEFAULT 'US',
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    phone VARCHAR(20),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -85,6 +88,9 @@ CREATE TABLE IF NOT EXISTS account_approvals (
     id SERIAL PRIMARY KEY,
     user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
     account_number VARCHAR(20) UNIQUE,
+    country VARCHAR(2) NOT NULL DEFAULT 'US',
+    currency VARCHAR(3) NOT NULL DEFAULT 'USD',
+    phone VARCHAR(20),
     status VARCHAR(20) DEFAULT 'pending',
     requested_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     reviewed_at TIMESTAMP,
