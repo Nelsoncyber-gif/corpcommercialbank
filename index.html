@@ -4328,6 +4328,7 @@
       const [inputMessage, setInputMessage] = useState('');
       const [socket, setSocket] = useState(null);
       const [isAdminConnected, setIsAdminConnected] = useState(false);
+      const [chatError, setChatError] = useState('');
       const messagesEndRef = useRef(null);
       const selectedChatRef = useRef(null);
 
@@ -4338,6 +4339,7 @@
       useEffect(() => {
         if (!user || user.role !== 'admin') return;
         const newSocket = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
+          auth: { token },
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000
@@ -4346,8 +4348,12 @@
         newSocket.on('connect', () => {
           console.log('🔌 Admin socket connected:', newSocket.id);
           setIsAdminConnected(true);
-          newSocket.emit('join-chat', { userId: user.id, userRole: 'admin', targetUserId: user.id });
+          newSocket.emit('join-chat', { targetUserId: user.id });
           newSocket.emit('get-active-chats');
+        });
+
+        newSocket.on('connect_error', (error) => {
+          setChatError(error.message || 'Unable to connect to support chat.');
         });
 
         newSocket.on('disconnect', () => {
@@ -4362,18 +4368,16 @@
 
         newSocket.on('new-user-message', ({ userId, message }) => {
           console.log('📩 Admin received new-user-message from user:', userId, message);
-          if (selectedChatRef.current && String(selectedChatRef.current.user_id) === String(userId)) {
-            setMessages(prev => [...prev, message]);
-          }
           newSocket.emit('get-active-chats');
         });
 
         newSocket.on('new-message', (msg) => {
           if (selectedChatRef.current && String(selectedChatRef.current.user_id) === String(msg.user_id)) {
-            setMessages(prev => [...prev, msg]);
+            setMessages(prev => prev.some(message => String(message.id) === String(msg.id)) ? prev : [...prev, msg]);
           }
         });
 
+        newSocket.on('chat-error', ({ message }) => setChatError(message || 'Support chat failed.'));
         setSocket(newSocket);
 
         return () => {
@@ -4389,23 +4393,28 @@
       const selectChat = async (chat) => {
         setSelectedChat(chat);
         setMessages([]);
+        setChatError('');
 
         if (!socket) return;
 
         socket.emit('join-chat', {
-          userId: user.id,
-          userRole: 'admin',
           targetUserId: chat.user_id
         });
 
         try {
-          const response = await fetch(`${API}/admin/chat-history/${chat.user_id}`, {
+          const response = await fetch(`${API}/chat/chat-history/${chat.user_id}`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const data = await response.json();
-          if (data.success) setMessages(data.messages || []);
+          if (!response.ok || !data.success) throw new Error(data.message || 'Failed to load chat history.');
+          setMessages(prev => {
+            const messagesById = new Map((data.messages || []).map(message => [String(message.id), message]));
+            prev.forEach(message => messagesById.set(String(message.id), message));
+            return [...messagesById.values()];
+          });
         } catch (error) {
           console.error('Error fetching chat history:', error);
+          setChatError(error.message || 'Failed to load chat history.');
         }
       };
 
@@ -4415,11 +4424,16 @@
 
         socket.emit('send-message', {
           userId: selectedChat.user_id,
-          message: inputMessage.trim(),
-          senderType: 'admin'
+          message: inputMessage.trim()
+        }, result => {
+          if (!result?.success) {
+            setChatError(result?.message || 'Message could not be sent.');
+            return;
+          }
+          setChatError('');
+          setMessages(prev => prev.some(message => String(message.id) === String(result.message.id)) ? prev : [...prev, result.message]);
+          setInputMessage('');
         });
-
-        setInputMessage('');
       };
 
       return (
@@ -4465,6 +4479,7 @@
             </div>
 
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+              {chatError && <div role="alert" style={{ color: '#b91c1c', background: '#fef2f2', padding: '10px 14px', fontSize: 13 }}>{chatError}</div>}
               {selectedChat ? (
                 <>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 14, borderBottom: '1px solid #e5e7eb' }}>
@@ -4528,7 +4543,13 @@
                     <input
                       type="text"
                       value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setInputMessage(value);
+                        if (selectedChat && socket) {
+                          socket.emit(value.trim() ? 'admin-typing' : 'admin-stop-typing', { targetUserId: selectedChat.user_id });
+                        }
+                      }}
                       placeholder="Type your reply..."
                       style={{ flex: 1, minWidth: 0, border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }}
                     />
@@ -4552,7 +4573,7 @@
     };
 
     // LIVE CHAT
-    const LiveChat = ({ user }) => {
+    const LiveChat = ({ user, token }) => {
       if (!user || user.role === 'admin') return null;
 
       const [open, setOpen] = useState(false);
@@ -4561,11 +4582,13 @@
       const [socket, setSocket] = useState(null);
       const [connected, setConnected] = useState(false);
       const [typing, setTyping] = useState(false);
+      const [chatError, setChatError] = useState('');
       const bottomRef = useRef(null);
       const chatEndRef = useRef(null);
       useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, open]);
       useEffect(() => {
         const s = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
+          auth: { token },
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000
@@ -4573,19 +4596,27 @@
         s.on('connect', () => {
           console.log('Chat connected:', s.id);
           setConnected(true);
-          s.emit('join-chat', { userId: user.id, userRole: user.role, targetUserId: user.id });
+          s.emit('join-chat', { targetUserId: user.id });
         });
         s.on('disconnect', () => { setConnected(false); console.log('Chat disconnected'); });
-        s.on('connect_error', (err) => { console.error('Chat connection error:', err); });
+        s.on('connect_error', (err) => {
+          console.error('Chat connection error:', err);
+          setChatError(err.message || 'Unable to connect to support chat.');
+        });
         s.on('chat-history', msgs => {
           console.log('Received chat history:', msgs.length, 'messages');
-          setMessages(msgs);
+          setMessages(prev => {
+            const messagesById = new Map(msgs.map(message => [String(message.id), message]));
+            prev.forEach(message => messagesById.set(String(message.id), message));
+            return [...messagesById.values()];
+          });
         });
         s.on('new-message', msg => {
           console.log('New message received:', msg);
-          setMessages(prev => [...prev, msg]);
+          setMessages(prev => prev.some(message => String(message.id) === String(msg.id)) ? prev : [...prev, msg]);
           if (msg.sender_type === 'admin') setTyping(false);
         });
+        s.on('chat-error', ({ message }) => setChatError(message || 'Support chat failed.'));
         s.on('admin-typing', () => setTyping(true));
         s.on('admin-stop-typing', () => setTyping(false));
         setSocket(s);
@@ -4598,8 +4629,15 @@
         e.preventDefault();
         if (!input.trim() || !socket) return;
         console.log('Sending message:', input);
-        socket.emit('send-message', { userId: user.id, message: input.trim(), senderType: 'user' });
-        setInput('');
+        socket.emit('send-message', { userId: user.id, message: input.trim() }, result => {
+          if (!result?.success) {
+            setChatError(result?.message || 'Message could not be sent.');
+            return;
+          }
+          setChatError('');
+          setMessages(prev => prev.some(message => String(message.id) === String(result.message.id)) ? prev : [...prev, result.message]);
+          setInput('');
+        });
       };
       return <>
         <button className="chat-fab" onClick={() => setOpen(!open)} style={{ position: 'fixed', bottom: 24, right: 24, width: 60, height: 60, borderRadius: '50%', background: 'var(--teal-primary)', color: 'var(--white)', fontSize: 24, border: 'none', cursor: 'pointer', boxShadow: 'var(--shadow-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900 }}>
@@ -4617,6 +4655,7 @@
             <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--white)', fontSize: 24, cursor: 'pointer' }}>✕</button>
           </div>
           <div className="chat-messages" style={{ flex: 1, overflowY: 'auto', padding: '16px', background: 'var(--gray-50)' }}>
+            {chatError && <div role="alert" style={{ color: '#b91c1c', background: '#fef2f2', padding: '10px 12px', marginBottom: 12, borderRadius: 6, fontSize: 13 }}>{chatError}</div>}
             {messages.length === 0 ? <div style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '40px 20px' }}><div style={{ fontSize: 40, marginBottom: 12 }}>👋</div><div style={{ fontSize: 15, fontWeight: 600, color: 'var(--gray-700)' }}>How can we help?</div><div style={{ fontSize: 13, marginTop: 6 }}>Send us a message and we'll get back to you</div></div>
               : messages.map((m, i) => <div key={i} className={`chat-message ${m.sender_type}`} style={{ display: 'flex', flexDirection: 'column', alignItems: m.sender_type === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 }}><div className="chat-bubble" style={{ padding: '10px 14px', borderRadius: 12, maxWidth: '75%', wordWrap: 'break-word', background: m.sender_type === 'user' ? 'var(--teal-primary)' : 'var(--white)', color: m.sender_type === 'user' ? 'var(--white)' : 'var(--gray-900)', border: m.sender_type === 'admin' ? '1px solid var(--gray-200)' : 'none' }}>{m.message}</div><div className="chat-time" style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4, padding: '0 4px' }}>{fmtTime(m.created_at)}</div></div>)}
             {typing && <div style={{ fontSize: 12, color: 'var(--gray-500)', fontStyle: 'italic', padding: '8px 16px' }}>Support is typing...</div>}
@@ -7327,7 +7366,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
             {auth.user?.role === 'admin' ? (
               <AdminChatPanel user={auth.user} token={auth.token} />
             ) : (
-              <LiveChat user={auth.user} />
+              <LiveChat user={auth.user} token={auth.token} />
             )}
           </div>
         </div>}

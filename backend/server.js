@@ -6,6 +6,7 @@ const http = require('http');
 const { Server } = require('socket.io');
 const path = require('path');
 const pool = require('./config/db');
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const server = http.createServer(app);
@@ -20,6 +21,17 @@ const io = new Server(server, {
     ],
     methods: ['GET', 'POST'],
     credentials: true
+  }
+});
+
+io.use((socket, next) => {
+  try {
+    const token = socket.handshake.auth?.token;
+    if (!token) return next(new Error('Authentication required.'));
+    socket.data.authUser = jwt.verify(token, process.env.JWT_SECRET);
+    next();
+  } catch (error) {
+    next(new Error('Invalid or expired authentication token.'));
   }
 });
 
@@ -74,6 +86,7 @@ app.get('/*path', (req, res) => {
 // Socket.io for real-time chat
 const activeAdmins = new Map();
 const userSockets = new Map();
+const adminTypingTimers = new Map();
 const adminQueueRoom = 'support-admins';
 
 const getSupportRoom = (userId) => `support-${userId}`;
@@ -81,8 +94,15 @@ const getSupportRoom = (userId) => `support-${userId}`;
 io.on('connection', (socket) => {
   console.log('💬 Socket connected:', socket.id);
 
-  socket.on('join-chat', async ({ userId, userRole, targetUserId }) => {
-    const targetId = Number(targetUserId ?? userId);
+  socket.on('join-chat', async ({ targetUserId } = {}) => {
+    const authUser = socket.data.authUser;
+    const userId = Number(authUser.id);
+    const isAdmin = authUser.role === 'admin';
+    const targetId = isAdmin ? Number(targetUserId ?? userId) : userId;
+    if (!Number.isInteger(userId) || userId <= 0 || !Number.isInteger(targetId) || targetId <= 0) {
+      socket.emit('chat-error', { message: 'Invalid chat participant.' });
+      return;
+    }
     const roomName = getSupportRoom(targetId);
 
     if (socket.data.currentRoom && socket.data.currentRoom !== roomName) {
@@ -91,11 +111,11 @@ io.on('connection', (socket) => {
 
     socket.join(roomName);
     socket.data.currentRoom = roomName;
-    socket.data.userRole = userRole;
-    socket.data.userId = Number(userId);
+    socket.data.userRole = authUser.role;
+    socket.data.userId = userId;
 
-    if (userRole === 'admin') {
-      activeAdmins.set(Number(userId), socket.id);
+    if (isAdmin) {
+      activeAdmins.set(userId, socket.id);
       socket.join(adminQueueRoom);
       io.to(adminQueueRoom).emit('admin-online', { adminCount: activeAdmins.size });
       console.log('👨‍💼 Admin joined support room:', roomName);
@@ -115,18 +135,20 @@ io.on('connection', (socket) => {
       socket.emit('chat-history', messages.rows);
     } catch (error) {
       console.error('Error fetching chat history:', error);
+      socket.emit('chat-error', { message: 'Failed to load chat history.' });
     }
   });
 
-  socket.on('send-message', async ({ userId, message, senderType }) => {
-    console.log('📩 [DEBUG] send-message payload:', { userId, message, senderType });
-
+  socket.on('send-message', async ({ userId, message } = {}, acknowledge) => {
     try {
       const cleanMessage = String(message || '').trim();
-      const targetId = Number(userId);
+      const isAdmin = socket.data.authUser.role === 'admin';
+      const targetId = isAdmin ? Number(userId) : Number(socket.data.authUser.id);
 
-      if (!targetId || isNaN(targetId) || !cleanMessage) {
-        console.error('❌ [DEBUG] Invalid payload, dropping message');
+      if (!Number.isInteger(targetId) || targetId <= 0 || !cleanMessage || cleanMessage.length > 5000) {
+        const result = { success: false, message: 'Enter a message of 1 to 5000 characters.' };
+        if (typeof acknowledge === 'function') acknowledge(result);
+        else socket.emit('chat-error', result);
         return;
       }
 
@@ -134,27 +156,63 @@ io.on('connection', (socket) => {
         `INSERT INTO chat_messages (user_id, sender_type, message)
          VALUES ($1, $2, $3)
          RETURNING *`,
-        [targetId, senderType, cleanMessage]
+        [targetId, isAdmin ? 'admin' : 'user', cleanMessage]
       );
 
       const newMessage = result.rows[0];
       const roomName = getSupportRoom(targetId);
-      console.log('💾 Saved message:', newMessage);
-
       io.to(roomName).emit('new-message', newMessage);
 
-      if (senderType === 'user') {
+      if (!isAdmin) {
         io.to(adminQueueRoom).emit('new-user-message', {
           userId: targetId,
           message: newMessage
         });
       }
+      if (typeof acknowledge === 'function') acknowledge({ success: true, message: newMessage });
     } catch (error) {
       console.error('Error sending message:', error);
+      const result = { success: false, message: 'Message could not be sent. Please try again.' };
+      if (typeof acknowledge === 'function') acknowledge(result);
+      else socket.emit('chat-error', result);
     }
   });
 
+  socket.on('admin-typing', ({ targetUserId } = {}) => {
+    if (socket.data.authUser.role !== 'admin') return;
+    const userId = Number(targetUserId);
+    if (!Number.isInteger(userId) || userId <= 0) return;
+
+    const roomName = getSupportRoom(userId);
+    io.to(roomName).emit('admin-typing');
+    const existingTimer = adminTypingTimers.get(socket.id);
+    if (existingTimer) {
+      clearTimeout(existingTimer.timer);
+      if (existingTimer.roomName !== roomName) io.to(existingTimer.roomName).emit('admin-stop-typing');
+    }
+    const timer = setTimeout(() => {
+      io.to(roomName).emit('admin-stop-typing');
+      if (adminTypingTimers.get(socket.id)?.timer === timer) adminTypingTimers.delete(socket.id);
+    }, 1500);
+    adminTypingTimers.set(socket.id, { timer, roomName });
+  });
+
+  socket.on('admin-stop-typing', ({ targetUserId } = {}) => {
+    if (socket.data.authUser.role !== 'admin') return;
+    const userId = Number(targetUserId);
+    if (!Number.isInteger(userId) || userId <= 0) return;
+    const timer = adminTypingTimers.get(socket.id);
+    if (timer) clearTimeout(timer.timer);
+    adminTypingTimers.delete(socket.id);
+    if (timer && timer.roomName !== getSupportRoom(userId)) io.to(timer.roomName).emit('admin-stop-typing');
+    io.to(getSupportRoom(userId)).emit('admin-stop-typing');
+  });
+
   socket.on('get-active-chats', async () => {
+    if (socket.data.authUser.role !== 'admin') {
+      socket.emit('chat-error', { message: 'Only support staff can view active chats.' });
+      return;
+    }
     try {
       const chats = await pool.query(
         `SELECT DISTINCT ON (cm.user_id)
@@ -172,11 +230,18 @@ io.on('connection', (socket) => {
       socket.emit('active-chats', chats.rows);
     } catch (error) {
       console.error('Error fetching active chats:', error);
+      socket.emit('chat-error', { message: 'Failed to load active chats.' });
     }
   });
 
   socket.on('disconnect', () => {
     console.log('Socket disconnected:', socket.id);
+    const typingTimer = adminTypingTimers.get(socket.id);
+    if (typingTimer) {
+      clearTimeout(typingTimer.timer);
+      io.to(typingTimer.roomName).emit('admin-stop-typing');
+    }
+    adminTypingTimers.delete(socket.id);
 
     for (const [adminId, socketId] of activeAdmins.entries()) {
       if (socketId === socket.id) {
