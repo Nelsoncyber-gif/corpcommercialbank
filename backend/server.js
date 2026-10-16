@@ -215,17 +215,22 @@ io.on('connection', (socket) => {
     }
     try {
       const chats = await pool.query(
-        `SELECT DISTINCT ON (cm.user_id)
-                cm.user_id,
+        `SELECT u.id AS user_id,
                 u.first_name,
                 u.last_name,
                 u.email,
-                cm.message AS last_message,
-                cm.created_at AS last_message_time
-         FROM chat_messages cm
-         JOIN users u ON cm.user_id = u.id
+                latest.message AS last_message,
+                latest.created_at AS last_message_time
+         FROM users u
+         LEFT JOIN LATERAL (
+           SELECT message, created_at
+           FROM chat_messages
+           WHERE user_id = u.id
+           ORDER BY created_at DESC
+           LIMIT 1
+         ) latest ON TRUE
          WHERE u.role != 'admin'
-         ORDER BY cm.user_id, cm.created_at DESC`
+         ORDER BY latest.created_at DESC NULLS LAST, u.first_name, u.last_name`
       );
       socket.emit('active-chats', chats.rows);
     } catch (error) {

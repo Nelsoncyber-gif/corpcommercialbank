@@ -4447,9 +4447,9 @@
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 320px) minmax(0, 1fr)', gap: 16, maxHeight: 520 }}>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, overflowY: 'auto' }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Active Chats</h3>
+              <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Customers — select to start or continue a chat</h3>
               {activeChats.length === 0 ? (
-                <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>No active chats</p>
+                <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>No customers found</p>
               ) : (
                 <div style={{ display: 'grid', gap: 8 }}>
                   {activeChats.map((chat) => (
@@ -4467,11 +4467,9 @@
                     >
                       <p style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>{chat.first_name} {chat.last_name}</p>
                       <p style={{ margin: '4px 0 0', fontSize: 12, color: '#6b7280' }}>{chat.email}</p>
-                      {chat.last_message && (
-                        <p style={{ margin: '6px 0 0', fontSize: 12, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {chat.last_message}
-                        </p>
-                      )}
+                      <p style={{ margin: '6px 0 0', fontSize: 12, color: '#9ca3af', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {chat.last_message || 'Start a conversation'}
+                      </p>
                     </div>
                   ))}
                 </div>
@@ -6035,6 +6033,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 <button className={`nav-link ${view === 'deposit' ? 'active' : ''}`} onClick={() => setView('deposit')}>{translate('processDeposit')}</button>
                 <button className={`nav-link ${view === 'admin-transactions' ? 'active' : ''}`} onClick={() => setView('admin-transactions')}>{translate('allTransactions')}</button>
                 <button className={`nav-link ${view === 'backdate' ? 'active' : ''}`} onClick={() => setView('backdate')}>{translate('backdateTransaction')}</button>
+                <button className={`nav-link ${view === 'support-chat' ? 'active' : ''}`} onClick={() => setView('support-chat')}>💬 Support Chat</button>
               </>}
               <button className={`nav-link ${view === 'branches' ? 'active' : ''}`} onClick={() => setView('branches')}>{translate('branches')}</button>
             </div>
@@ -6081,6 +6080,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
               <button className={`mobile-menu-item ${view==='deposit'?'active':''}`} onClick={()=>{setView('deposit');setMobileMenuOpen(false);}}>💰 {translate('processDeposit') || 'Process Deposit'}</button>
               <button className={`mobile-menu-item ${view==='admin-transactions'?'active':''}`} onClick={()=>{setView('admin-transactions');setMobileMenuOpen(false);}}>📊 {translate('allTransactions') || 'All Transactions'}</button>
               <button className={`mobile-menu-item ${view==='backdate'?'active':''}`} onClick={()=>{setView('backdate');setMobileMenuOpen(false);}}>⏱️ {translate('backdateTransaction') || 'Backdate'}</button>
+              <button className={`mobile-menu-item ${view==='support-chat'?'active':''}`} onClick={()=>{setView('support-chat');setMobileMenuOpen(false);}}>💬 Support Chat</button>
             </>}
             <button className={`mobile-menu-item ${view==='branches'?'active':''}`} onClick={()=>{setView('branches');setMobileMenuOpen(false);}}>🏢 {translate('branches') || 'Branches'}</button>
             <button className="mobile-menu-item" onClick={logout} style={{borderTop:'2px solid var(--red-error)',color:'var(--red-error)',marginTop:12}}>🚪 {translate('signOut') || 'Sign out'}</button>
@@ -7363,13 +7363,16 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 </div>
               </div>
             )}
-            {auth.user?.role === 'admin' ? (
-              <AdminChatPanel user={auth.user} token={auth.token} />
-            ) : (
-              <LiveChat user={auth.user} token={auth.token} />
-            )}
           </div>
         </div>}
+        {view === 'support-chat' && auth.user?.role === 'admin' && (
+          <div className="section">
+            <div className="container">
+              <AdminChatPanel user={auth.user} token={auth.token} />
+            </div>
+          </div>
+        )}
+        {auth.user?.role !== 'admin' && <LiveChat user={auth.user} token={auth.token} />}
 
         {showOpenAccount && <div role="presentation" onClick={event => {
           if (event.target === event.currentTarget && !submittingAccountRequest) setShowOpenAccount(false);
