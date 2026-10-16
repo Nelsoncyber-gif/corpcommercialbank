@@ -2813,6 +2813,28 @@
       }
     }
 
+    @media (max-width: 768px) {
+      .admin-chat-panel {
+        width: calc(100% - 24px) !important;
+        padding: 16px !important;
+      }
+
+      .admin-chat-layout {
+        grid-template-columns: minmax(0, 1fr) !important;
+        max-height: none !important;
+      }
+
+      .admin-chat-list {
+        min-width: 0;
+        max-height: 180px;
+      }
+
+      .admin-chat-conversation {
+        min-width: 0;
+        min-height: 360px;
+      }
+    }
+
     /* Landscape mode optimizations */
     @media (max-width: 896px) and (orientation: landscape) {
       .hero {
@@ -4435,7 +4457,7 @@
       };
 
       return (
-        <div style={{ maxWidth: 1100, margin: '16px auto 0', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 16, padding: 24 }}>
+        <div className="admin-chat-panel" style={{ maxWidth: 1100, margin: '16px auto 0', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 16, padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>💬 Support Chat</h2>
             <span style={{ fontSize: 13, color: connected ? '#16a34a' : '#dc2626' }}>
@@ -4443,8 +4465,8 @@
             </span>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 320px) minmax(0, 1fr)', gap: 16, maxHeight: 520 }}>
-            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, overflowY: 'auto' }}>
+          <div className="admin-chat-layout" style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 320px) minmax(0, 1fr)', gap: 16, maxHeight: 520 }}>
+            <div className="admin-chat-list" style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, overflowY: 'auto' }}>
               <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Customers</h3>
               {activeChats.length === 0 ? (
                 <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>No customers found</p>
@@ -4473,7 +4495,7 @@
               )}
             </div>
 
-            <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+            <div className="admin-chat-conversation" style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
               {chatError && <div style={{ color: '#b91c1c', background: '#fef2f2', padding: '10px 14px', fontSize: 13 }}>{chatError}</div>}
               {selectedChat ? (
                 <>
@@ -4607,11 +4629,11 @@
 
       return (
         <>
-          <button className="chat-fab" onClick={() => setOpen(!open)} style={{ position: 'fixed', bottom: 24, right: 24, width: 60, height: 60, borderRadius: '50%', background: 'var(--teal-primary)', color: 'var(--white)', fontSize: 24, border: 'none', cursor: 'pointer', boxShadow: 'var(--shadow-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900 }}>
+          <button className="chat-fab" onClick={() => setOpen(!open)}>
             💬{!connected && <span style={{ position: 'absolute', top: -4, right: -4, width: 12, height: 12, background: 'var(--red-error)', borderRadius: '50%', border: '2px solid var(--white)' }} />}
           </button>
           {open && (
-            <div className="chat-panel" style={{ position: 'fixed', bottom: 20, right: 20, width: 'min(360px, calc(100vw - 24px))', maxWidth: 360, height: 'min(520px, calc(100vh - 120px))', background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', zIndex: 900 }}>
+            <div className="chat-panel">
               <div className="chat-header" style={{ background: 'var(--teal-primary)', color: 'var(--white)', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
@@ -4643,13 +4665,12 @@
                 {adminTyping && <div style={{ fontSize: 12, color: 'var(--gray-500)', fontStyle: 'italic', padding: '8px 16px' }}>Support is typing...</div>}
                 <div ref={bottomRef} />
               </div>
-              <form onSubmit={send} style={{ padding: 16, borderTop: '1px solid var(--gray-200)', display: 'flex', gap: 8, alignItems: 'center' }}>
+              <form onSubmit={send} className="chat-input-bar">
                 <input
                   className="chat-input"
                   placeholder="Type your message..."
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  style={{ flex: 1, padding: '10px 14px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 14 }}
                 />
                 <button type="submit" className="btn btn-primary" disabled={!connected || !input.trim()}>Send</button>
               </form>
