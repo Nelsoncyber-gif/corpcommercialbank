@@ -4325,139 +4325,127 @@
         </div>
       </div>;
     };
-    // ADMIN SUPPORT CHAT PANEL
+    // ============================================
+    // ADMIN SUPPORT CHAT PANEL (REWRITTEN)
+    // ============================================
     const AdminChatPanel = ({ user, token }) => {
-      const [activeChats, setActiveChats] = useState([]);
-      const [selectedChat, setSelectedChat] = useState(null);
-      const [messages, setMessages] = useState([]);
-      const [inputMessage, setInputMessage] = useState('');
-      const [socket, setSocket] = useState(null);
-      const [isAdminConnected, setIsAdminConnected] = useState(false);
-      const [chatError, setChatError] = useState('');
-      const messagesEndRef = useRef(null);
-      const selectedChatRef = useRef(null);
+      const [activeChats, setActiveChats] = React.useState([]);
+      const [selectedChat, setSelectedChat] = React.useState(null);
+      const [messages, setMessages] = React.useState([]);
+      const [inputMessage, setInputMessage] = React.useState('');
+      const [socket, setSocket] = React.useState(null);
+      const [connected, setConnected] = React.useState(false);
+      const [chatError, setChatError] = React.useState('');
+      const [customerTyping, setCustomerTyping] = React.useState(false);
+      const messagesEndRef = React.useRef(null);
+      const selectedChatRef = React.useRef(null);
 
-      useEffect(() => {
-        selectedChatRef.current = selectedChat;
-      }, [selectedChat]);
+      React.useEffect(() => { selectedChatRef.current = selectedChat; }, [selectedChat]);
+      React.useEffect(() => { messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
 
-      useEffect(() => {
+      React.useEffect(() => {
         if (!user || user.role !== 'admin') return;
         const chatToken = token || localStorage.getItem('token');
         if (!chatToken || chatToken === 'null' || chatToken === 'undefined') {
           setChatError('Your session token is missing. Please sign in again.');
           return;
         }
-        const newSocket = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
+        const s = io(window.location.hostname === 'localhost' ? 'http://localhost:5000' : '/', {
           auth: { token: chatToken },
           reconnection: true,
           reconnectionAttempts: 5,
           reconnectionDelay: 1000
         });
 
-        newSocket.on('connect', () => {
-          console.log('🔌 Admin socket connected:', newSocket.id);
-          setIsAdminConnected(true);
-          newSocket.emit('join-chat', { targetUserId: user.id });
-          newSocket.emit('get-active-chats');
+        s.on('connect', () => {
+          console.log('🔌 Admin socket connected:', s.id);
+          setConnected(true);
+          s.emit('chat:list');
         });
 
-        newSocket.on('connect_error', (error) => {
-          setChatError(error.message || 'Unable to connect to support chat.');
-        });
+        s.on('connect_error', (err) => setChatError(err.message || 'Unable to connect to support chat.'));
+        s.on('disconnect', () => { setConnected(false); });
 
-        newSocket.on('disconnect', () => {
-          setIsAdminConnected(false);
-          console.log('🔌 Admin socket disconnected');
-        });
-
-        newSocket.on('active-chats', (chats) => {
-          console.log('📋 Active chats:', chats.length);
+        s.on('chat:list', (chats) => {
+          console.log('📋 Chat list:', chats.length);
           setActiveChats(chats);
         });
 
-        newSocket.on('new-user-message', ({ userId, message }) => {
-          console.log('📩 Admin received new-user-message from user:', userId, message);
-          newSocket.emit('get-active-chats');
+        s.on('chat:notify', ({ userId }) => {
+          console.log('📩 New customer message from user', userId);
+          s.emit('chat:list');
         });
 
-        newSocket.on('new-message', (msg) => {
+        s.on('chat:message', (msg) => {
           if (selectedChatRef.current && String(selectedChatRef.current.user_id) === String(msg.user_id)) {
-            setMessages(prev => prev.some(message => String(message.id) === String(msg.id)) ? prev : [...prev, msg]);
+            setMessages(prev => prev.some(m => String(m.id) === String(msg.id)) ? prev : [...prev, msg]);
+            if (msg.sender_type === 'user') setCustomerTyping(false);
           }
         });
 
-        newSocket.on('chat-error', ({ message }) => setChatError(message || 'Support chat failed.'));
-        setSocket(newSocket);
+        s.on('chat:history', ({ userId, messages: history }) => {
+          if (selectedChatRef.current && String(selectedChatRef.current.user_id) === String(userId)) {
+            setMessages(prev => {
+              const map = new Map(history.map(m => [String(m.id), m]));
+              prev.forEach(m => map.set(String(m.id), m));
+              return [...map.values()].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+            });
+          }
+        });
 
-        return () => {
-          console.log('🔌 Admin socket disconnecting');
-          newSocket.disconnect();
-        };
+        s.on('chat:typing:update', ({ from, typing }) => {
+          if (from === 'user') setCustomerTyping(typing);
+        });
+
+        s.on('chat:error', ({ message }) => setChatError(message || 'Support chat failed.'));
+        setSocket(s);
+
+        return () => { s.disconnect(); };
       }, [user?.id, token]);
 
-      useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      }, [messages, selectedChat]);
-
-      const selectChat = async (chat) => {
+      const selectChat = (chat) => {
         setSelectedChat(chat);
         setMessages([]);
         setChatError('');
-
-        if (!socket) return;
-
-        socket.emit('join-chat', {
-          targetUserId: chat.user_id
-        });
-
-        try {
-          const response = await fetch(`${API}/chat/chat-history/${chat.user_id}`, {
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          const data = await response.json();
-          if (!response.ok || !data.success) throw new Error(data.message || 'Failed to load chat history.');
-          setMessages(prev => {
-            const messagesById = new Map((data.messages || []).map(message => [String(message.id), message]));
-            prev.forEach(message => messagesById.set(String(message.id), message));
-            return [...messagesById.values()];
-          });
-        } catch (error) {
-          console.error('Error fetching chat history:', error);
-          setChatError(error.message || 'Failed to load chat history.');
-        }
+        setCustomerTyping(false);
+        if (socket) socket.emit('chat:join', { userId: chat.user_id });
       };
 
       const sendMessage = (e) => {
         e.preventDefault();
         if (!inputMessage.trim() || !selectedChat || !socket) return;
-
-        socket.emit('send-message', {
-          userId: selectedChat.user_id,
-          message: inputMessage.trim()
-        }, result => {
+        socket.emit('chat:send', {
+          toUserId: selectedChat.user_id,
+          text: inputMessage.trim()
+        }, (result) => {
           if (!result?.success) {
             setChatError(result?.message || 'Message could not be sent.');
             return;
           }
           setChatError('');
-          setMessages(prev => prev.some(message => String(message.id) === String(result.message.id)) ? prev : [...prev, result.message]);
+          setMessages(prev => prev.some(m => String(m.id) === String(result.message.id)) ? prev : [...prev, result.message]);
           setInputMessage('');
         });
       };
 
+      const handleTyping = (value) => {
+        setInputMessage(value);
+        if (!selectedChat || !socket) return;
+        socket.emit('chat:typing', { toUserId: selectedChat.user_id, typing: value.trim().length > 0 });
+      };
+
       return (
-        <div className="glass-card mx-4 mt-4 p-6 animate-fade-in" style={{ maxWidth: 1100, margin: '16px auto 0', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 16 }}>
+        <div style={{ maxWidth: 1100, margin: '16px auto 0', background: '#f8fafc', border: '1px solid #e5e7eb', borderRadius: 16, padding: 24 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
             <h2 style={{ fontSize: 24, fontWeight: 700, margin: 0 }}>💬 Support Chat</h2>
-            <span style={{ fontSize: 13, color: isAdminConnected ? '#16a34a' : '#dc2626' }}>
-              {isAdminConnected ? '● Connected' : '● Connecting...'}
+            <span style={{ fontSize: 13, color: connected ? '#16a34a' : '#dc2626' }}>
+              {connected ? '● Connected' : '● Connecting...'}
             </span>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'minmax(220px, 320px) minmax(0, 1fr)', gap: 16, maxHeight: 520 }}>
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, padding: 14, overflowY: 'auto' }}>
-              <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Customers — select to start or continue a chat</h3>
+              <h3 style={{ margin: '0 0 12px', fontSize: 14, fontWeight: 700 }}>Customers</h3>
               {activeChats.length === 0 ? (
                 <p style={{ color: '#6b7280', fontSize: 13, margin: 0 }}>No customers found</p>
               ) : (
@@ -4471,8 +4459,7 @@
                         borderRadius: 10,
                         cursor: 'pointer',
                         border: selectedChat?.user_id === chat.user_id ? '1px solid #14b8a6' : '1px solid transparent',
-                        background: selectedChat?.user_id === chat.user_id ? '#ecfeff' : '#f3f4f6',
-                        transition: 'all 0.2s ease'
+                        background: selectedChat?.user_id === chat.user_id ? '#ecfeff' : '#f3f4f6'
                       }}
                     >
                       <p style={{ margin: 0, fontSize: 14, fontWeight: 700 }}>{chat.first_name} {chat.last_name}</p>
@@ -4487,63 +4474,31 @@
             </div>
 
             <div style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 12, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-              {chatError && <div role="alert" style={{ color: '#b91c1c', background: '#fef2f2', padding: '10px 14px', fontSize: 13 }}>{chatError}</div>}
+              {chatError && <div style={{ color: '#b91c1c', background: '#fef2f2', padding: '10px 14px', fontSize: 13 }}>{chatError}</div>}
               {selectedChat ? (
                 <>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, padding: 14, borderBottom: '1px solid #e5e7eb' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedChat(null);
-                          setMessages([]);
-                        }}
-                        style={{
-                          width: 30,
-                          height: 30,
-                          borderRadius: '50%',
-                          border: 'none',
-                          background: '#e5e7eb',
-                          color: '#111827',
-                          cursor: 'pointer',
-                          fontSize: 18,
-                          lineHeight: 1
-                        }}
-                        title="Back to chat list"
-                        aria-label="Back to chat list"
-                      >
-                        ←
-                      </button>
-                      <div style={{ minWidth: 0 }}>
-                        <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {selectedChat.first_name} {selectedChat.last_name}
-                        </h3>
-                        <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {selectedChat.email}
-                        </p>
-                      </div>
+                  <div style={{ padding: 14, borderBottom: '1px solid #e5e7eb', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div>
+                      <h3 style={{ margin: 0, fontSize: 16, fontWeight: 700 }}>
+                        {selectedChat.first_name} {selectedChat.last_name}
+                      </h3>
+                      <p style={{ margin: '2px 0 0', fontSize: 12, color: '#6b7280' }}>{selectedChat.email}</p>
                     </div>
-
-                    <button
-                      type="button"
-                      onClick={() => setSelectedChat(null)}
-                      style={{ background: 'transparent', border: 'none', color: '#6b7280', fontSize: 22, cursor: 'pointer' }}
-                      title="Close chat"
-                      aria-label="Close chat"
-                    >
-                      ✕
-                    </button>
+                    <button onClick={() => { setSelectedChat(null); setMessages([]); }} style={{ background: 'transparent', border: 'none', fontSize: 22, cursor: 'pointer', color: '#6b7280' }}>✕</button>
                   </div>
 
                   <div style={{ flex: 1, overflowY: 'auto', padding: 16, background: '#f9fafb' }}>
                     {messages.map((msg, index) => (
-                      <div key={index} style={{ display: 'flex', justifyContent: msg.sender_type === 'admin' ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
+                      <div key={msg.id || index} style={{ display: 'flex', justifyContent: msg.sender_type === 'admin' ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
                         <div style={{ maxWidth: '75%', background: msg.sender_type === 'admin' ? '#0f766e' : '#fff', color: msg.sender_type === 'admin' ? '#fff' : '#111827', border: msg.sender_type === 'admin' ? 'none' : '1px solid #e5e7eb', borderRadius: 12, padding: '10px 12px' }}>
                           <div>{msg.message}</div>
-                          <div style={{ fontSize: 10, opacity: 0.75, marginTop: 4 }}>{new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                          <div style={{ fontSize: 10, opacity: 0.75, marginTop: 4 }}>
+                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                          </div>
                         </div>
                       </div>
                     ))}
+                    {customerTyping && <div style={{ fontSize: 12, color: '#6b7280', fontStyle: 'italic' }}>Customer is typing...</div>}
                     <div ref={messagesEndRef} />
                   </div>
 
@@ -4551,15 +4506,9 @@
                     <input
                       type="text"
                       value={inputMessage}
-                      onChange={(e) => {
-                        const value = e.target.value;
-                        setInputMessage(value);
-                        if (selectedChat && socket) {
-                          socket.emit(value.trim() ? 'admin-typing' : 'admin-stop-typing', { targetUserId: selectedChat.user_id });
-                        }
-                      }}
+                      onChange={(e) => handleTyping(e.target.value)}
                       placeholder="Type your reply..."
-                      style={{ flex: 1, minWidth: 0, border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }}
+                      style={{ flex: 1, border: '1px solid #d1d5db', borderRadius: 8, padding: '10px 12px', fontSize: 14 }}
                     />
                     <button type="submit" style={{ background: '#0f766e', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 16px', fontWeight: 700, cursor: 'pointer' }}>
                       Send
@@ -4567,8 +4516,8 @@
                   </form>
                 </>
               ) : (
-                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280', textAlign: 'center' }}>
-                  <div>
+                <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#6b7280' }}>
+                  <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: 36, marginBottom: 8 }}>💬</div>
                     <div>Select a chat to start messaging</div>
                   </div>
@@ -4580,21 +4529,23 @@
       );
     };
 
-    // LIVE CHAT
+    // ============================================
+    // LIVE CHAT (CUSTOMER) — REWRITTEN
+    // ============================================
     const LiveChat = ({ user, token }) => {
-      if (!user || user.role === 'admin') return null;
+      const [open, setOpen] = React.useState(false);
+      const [messages, setMessages] = React.useState([]);
+      const [input, setInput] = React.useState('');
+      const [socket, setSocket] = React.useState(null);
+      const [connected, setConnected] = React.useState(false);
+      const [adminTyping, setAdminTyping] = React.useState(false);
+      const [chatError, setChatError] = React.useState('');
+      const bottomRef = React.useRef(null);
 
-      const [open, setOpen] = useState(false);
-      const [messages, setMessages] = useState([]);
-      const [input, setInput] = useState('');
-      const [socket, setSocket] = useState(null);
-      const [connected, setConnected] = useState(false);
-      const [typing, setTyping] = useState(false);
-      const [chatError, setChatError] = useState('');
-      const bottomRef = useRef(null);
-      const chatEndRef = useRef(null);
-      useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }) }, [messages, open]);
-      useEffect(() => {
+      React.useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages, open]);
+
+      React.useEffect(() => {
+        if (!user || user.role === 'admin') return;
         const chatToken = token || localStorage.getItem('token');
         if (!chatToken || chatToken === 'null' || chatToken === 'undefined') {
           setChatError('Your session token is missing. Please sign in again.');
@@ -4606,81 +4557,108 @@
           reconnectionAttempts: 5,
           reconnectionDelay: 1000
         });
+
         s.on('connect', () => {
-          console.log('Chat connected:', s.id);
+          console.log('💬 Customer chat connected:', s.id);
           setConnected(true);
-          s.emit('join-chat', { targetUserId: user.id });
+          setChatError('');
         });
-        s.on('disconnect', () => { setConnected(false); console.log('Chat disconnected'); });
-        s.on('connect_error', (err) => {
-          console.error('Chat connection error:', err);
-          setChatError(err.message || 'Unable to connect to support chat.');
-        });
-        s.on('chat-history', msgs => {
-          console.log('Received chat history:', msgs.length, 'messages');
+        s.on('disconnect', () => setConnected(false));
+        s.on('connect_error', (err) => setChatError(err.message || 'Unable to connect.'));
+
+        s.on('chat:history', ({ messages: history }) => {
           setMessages(prev => {
-            const messagesById = new Map(msgs.map(message => [String(message.id), message]));
-            prev.forEach(message => messagesById.set(String(message.id), message));
-            return [...messagesById.values()];
+            const map = new Map(history.map(m => [String(m.id), m]));
+            prev.forEach(m => map.set(String(m.id), m));
+            return [...map.values()].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
           });
         });
-        s.on('new-message', msg => {
-          console.log('New message received:', msg);
-          setMessages(prev => prev.some(message => String(message.id) === String(msg.id)) ? prev : [...prev, msg]);
-          if (msg.sender_type === 'admin') setTyping(false);
+
+        s.on('chat:message', (msg) => {
+          setMessages(prev => prev.some(m => String(m.id) === String(msg.id)) ? prev : [...prev, msg]);
+          if (msg.sender_type === 'admin') setAdminTyping(false);
         });
-        s.on('chat-error', ({ message }) => setChatError(message || 'Support chat failed.'));
-        s.on('admin-typing', () => setTyping(true));
-        s.on('admin-stop-typing', () => setTyping(false));
+
+        s.on('chat:typing:update', ({ from, typing }) => {
+          if (from === 'admin') setAdminTyping(typing);
+        });
+
+        s.on('chat:error', ({ message }) => setChatError(message || 'Chat failed.'));
+
         setSocket(s);
-        return () => {
-          console.log('Disconnecting chat...');
-          s.disconnect();
-        };
-      }, [user.id, token]);
-      const send = e => {
+        return () => { s.disconnect(); };
+      }, [user?.id, user?.role, token]);
+
+      if (!user || user.role === 'admin') return null;
+
+      const send = (e) => {
         e.preventDefault();
         if (!input.trim() || !socket) return;
-        console.log('Sending message:', input);
-        socket.emit('send-message', { userId: user.id, message: input.trim() }, result => {
+        socket.emit('chat:send', { text: input.trim() }, (result) => {
           if (!result?.success) {
             setChatError(result?.message || 'Message could not be sent.');
             return;
           }
           setChatError('');
-          setMessages(prev => prev.some(message => String(message.id) === String(result.message.id)) ? prev : [...prev, result.message]);
+          setMessages(prev => prev.some(m => String(m.id) === String(result.message.id)) ? prev : [...prev, result.message]);
           setInput('');
         });
       };
-      return <>
-        <button className="chat-fab" onClick={() => setOpen(!open)} style={{ position: 'fixed', bottom: 24, right: 24, width: 60, height: 60, borderRadius: '50%', background: 'var(--teal-primary)', color: 'var(--white)', fontSize: 24, border: 'none', cursor: 'pointer', boxShadow: 'var(--shadow-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900 }}>
-          💬{!connected && <span style={{ position: 'absolute', top: -4, right: -4, width: 12, height: 12, background: 'var(--red-error)', borderRadius: '50%', border: '2px solid var(--white)' }} />}
-        </button>
-        {open && <div className="chat-panel" style={{ position: 'fixed', bottom: 20, right: 20, width: 'min(360px, calc(100vw - 24px))', maxWidth: '360px', height: 'min(520px, calc(100vh - 120px))', background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', zIndex: 900 }}>
-          <div className="chat-header" style={{ background: 'var(--teal-primary)', color: 'var(--white)', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
-                corpCommercial Support
-                {connected ? <span style={{ width: 8, height: 8, background: 'var(--green-success)', borderRadius: '50%' }} /> : <span style={{ width: 8, height: 8, background: 'var(--red-error)', borderRadius: '50%' }} />}
+
+      return (
+        <>
+          <button className="chat-fab" onClick={() => setOpen(!open)} style={{ position: 'fixed', bottom: 24, right: 24, width: 60, height: 60, borderRadius: '50%', background: 'var(--teal-primary)', color: 'var(--white)', fontSize: 24, border: 'none', cursor: 'pointer', boxShadow: 'var(--shadow-xl)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 900 }}>
+            💬{!connected && <span style={{ position: 'absolute', top: -4, right: -4, width: 12, height: 12, background: 'var(--red-error)', borderRadius: '50%', border: '2px solid var(--white)' }} />}
+          </button>
+          {open && (
+            <div className="chat-panel" style={{ position: 'fixed', bottom: 20, right: 20, width: 'min(360px, calc(100vw - 24px))', maxWidth: 360, height: 'min(520px, calc(100vh - 120px))', background: 'var(--white)', border: '1px solid var(--gray-200)', borderRadius: 12, boxShadow: 'var(--shadow-xl)', display: 'flex', flexDirection: 'column', zIndex: 900 }}>
+              <div className="chat-header" style={{ background: 'var(--teal-primary)', color: 'var(--white)', padding: '16px 20px', borderRadius: '12px 12px 0 0', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 15, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    corpCommercial Support
+                    {connected ? <span style={{ width: 8, height: 8, background: 'var(--green-success)', borderRadius: '50%' }} /> : <span style={{ width: 8, height: 8, background: 'var(--red-error)', borderRadius: '50%' }} />}
+                  </div>
+                  <div style={{ fontSize: 12, opacity: 0.9 }}>{connected ? (adminTyping ? 'Support is typing...' : 'Online') : 'Connecting...'}</div>
+                </div>
+                <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--white)', fontSize: 24, cursor: 'pointer' }}>✕</button>
               </div>
-              <div style={{ fontSize: 12, opacity: 0.9 }}>{connected ? (typing ? 'Support is typing...' : 'Online') : 'Connecting...'}</div>
+              <div className="chat-messages" style={{ flex: 1, overflowY: 'auto', padding: 16, background: 'var(--gray-50)' }}>
+                {chatError && <div style={{ color: '#b91c1c', background: '#fef2f2', padding: '10px 12px', marginBottom: 12, borderRadius: 6, fontSize: 13 }}>{chatError}</div>}
+                {messages.length === 0 ? (
+                  <div style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '40px 20px' }}>
+                    <div style={{ fontSize: 40, marginBottom: 12 }}>👋</div>
+                    <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--gray-700)' }}>How can we help?</div>
+                    <div style={{ fontSize: 13, marginTop: 6 }}>Send us a message and we'll get back to you</div>
+                  </div>
+                ) : messages.map((m, i) => (
+                  <div key={m.id || i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.sender_type === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 }}>
+                    <div style={{ padding: '10px 14px', borderRadius: 12, maxWidth: '75%', wordWrap: 'break-word', background: m.sender_type === 'user' ? 'var(--teal-primary)' : 'var(--white)', color: m.sender_type === 'user' ? 'var(--white)' : 'var(--gray-900)', border: m.sender_type === 'admin' ? '1px solid var(--gray-200)' : 'none' }}>
+                      {m.message}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4, padding: '0 4px' }}>
+                      {fmtTime(m.created_at)}
+                    </div>
+                  </div>
+                ))}
+                {adminTyping && <div style={{ fontSize: 12, color: 'var(--gray-500)', fontStyle: 'italic', padding: '8px 16px' }}>Support is typing...</div>}
+                <div ref={bottomRef} />
+              </div>
+              <form onSubmit={send} style={{ padding: 16, borderTop: '1px solid var(--gray-200)', display: 'flex', gap: 8, alignItems: 'center' }}>
+                <input
+                  className="chat-input"
+                  placeholder="Type your message..."
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  style={{ flex: 1, padding: '10px 14px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 14 }}
+                />
+                <button type="submit" className="btn btn-primary" disabled={!connected || !input.trim()}>Send</button>
+              </form>
             </div>
-            <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', color: 'var(--white)', fontSize: 24, cursor: 'pointer' }}>✕</button>
-          </div>
-          <div className="chat-messages" style={{ flex: 1, overflowY: 'auto', padding: '16px', background: 'var(--gray-50)' }}>
-            {chatError && <div role="alert" style={{ color: '#b91c1c', background: '#fef2f2', padding: '10px 12px', marginBottom: 12, borderRadius: 6, fontSize: 13 }}>{chatError}</div>}
-            {messages.length === 0 ? <div style={{ textAlign: 'center', color: 'var(--gray-500)', padding: '40px 20px' }}><div style={{ fontSize: 40, marginBottom: 12 }}>👋</div><div style={{ fontSize: 15, fontWeight: 600, color: 'var(--gray-700)' }}>How can we help?</div><div style={{ fontSize: 13, marginTop: 6 }}>Send us a message and we'll get back to you</div></div>
-              : messages.map((m, i) => <div key={i} className={`chat-message ${m.sender_type}`} style={{ display: 'flex', flexDirection: 'column', alignItems: m.sender_type === 'user' ? 'flex-end' : 'flex-start', marginBottom: 12 }}><div className="chat-bubble" style={{ padding: '10px 14px', borderRadius: 12, maxWidth: '75%', wordWrap: 'break-word', background: m.sender_type === 'user' ? 'var(--teal-primary)' : 'var(--white)', color: m.sender_type === 'user' ? 'var(--white)' : 'var(--gray-900)', border: m.sender_type === 'admin' ? '1px solid var(--gray-200)' : 'none' }}>{m.message}</div><div className="chat-time" style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 4, padding: '0 4px' }}>{fmtTime(m.created_at)}</div></div>)}
-            {typing && <div style={{ fontSize: 12, color: 'var(--gray-500)', fontStyle: 'italic', padding: '8px 16px' }}>Support is typing...</div>}
-            <div ref={bottomRef} />
-          </div>
-          <form onSubmit={send} className="chat-input-bar" style={{ padding: '16px', borderTop: '1px solid var(--gray-200)', display: 'flex', gap: 8, alignItems: 'center' }}>
-            <input className="chat-input" placeholder="Type your message..." value={input} onChange={e => setInput(e.target.value)} style={{ flex: 1, minWidth: 0, padding: '10px 14px', border: '1px solid var(--gray-300)', borderRadius: 6, fontSize: 14, fontFamily: 'inherit' }} />
-            <button type="submit" className="btn btn-primary" disabled={!connected || !input.trim()}>Send</button>
-          </form>
-        </div>}
-      </>;
+          )}
+        </>
+      );
     };
+
     // QUICK ACTIONS FLOATING MENU (FOR NON-LOGGED IN USERS)
     const QuickActionsMenu = () => {
       const [isOpen, setIsOpen] = useState(false);
