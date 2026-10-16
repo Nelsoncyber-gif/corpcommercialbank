@@ -113,6 +113,7 @@ io.on('connection', (socket) => {
     socket.data.currentRoom = roomName;
     socket.data.userRole = authUser.role;
     socket.data.userId = userId;
+    console.log(`💬 Socket ${socket.id} (${authUser.role}, user ${userId}) joined room ${roomName}`);
 
     if (isAdmin) {
       activeAdmins.set(userId, socket.id);
@@ -161,9 +162,11 @@ io.on('connection', (socket) => {
 
       const newMessage = result.rows[0];
       const roomName = getSupportRoom(targetId);
+      console.log(`📡 Broadcasting message ${newMessage.id} to room ${roomName}`);
       io.to(roomName).emit('new-message', newMessage);
 
       if (!isAdmin) {
+        console.log(`📡 Notifying admin queue room ${adminQueueRoom} about customer ${targetId}`);
         io.to(adminQueueRoom).emit('new-user-message', {
           userId: targetId,
           message: newMessage
