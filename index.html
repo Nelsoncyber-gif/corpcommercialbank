@@ -2831,7 +2831,7 @@
       }
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 900px) {
       .admin-chat-wrapper {
         padding: 12px;
         margin: 8px auto 0;
@@ -2840,15 +2840,10 @@
 
       .admin-chat-grid {
         grid-template-columns: 1fr;
-        grid-template-rows: auto 1fr;
+        grid-template-rows: 160px 1fr;
         max-height: none;
         height: calc(100vh - 220px);
         min-height: 500px;
-      }
-
-      .admin-chat-list {
-        max-height: 160px;
-        overflow-y: auto;
       }
 
       .admin-chat-messages-panel {
@@ -7402,9 +7397,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         </div>}
         {view === 'support-chat' && auth.user?.role === 'admin' && (
           <div className="section">
-            <div className="container">
-              <AdminChatPanel user={auth.user} token={auth.token} />
-            </div>
+            <AdminChatPanel user={auth.user} token={auth.token} />
           </div>
         )}
         {auth.user?.role !== 'admin' && <LiveChat user={auth.user} token={auth.token} />}
