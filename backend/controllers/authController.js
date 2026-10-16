@@ -74,12 +74,12 @@ exports.register = async (req, res) => {
     // Create user with all fields (no OTP)
     const result = await pool.query(
       `INSERT INTO users(
-        first_name, last_name, email, password, phone,
+        first_name, last_name, email, password, role, phone,
         address, city, state, zip_code, country,
         date_of_birth, occupation, tax_id,
         next_of_kin_name, next_of_kin_phone, next_of_kin_relationship,
         profile_picture, is_verified
-      ) VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
+      ) VALUES($1, $2, $3, $4, 'user', $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17, $18)
        RETURNING id, first_name, last_name, email, phone, country`,
       [
         first_name, last_name, email, hashed, phone,

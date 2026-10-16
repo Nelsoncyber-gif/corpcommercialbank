@@ -112,8 +112,10 @@ module.exports = function registerChat(io) {
                 ORDER BY created_at DESC
                 LIMIT 1
              ) latest ON TRUE
-            WHERE u.role <> 'admin'
-            ORDER BY latest.created_at DESC NULLS LAST, u.first_name, u.last_name`
+            WHERE u.role IS DISTINCT FROM 'admin'
+              AND u.id <> $1
+            ORDER BY latest.created_at DESC NULLS LAST, u.first_name, u.last_name`,
+          [userId]
         );
         socket.emit('chat:list', rows);
       } catch (err) {
