@@ -12,6 +12,7 @@
   <!-- Try version 6.26.0 instead of the latest -->
 <script src="https://unpkg.com/@babel/standalone@7.23.0/babel.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+  <script src="/locale-translations.js"></script>
   <link
     href="https://fonts.googleapis.com/css2?family=Source+Serif+4:wght@400;600;700&family=Inter:wght@300;400;500;600;700&display=swap"
     rel="stylesheet">
@@ -4166,9 +4167,15 @@
         document.documentElement.lang = currentLanguage;
       }, [currentLanguage]);
 
-      const t = (key) => {
-        return translations[currentLanguage]?.[key] || translations.en?.[key] || key;
-      };
+     const t = (key) => {
+  const statics = (typeof window !== 'undefined' && window.STATIC_TRANSLATIONS) || {};
+  return (
+    translations[currentLanguage]?.[key] ||
+    statics[currentLanguage]?.[key] ||
+    translations.en?.[key] ||
+    key
+  );
+};
 
       const changeLanguage = (langCode) => {
         setCurrentLanguage(langCode);
@@ -5810,8 +5817,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
     // MAIN APP
     const App = () => {
       // Use LanguageProvider context
-      const { currentLanguage, setCurrentLanguage: contextSetLanguage } = useTranslation();
-      
+     const { currentLanguage, setCurrentLanguage: contextSetLanguage, t: translate } = useTranslation();      
       const [auth, setAuth] = useState(null);
       const [showLogin, setShowLogin] = useState(true);
       const [view, setView] = useState('overview');
@@ -5935,218 +5941,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
         }
       };
 
-      // Translation helper
-      const translate = (key) => {
-        const translations = {
-          en: {
-            home: 'Home', overview: 'Overview', accounts: 'Accounts', cards: 'Cards',
-            transfers: 'Transfers', profile: 'Profile', admin: 'Admin', logout: 'Logout',
-            myAccounts: 'My Accounts', openNew: 'Open New Account', accountNumber: 'Account Number',
-            balance: 'Balance', status: 'Status', active: 'Active', frozen: 'Frozen',
-            yourCards: 'Your Cards', requestNew: 'Request New Card', viewRequests: 'View Requests',
-            cardNumber: 'Card Number', cardHolder: 'Card Holder', expires: 'Expires',
-            sendMoney: 'Send Money', fromAccount: 'From Account', toAccount: 'To Account',
-            amount: 'Amount', transferType: 'Transfer Type', domestic: 'Domestic',
-            international: 'International', sendTransfer: 'Send Transfer', transactionPin: 'Transaction PIN',
-            myProfile: 'My Profile', firstName: 'First Name', lastName: 'Last Name',
-            email: 'Email', phone: 'Phone', address: 'Address', setPin: 'Set PIN',
-            login: 'Login', register: 'Register', password: 'Password',
-            loading: 'Loading...', save: 'Save', cancel: 'Cancel', success: 'Success',
-            error: 'Error', language: 'Language', selectLanguage: 'Select Language',
-            customers: 'Customers', pendingApprovals: 'Pending Approvals', cardRequests: 'Card Requests',
-            processDeposit: 'Process Deposit', allTransactions: 'All Transactions', backdateTransaction: 'Backdate',
-            branches: 'Branches', withdraw: 'Withdraw', transactions: 'Transactions',
-            changePassword: 'Change Password', setPin: 'Set PIN', loansCredit: 'Loans & Credit',
-            investmentCenter: 'Investment Center', yourCards: 'Your Cards', requestNew: 'Request New Card',
-            manageAccounts: 'Manage your checking and savings accounts', viewActivity: 'View all your account activity',
-            sendMoney: 'Send money domestically or internationally', withdrawMoney: 'Withdraw money from your account',
-            manageCards: 'Manage your debit and credit cards', orderCard: 'Order a new debit card',
-            trackStatus: 'Track your card request status', manageSettings: 'Manage your account settings',
-            updatePassword: 'Update your login password', createPIN: 'Create a 6-digit PIN',
-            noAccounts: 'No accounts yet', openAccount: 'Open your first account',
-            noTransactions: 'No transactions yet', noCards: 'No cards yet',
-            downloadReceipt: 'Download', completed: 'Completed', availableBalance: 'Available balance',
-            waitingForAdmin: 'Waiting for admin', pendingApproval: 'Pending Approval',
-            frozen: 'Frozen', active: 'Active', noAccount: 'No Account',
-            backToCards: 'Back to Cards', backToProfile: 'Back to Profile'
-          },
-          es: {
-            home: 'Inicio', overview: 'Resumen', accounts: 'Cuentas', cards: 'Tarjetas',
-            transfers: 'Transferencias', profile: 'Perfil', admin: 'Administrador', logout: 'Cerrar Sesión',
-            myAccounts: 'Mis Cuentas', openNew: 'Abrir Nueva Cuenta', accountNumber: 'Número de Cuenta',
-            balance: 'Saldo', status: 'Estado', active: 'Activa', frozen: 'Congelada',
-            yourCards: 'Tus Tarjetas', requestNew: 'Solicitar Nueva Tarjeta', viewRequests: 'Ver Solicitudes',
-            cardNumber: 'Número de Tarjeta', cardHolder: 'Titular', expires: 'Vence',
-            sendMoney: 'Enviar Dinero', fromAccount: 'Desde Cuenta', toAccount: 'A Cuenta',
-            amount: 'Monto', transferType: 'Tipo de Transferencia', domestic: 'Nacional',
-            international: 'Internacional', sendTransfer: 'Enviar Transferencia', transactionPin: 'PIN de Transacción',
-            myProfile: 'Mi Perfil', firstName: 'Nombre', lastName: 'Apellido',
-            email: 'Correo', phone: 'Teléfono', address: 'Dirección', setPin: 'Establecer PIN',
-            login: 'Iniciar Sesión', register: 'Registrarse', password: 'Contraseña',
-            loading: 'Cargando...', save: 'Guardar', cancel: 'Cancelar', success: 'Éxito',
-            error: 'Error', language: 'Idioma', selectLanguage: 'Seleccionar Idioma',
-            customers: 'Clientes', pendingApprovals: 'Aprobaciones Pendientes', cardRequests: 'Solicitudes de Tarjeta',
-            processDeposit: 'Procesar Depósito', allTransactions: 'Todas las Transacciones', backdateTransaction: 'Retroceder',
-            branches: 'Sucursales', withdraw: 'Retirar', transactions: 'Transacciones',
-            changePassword: 'Cambiar Contraseña', setPin: 'Establecer PIN', loansCredit: 'Préstamos y Crédito',
-            investmentCenter: 'Centro de Inversión', yourCards: 'Tus Tarjetas', requestNew: 'Solicitar Nueva',
-            manageAccounts: 'Administra tus cuentas', viewActivity: 'Ver toda tu actividad',
-            sendMoney: 'Enviar dinero nacional o internacional', withdrawMoney: 'Retirar dinero',
-            manageCards: 'Administrar tarjetas', orderCard: 'Ordenar nueva tarjeta',
-            trackStatus: 'Seguimiento de solicitud', manageSettings: 'Administrar configuración',
-            updatePassword: 'Actualizar contraseña', createPIN: 'Crear PIN de 6 dígitos',
-            noAccounts: 'Sin cuentas aún', openAccount: 'Abre tu primera cuenta',
-            noTransactions: 'Sin transacciones', noCards: 'Sin tarjetas',
-            downloadReceipt: 'Descargar', completed: 'Completado', availableBalance: 'Saldo disponible',
-            waitingForAdmin: 'Esperando admin', pendingApproval: 'Aprobación Pendiente',
-            frozen: 'Congelada', active: 'Activa', noAccount: 'Sin Cuenta',
-            backToCards: 'Volver a Tarjetas', backToProfile: 'Volver al Perfil'
-          },
-          fr: {
-            home: 'Accueil', overview: 'Aperçu', accounts: 'Comptes', cards: 'Cartes',
-            transfers: 'Virements', profile: 'Profil', admin: 'Administrateur', logout: 'Déconnexion',
-            myAccounts: 'Mes Comptes', openNew: 'Ouvrir Nouveau Compte', accountNumber: 'Numéro de Compte',
-            balance: 'Solde', status: 'Statut', active: 'Actif', frozen: 'Gelé',
-            yourCards: 'Vos Cartes', requestNew: 'Demander Nouvelle Carte', viewRequests: 'Voir Demandes',
-            cardNumber: 'Numéro de Carte', cardHolder: 'Titulaire', expires: 'Expire',
-            sendMoney: 'Envoyer Argent', fromAccount: 'Depuis Compte', toAccount: 'Vers Compte',
-            amount: 'Montant', transferType: 'Type de Virement', domestic: 'National',
-            international: 'International', sendTransfer: 'Envoyer Virement', transactionPin: 'NIP de Transaction',
-            myProfile: 'Mon Profil', firstName: 'Prénom', lastName: 'Nom',
-            email: 'Email', phone: 'Téléphone', address: 'Adresse', setPin: 'Définir NIP',
-            login: 'Connexion', register: "S'inscrire", password: 'Mot de passe',
-            loading: 'Chargement...', save: 'Enregistrer', cancel: 'Annuler', success: 'Succès',
-            error: 'Erreur', language: 'Langue', selectLanguage: 'Choisir Langue',
-            customers: 'Clients', pendingApprovals: 'Approbations en Attente', cardRequests: 'Demandes de Carte',
-            processDeposit: 'Traiter Dépôt', allTransactions: 'Toutes Transactions', backdateTransaction: 'Antidater',
-            branches: 'Agences', withdraw: 'Retirer', transactions: 'Transactions'
-          },
-          de: {
-            home: 'Startseite', overview: 'Übersicht', accounts: 'Konten', cards: 'Karten',
-            transfers: 'Überweisungen', profile: 'Profil', admin: 'Administrator', logout: 'Abmelden',
-            myAccounts: 'Meine Konten', openNew: 'Neues Konto Eröffnen', accountNumber: 'Kontonummer',
-            balance: 'Saldo', status: 'Status', active: 'Aktiv', frozen: 'Eingefroren',
-            yourCards: 'Ihre Karten', requestNew: 'Neue Karte Beantragen', viewRequests: 'Anträge Ansehen',
-            cardNumber: 'Kartennummer', cardHolder: 'Karteninhaber', expires: 'Läuft Ab',
-            sendMoney: 'Geld Senden', fromAccount: 'Von Konto', toAccount: 'An Konto',
-            amount: 'Betrag', transferType: 'Überweisungsart', domestic: 'Inländisch',
-            international: 'International', sendTransfer: 'Überweisung Senden', transactionPin: 'Transaktions-PIN',
-            myProfile: 'Mein Profil', firstName: 'Vorname', lastName: 'Nachname',
-            email: 'E-Mail', phone: 'Telefon', address: 'Adresse', setPin: 'PIN Festlegen',
-            login: 'Anmelden', register: 'Registrieren', password: 'Passwort',
-            loading: 'Laden...', save: 'Speichern', cancel: 'Abbrechen', success: 'Erfolg',
-            error: 'Fehler', language: 'Sprache', selectLanguage: 'Sprache Wählen',
-            customers: 'Kunden', pendingApprovals: 'Ausstehende Genehmigungen', cardRequests: 'Kartenanträge',
-            processDeposit: 'Einzahlen', allTransactions: 'Alle Transaktionen', backdateTransaction: 'Zurückdatieren',
-            branches: 'Filialen', withdraw: 'Abheben', transactions: 'Transaktionen'
-          },
-          zh: {
-            home: '首页', overview: '概览', accounts: '账户', cards: '卡片',
-            transfers: '转账', profile: '个人资料', admin: '管理员', logout: '退出',
-            myAccounts: '我的账户', openNew: '开立新账户', accountNumber: '账号',
-            balance: '余额', status: '状态', active: '活跃', frozen: '冻结',
-            yourCards: '我的卡片', requestNew: '申请新卡', viewRequests: '查看申请',
-            cardNumber: '卡号', cardHolder: '持卡人', expires: '到期',
-            sendMoney: '发送款项', fromAccount: '从账户', toAccount: '到账户',
-            amount: '金额', transferType: '转账类型', domestic: '国内',
-            international: '国际', sendTransfer: '发送转账', transactionPin: '交易密码',
-            myProfile: '我的资料', firstName: '名字', lastName: '姓氏',
-            email: '邮箱', phone: '电话', address: '地址', setPin: '设��密码',
-            login: '登录', register: '注册', password: '密码',
-            loading: '加载中...', save: '保存', cancel: '取消', success: '成功',
-            error: '错误', language: '语言', selectLanguage: '选择语言',
-            customers: '客户', pendingApprovals: '待审批', cardRequests: '卡片申请',
-            processDeposit: '处理存款', allTransactions: '所有交易', backdateTransaction: '回溯',
-            branches: '分行', withdraw: '取款', transactions: '交易'
-          },
-          ar: {
-            home: 'الرئيسية', overview: 'نظرة عامة', accounts: 'الحسابات', cards: 'البطاقات',
-            transfers: 'التحويلات', profile: 'الملف الشخصي', admin: 'المسؤول', logout: 'تسجيل خروج',
-            myAccounts: 'حساباتي', openNew: 'فتح حساب جديد', accountNumber: 'رقم الحساب',
-            balance: 'الرصيد', status: 'الحالة', active: 'نشط', frozen: 'مجمد',
-            yourCards: 'بطاقاتي', requestNew: 'طلب بطاقة جديدة', viewRequests: 'عرض الطلبات',
-            cardNumber: 'رقم البطاقة', cardHolder: 'صاحب البطاقة', expires: 'تنتهي',
-            sendMoney: 'إرسال أموال', fromAccount: 'من حساب', toAccount: 'إلى حساب',
-            amount: 'المبلغ', transferType: 'نوع التحويل', domestic: 'محلي',
-            international: 'دولي', sendTransfer: 'إرسال التحويل', transactionPin: 'رقم PIN',
-            myProfile: 'ملفي الشخصي', firstName: 'الاسم الأول', lastName: 'اسم العائلة',
-            email: 'البريد الإلكتروني', phone: 'الهاتف', address: 'العنوان', setPin: 'تعيين PIN',
-            login: 'تسجيل الدخول', register: 'تسجيل جديد', password: 'كلمة المرور',
-            loading: 'جاري التحميل...', save: 'حفظ', cancel: 'إلغاء', success: 'نجاح',
-            error: 'خطأ', language: 'اللغة', selectLanguage: 'اختر اللغة',
-            customers: 'العملاء', pendingApprovals: 'الموافقات المعلقة', cardRequests: 'طلبات البطاقة',
-            processDeposit: 'معالجة الإيداع', allTransactions: 'جميع المعاملات', backdateTransaction: 'التأر��خ',
-            branches: 'الفروع', withdraw: 'سحب', transactions: 'المعاملات'
-          },
-          ja: {
-            home: 'ホーム', overview: '概要', accounts: '口座', cards: 'カード',
-            transfers: '送金', profile: 'プロフィール', admin: '管理者', logout: 'ログアウト',
-            myAccounts: 'マイ口座', openNew: '新規口座開設', accountNumber: '口座番号',
-            balance: '残高', status: 'ステータス', active: '有効', frozen: '凍結',
-            yourCards: 'マイカード', requestNew: 'カードを申請', viewRequests: '申請を確認',
-            cardNumber: 'カード番号', cardHolder: 'カード名義', expires: '有効期限',
-            sendMoney: '送金する', fromAccount: '元口座', toAccount: '宛先口座',
-            amount: '金額', transferType: '送金タイプ', domestic: '国内',
-            international: '国際', sendTransfer: '送金する', transactionPin: '取引 PIN',
-            myProfile: 'マイプロフィール', firstName: '名', lastName: '姓',
-            email: 'メール', phone: '電話', address: '住所', setPin: 'PIN を設定',
-            login: 'ログイン', register: '登録', password: 'パスワード',
-            loading: '読み込み中...', save: '保存', cancel: 'キャンセル', success: '成功',
-            error: 'エラー', language: '言語', selectLanguage: '言語を選択'
-          },
-          pt: {
-            home: 'Início', overview: 'Visão Geral', accounts: 'Contas', cards: 'Cartões',
-            transfers: 'Transferências', profile: 'Perfil', admin: 'Administrador', logout: 'Sair',
-            myAccounts: 'Minhas Contas', openNew: 'Abrir Nova Conta', accountNumber: 'Número da Conta',
-            balance: 'Saldo', status: 'Status', active: 'Ativa', frozen: 'Congelada',
-            yourCards: 'Seus Cartões', requestNew: 'Solicitar Novo Cartão', viewRequests: 'Ver Solicitações',
-            cardNumber: 'Número do Cartão', cardHolder: 'Titular', expires: 'Vence',
-            sendMoney: 'Enviar Dinheiro', fromAccount: 'Da Conta', toAccount: 'Para Conta',
-            amount: 'Valor', transferType: 'Tipo de Transferência', domestic: 'Nacional',
-            international: 'Internacional', sendTransfer: 'Enviar Transferência', transactionPin: 'PIN de Transação',
-            myProfile: 'Meu Perfil', firstName: 'Nome', lastName: 'Sobrenome',
-            email: 'Email', phone: 'Telefone', address: 'Endereço', setPin: 'Definir PIN',
-            login: 'Entrar', register: 'Cadastrar', password: 'Senha',
-            loading: 'Carregando...', save: 'Salvar', cancel: 'Cancelar', success: 'Sucesso',
-            error: 'Erro', language: 'Idioma', selectLanguage: 'Selecionar Idioma'
-          },
-          ru: {
-            home: 'Главная', overview: 'Обзор', accounts: 'Счета', cards: 'Карты',
-            transfers: 'Переводы', profile: 'Профиль', admin: 'Администратор', logout: 'Выйти',
-            myAccounts: 'Мои Счета', openNew: 'Открыть Новый Счет', accountNumber: 'Номер Счета',
-            balance: 'Баланс', status: 'Статус', active: 'Активен', frozen: 'Заморожен',
-            yourCards: 'Мои Карты', requestNew: 'Заказать Карту', viewRequests: 'Просмотр Запросов',
-            cardNumber: 'Номер Карты', cardHolder: 'Владелец', expires: '������стекает',
-            sendMoney: 'Отправить Деньги', fromAccount: 'Со Счета', toAccount: 'На Счет',
-            amount: 'Сумма', transferType: 'Тип Перевода', domestic: 'Внутренний',
-            international: 'Международный', sendTransfer: 'Отправить Перевод', transactionPin: 'PIN Транзакции',
-            myProfile: 'Мой Профиль', firstName: 'Имя', lastName: 'Фамилия',
-            email: 'Email', phone: 'Телефон', address: 'Адрес', setPin: 'Установить PIN',
-            login: 'Войти', register: 'Регистрация', password: 'Пароль',
-            loading: 'Загрузка...', save: 'Сохранить', cancel: 'Отмена', success: 'Успех',
-            error: 'Ошибка', language: 'Язык', selectLanguage: 'Выбрать Язык'
-          },
-          hi: {
-            home: 'होम', overview: 'अवलोकन', accounts: 'खाते', cards: 'कार्ड',
-            transfers: 'स्थानांतरण', profile: 'प्रोफ़ाइल', admin: 'व्यवस्थापक', logout: 'लॉग आउट',
-            myAccounts: 'मेरे खाते', openNew: 'नया खाता खोलें', accountNumber: 'खाता संख्या',
-            balance: 'शेष', status: 'स्थिति', active: 'सक्रिय', frozen: 'स्थिर',
-            yourCards: 'आपके कार्ड', requestNew: 'नया कार्ड अनुरोध करें', viewRequests: 'अनुरोध देखें',
-            cardNumber: 'कार्ड नंबर', cardHolder: 'धारक', expires: 'समाप्त',
-            sendMoney: 'पैसे भेजें', fromAccount: 'से खाता', toAccount: 'को खाता',
-            amount: 'राशि', transferType: 'स्थानांतरण प्रकार', domestic: 'घरेलू',
-            international: 'अंतर्राष्ट्रीय', sendTransfer: 'स्थानांतरण भेजें', transactionPin: 'लेनदेन PIN',
-            myProfile: 'मेरी प्रोफ़ाइल', firstName: 'पहला नाम', lastName: 'उपनाम',
-            email: 'ईमेल', phone: 'फोन', address: 'पता', setPin: 'PIN सेट करें',
-            login: 'लॉग इन', register: 'पंजीकरण', password: 'पासवर्ड',
-            loading: 'लोड हो रहा है...', save: 'सहेजें', cancel: 'रद्द करें', success: 'सफलता',
-            error: 'त्रुटि', language: 'भाषा', selectLanguage: 'भाषा चुनें'
-          }
-        };
-        return translations[language]?.[key] || translations.en?.[key] || key;
-      };
-
-      useEffect(() => {
+           useEffect(() => {
         const token = localStorage.getItem('token');
         const userStr = localStorage.getItem('user');
 
@@ -7582,7 +7377,7 @@ const CustomerManagement = ({ adminData, auth, showToast, loadData, API, currenc
                 <h3 style={{ fontSize: 18, fontWeight: 600, marginBottom: 16, color: 'var(--teal-primary)' }}>Recent Notifications</h3>
                 <div style={{ display: 'grid', gap: 12 }}>
                   <div style={{ padding: 16, background: 'var(--teal-pale)', borderRadius: 8, borderLeft: '4px solid var(--teal-primary)' }}>
-                    <div style={{ fontWeight: 600, color: 'var(--teal-dark)', marginBottom: 4 }}>���� Welcome to CorpCommercial Bank!</div>
+                    <div style={{ fontWeight: 600, color: 'var(--teal-dark)', marginBottom: 4 }}>     Welcome to CorpCommercial Bank!</div>
                     <div style={{ fontSize: 13, color: 'var(--gray-600)' }}>Thank you for banking with us. Explore our features to make the most of your banking experience.</div>
                     <div style={{ fontSize: 11, color: 'var(--gray-500)', marginTop: 8 }}>Just now</div>
                   </div>
