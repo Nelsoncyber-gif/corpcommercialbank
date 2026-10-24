@@ -3293,6 +3293,8 @@
         satisfiedClients: 'Satisfied Clients', branches: 'Branches',
         // About
         aboutUs: 'About Us', weAre: 'We are...',
+        aboutHeroTitle: 'Trusted Financial Company Since 1978',
+        aboutHeroParagraph: 'CorpCommercial Bank is a trusted online banking institution with over 42 years of excellence. With headquarters in both the USA and Germany, we provide secure and innovative financial services worldwide. Our legacy is built on reliability, customer satisfaction, and digital advancement, making banking simple and accessible for individuals and businesses across the globe.',
         // View activity
         viewActivity: 'View all your account activity', sendMoneyDomestic: 'Send money domestically or internationally',
         withdrawMoney: 'Withdraw money from your account', trackStatus: 'Track your card request status',
@@ -4431,6 +4433,9 @@
         {/* HERO SECTION WITH TRANSPARENT OVERLAY */}
         <div className="hero">
           <div className="container" style={{ position: 'relative', zIndex: 10 }}>
+            <div style={{ position: 'absolute', top: 20, right: 20, zIndex: 100 }}>
+              <LanguageSelector />
+            </div>
             <div className="hero-content">
               <div className="hero-label">{t('planLaunchGrow') || 'PLAN. LAUNCH. GROW.'}</div>
               <h1 className="hero-title">{t('weContinueToServe') || 'We continue to serve your financial needs'}</h1>
@@ -4489,9 +4494,9 @@
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 48, alignItems: 'center', maxWidth: 1200, margin: '0 auto' }}>
               <div>
                 <div className="section-label">{t('aboutUs') || 'About Us'}</div>
-                <h2 className="section-main-title">{t('weAre') || 'We Are'} Trusted Financial Company Since 1978</h2>
+                <h2 className="section-main-title">{t('aboutHeroTitle') || 'Trusted Financial Company Since 1978'}</h2>
                 <p style={{ fontSize: 16, color: 'var(--gray-600)', lineHeight: 1.8, marginBottom: 24 }}>
-                  CorpCommercial Bank is a trusted online banking institution with over 42 years of excellence. With headquarters in both the USA and Germany, we provide secure and innovative financial services worldwide. Our legacy is built on reliability, customer satisfaction, and digital advancement, making banking simple and accessible for individuals and businesses across the globe.
+                  {t('aboutHeroParagraph') || 'CorpCommercial Bank is a trusted online banking institution with over 42 years of excellence. With headquarters in both the USA and Germany, we provide secure and innovative financial services worldwide. Our legacy is built on reliability, customer satisfaction, and digital advancement, making banking simple and accessible for individuals and businesses across the globe.'}
                 </p>
                 <ul className="about-features">
                   <li>{t('secureTransactions') || 'Secure Transactions'}</li>
